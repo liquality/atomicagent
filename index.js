@@ -1,84 +1,44 @@
-var net = require('net')
+require('bcoin/lib/net/common').USER_AGENT = '/bcoin:v1.0.2/LIQ:agent.liquality.io'
+const bcoin = require('bcoin')
 
-var client = new net.Socket()
+const tchain = new bcoin.Chain({
+  memory: true,
+  network: 'testnet'
+})
 
-client.connect(18444, 'localhost', function () {
-  console.log('connected')
+const tmempool = new bcoin.Mempool({
+  network: 'testnet',
+  chain: tchain
+})
 
-  var buff = Buffer.from('fabfb5da76657273696f6e000000000064000000358d493262ea0000010000000000000011b2d05000000000010000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000ffff0000000000003b2eb35d8ce617650f2f5361746f7368693a302e372e322fc03e0300', 'hex')
+const tpool = new bcoin.Pool({
+  network: 'testnet',
+  chain: tchain,
+  mempool: tmempool,
+  size: 100
+})
 
-  console.log('xxxx', buff.toString(), 'xxxx')
+setInterval(function () {
+  console.log('Checking for daemons')
+  tpool.peers.list.toArray().forEach(checkForLiqualityAgent)
+}, 10000)
 
-  try {
-    client.write(buff)
-  } catch (e) {
-    console.log(e)
+// matches LIQ:domain.com
+function checkForLiqualityAgent (peer) {
+  const m = peer.agent.match(/LIQ:(.*)/)
+  if (m && m[1]) {
+    console.log(`Found a Liquality daemon on ${m[1]}`)
   }
-})
+}
 
-client.on('data', function (data) {
-  console.log('Received: ' + data)
-})
+;(async function () {
+  tpool.on('peer', peer => {
+    console.log('new peer', peer.hostname())
+  })
 
-client.on('close', function () {
-  console.log('Connection closed')
-})
+  await tchain.open()
+  await tpool.open()
+  await tpool.connect()
 
-// var methods = {
-//   test: function () {
-//     console.log(arguments)
-//     return 'hello'
-//   },
-//   connect: function (host, port) {
-//     console.log('Connecting to ', host, port)
-//     client.connect(port, host, function () {
-//       return 'connected'
-//     })
-//   },
-//   version: function () {
-//     var buff = Buffer.from('fabfb5da76657273696f6e000000000064000000358d493262ea0000010000000000000011b2d05000000000010000000000000000000000000000000000ffff000000000000000000000000000000000000000000000000ffff0000000000003b2eb35d8ce617650f2f5361746f7368693a302e372e322fc03e0300', 'hex')
-//     try {
-//       client.write(buff)
-//     } catch (e) {
-//       console.log(e)
-//     }
-//   },
-//   disconnect: function () {
-//     client.destroy()
-//   },
-//   quit: function () {
-//     console.log('Have a great day!')
-//     process.exit(0)
-//   },
-//   unknown: function () {
-//     return 'Unknown command'
-//   }
-// }
-//
-// function handleCmd () {
-//   rl.prompt()
-//   rl.on('line', (line) => {
-//     var answer = line.trim()
-//     var parts = answer.split(' ')
-//     var method = (parts[0] in methods) ? parts[0] : 'unknown'
-//     console.log(methods[method](...parts.splice(1)))
-//     rl.prompt()
-//   }).on('close', () => {
-//     methods.quit()
-//   })
-// }
-//
-// var rl = null
-// if (argv._.length < 1) {
-//   const readline = require('readline')
-//
-//   rl = readline.createInterface({
-//     input: process.stdin,
-//     output: process.stdout,
-//     prompt: 'bitcoin> '
-//   })
-//   handleCmd()
-// } else {
-//   methods['connect'](...argv._)
-//   methods['version']()
-// }
+  tpool.startSync()
+})()
