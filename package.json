@@ -3,6 +3,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "postinstall": "cd ui && npm ci && npm run build"
   },
   "author": "",
