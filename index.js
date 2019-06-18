@@ -5,8 +5,8 @@ const compress = require('compression')
 const bodyParser = require('body-parser')
 const proxy = require('http-proxy-middleware')
 
-const Client = require('./utils/client')
-const cors = require('./middlewares/cors')
+const Client = require('./agent/utils/client')
+const cors = require('./agent/middlewares/cors')
 
 module.exports = options => {
   const app = express()
@@ -17,7 +17,7 @@ module.exports = options => {
   app.use(compress())
   app.use(cors())
   app.use(bodyParser.json({ limit: '5mb' }))
-  app.use('/api', require('./routes/api'))
+  app.use('/api', require('./agent/routes/api'))
 
   if (process.env.UI_DEV === 'true') {
     app.use('/', proxy({
@@ -25,8 +25,8 @@ module.exports = options => {
       changeOrigin: true
     }))
   } else if (options.ui) {
-    app.use('/', express.static(path.join(__dirname, 'ui', 'dist')))
-    app.use('/*', express.static(path.join(__dirname, 'ui', 'dist', 'index.html')))
+    app.use('/', express.static(path.join(__dirname, 'dist')))
+    app.use('/*', express.static(path.join(__dirname, 'dist', 'index.html')))
   }
 
   app.listen(options.port)
