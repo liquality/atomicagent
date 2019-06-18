@@ -23,11 +23,13 @@
     },
     "ETH_RPC_USER": {
       "description": "Ethereum RPC user",
-      "value": ""
+      "value": "",
+      "required": false
     },
     "ETH_RPC_PASS": {
       "description": "Ethereum RPC pass",
-      "value": ""
+      "value": "",
+      "required": false
     }
   }
 }

@@ -1,6 +1,7 @@
 {
   "name": "atomicagent",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Atomic Swap Agent",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
