@@ -24,12 +24,12 @@ module.exports = options => {
       target: 'http://localhost:8081/',
       changeOrigin: true
     }))
-  } else if (options.ui) {
+  } else {
     app.use('/', express.static(path.join(__dirname, 'dist')))
     app.use('/*', express.static(path.join(__dirname, 'dist', 'index.html')))
   }
 
   app.listen(options.port)
 
-  console.log(`Atomic Agent (${options.ui ? 'with' : 'without'} UI) is running on ${options.port}`)
+  console.log(`Atomic Agent with UI is running on ${options.port}`)
 }

@@ -7,7 +7,6 @@ const atomicAgent = require('../')
 
 program
   .version(pkg.version)
-  .option('-u, --ui', 'Enable Agent UI')
   .option('-p, --port <port>', 'Application port', 9898)
   .option('--btc-rpc <url>', 'Bitcoin RPC endpoint', 'http://localhost:18332')
   .option('--btc-rpc-user <user>', 'Bitcoin RPC user', 'bitcoin')
