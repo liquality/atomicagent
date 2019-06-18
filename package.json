@@ -1,8 +1,11 @@
 {
   "name": "atomicagent",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Atomic Swap Agent",
   "main": "index.js",
+  "bin": {
+    "atomicagent": "bin/atomicagent"
+  },
   "scripts": {
     "start": "./bin/atomicagent",
     "serve": "vue-cli-service serve",
@@ -29,9 +32,7 @@
     "helmet": "^3.18.0",
     "http-proxy-middleware": "^0.19.1",
     "qs": "^6.7.0",
-    "uuid": "^3.3.2"
-  },
-  "devDependencies": {
+    "uuid": "^3.3.2",
     "@vue/cli-plugin-babel": "^3.8.0",
     "@vue/cli-plugin-eslint": "^3.8.0",
     "@vue/cli-plugin-pwa": "^3.8.0",
