@@ -1,6 +1,4 @@
-const client = require('./client')
-
-module.exports = async (emitter, data) => {
+module.exports = async (emitter, client, data) => {
   const {
     id,
     ccy1,

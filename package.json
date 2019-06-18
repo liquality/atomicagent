@@ -1,5 +1,5 @@
 {
-  "name": "atomic-agent",
+  "name": "atomicagent",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -14,6 +14,7 @@
     "bcoin": "^1.0.2",
     "bignumber.js": "^9.0.0",
     "body-parser": "^1.19.0",
+    "commander": "^2.20.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^8.0.0",

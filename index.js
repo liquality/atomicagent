@@ -1,7 +1,3 @@
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
-
 const path = require('path')
 const express = require('express')
 const helmet = require('helmet')
@@ -9,25 +5,31 @@ const compress = require('compression')
 const bodyParser = require('body-parser')
 const proxy = require('http-proxy-middleware')
 
-const cors = require('./cors')
+const Client = require('./utils/client')
+const cors = require('./middlewares/cors')
 
-const app = express()
+module.exports = options => {
+  const app = express()
 
-app.set('etag', false)
-app.use(helmet())
-app.use(compress())
-app.use(cors())
-app.use(bodyParser.json({ limit: '5mb' }))
-app.use('/api', require('./api'))
+  app.set('client', Client(options))
+  app.set('etag', false)
+  app.use(helmet())
+  app.use(compress())
+  app.use(cors())
+  app.use(bodyParser.json({ limit: '5mb' }))
+  app.use('/api', require('./routes/api'))
 
-if (process.env.NODE_ENV === 'production') {
-  app.use('/', express.static(path.join(__dirname, 'ui', 'dist')))
-  app.use('/*', express.static(path.join(__dirname, 'ui', 'dist', 'index.html')))
-} else {
-  app.use('/', proxy({
-    target: 'http://localhost:8080/',
-    changeOrigin: true
-  }))
+  if (process.env.UI_DEV === 'true') {
+    app.use('/', proxy({
+      target: 'http://localhost:8081/',
+      changeOrigin: true
+    }))
+  } else if (options.ui) {
+    app.use('/', express.static(path.join(__dirname, 'ui', 'dist')))
+    app.use('/*', express.static(path.join(__dirname, 'ui', 'dist', 'index.html')))
+  }
+
+  app.listen(options.port)
+
+  console.log(`Atomic Agent (${options.ui ? 'with' : 'without'} UI) is running on ${options.port}`)
 }
-
-app.listen(process.env.PORT)

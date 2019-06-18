@@ -1,0 +1,33 @@
+{
+  "name": "Atomic Agent",
+  "description": "A handy tool to quickly get started with Liquality Atomic Swap",
+  "repository": "https://github.com/liquality/atomicagent",
+  "logo": "https://raw.githubusercontent.com/liquality/chainabstractionlayer/master/liquality-logo.png",
+  "keywords": ["liquality", "atomic swap", "swap", "ethereum", "bitcoin", "cryptocurrency"],
+  "env": {
+    "BTC_RPC": {
+      "description": "Bitcoin RPC endpoint",
+      "value": "http://localhost:18332"
+    },
+    "BTC_RPC_USER": {
+      "description": "Bitcoin RPC user",
+      "value": "bitcoin"
+    },
+    "BTC_RPC_PASS": {
+      "description": "Bitcoin RPC pass",
+      "value": "local321"
+    },
+    "ETH_RPC": {
+      "description": "Ethereum RPC endpoint",
+      "value": "http://localhost:8545"
+    },
+    "ETH_RPC_USER": {
+      "description": "Ethereum RPC user",
+      "value": ""
+    },
+    "ETH_RPC_PASS": {
+      "description": "Ethereum RPC pass",
+      "value": ""
+    }
+  }
+}

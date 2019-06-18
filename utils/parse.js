@@ -4,7 +4,8 @@ const BigNumber = require('bignumber.js')
 const mul = (val, by) => BigNumber(val).multipliedBy(by).toNumber()
 
 module.exports = link => {
-  const query = qs.parse(link.substring(link.indexOf('#') + 1))
+  link = link.includes('#') ? link.substring(link.indexOf('#') + 1) : link
+  const query = qs.parse(link)
 
   if (!query.isPartyB) throw new Error('Invalid Counter Party Link')
 
