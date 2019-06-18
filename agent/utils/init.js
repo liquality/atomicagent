@@ -1,5 +1,5 @@
 const qs = require('qs')
-const { crypto } = require('@liquality/bundle')
+const { sha256 } = require('@liquality/crypto')
 
 const BigNumber = require('bignumber.js')
 
@@ -46,7 +46,7 @@ module.exports = async (emitter, client, data) => {
   const nodeExp = userExp - (60 * 60 * 6)
 
   const secret = await client[ccy2].swap.generateSecret('combak')
-  const secretHash = crypto.sha256(secret)
+  const secretHash = sha256(secret)
 
   const tx = await client[ccy2].swap.initiateSwap(ccy2v, ccy2Addr, ccy2CounterPartyAddr, secretHash, userExp)
   console.log(`Initiated ${ccy2} to ${ccy1} swap`, tx)
