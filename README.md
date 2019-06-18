@@ -13,3 +13,7 @@ nano .env # fill out all the envs
 ```bash
 npm start
 ```
+
+## Deploy your own Atomic Agent
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)

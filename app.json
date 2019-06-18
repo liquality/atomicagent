@@ -7,7 +7,7 @@
   "env": {
     "BTC_RPC": {
       "description": "Bitcoin RPC endpoint",
-      "value": "http://localhost:18332"
+      "value": "https://liquality.io/bitcointestnetrpc/"
     },
     "BTC_RPC_USER": {
       "description": "Bitcoin RPC user",
@@ -19,7 +19,7 @@
     },
     "ETH_RPC": {
       "description": "Ethereum RPC endpoint",
-      "value": "http://localhost:8545"
+      "value": "https://liquality.io/ethereumtestnetrpc/"
     },
     "ETH_RPC_USER": {
       "description": "Ethereum RPC user",
