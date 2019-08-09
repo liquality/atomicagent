@@ -1,0 +1,268 @@
+openapi: 3.0.1
+info:
+  title: Liquality Agent
+  description: This is the mock API for the liquality agent. See [Liquality.io](https://liquality.io)
+    for more information.
+  contact:
+    email: info@liquality.io
+  license:
+    name: MIT
+  version: 1.0.0
+  x-logo:
+    url: https://avatars1.githubusercontent.com/u/42639968?s=200&v=4
+servers:
+- url: https://localhost:9898/v1
+tags:
+- name: swap
+  description: Swap with the agent
+  externalDocs:
+    description: API Source
+    url: https://github.com/liquality/agent
+  x-displayName: Swap API
+paths:
+  /swap/marketinfo:
+    parameters:
+    - name: from
+      in: query
+      description: from currency
+      required: false
+      schema:
+        type: string
+        example: BTC
+    - name: to
+      in: query
+      description: to currency
+      required: false
+      schema:
+        type: string
+        example: ETH
+    get:
+      tags:
+      - swap
+      summary: Retrieve the markets that the agent is able to swap
+      operationId: getSwapMarketInfo
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Market'
+  /swap/order:
+    post:
+      tags:
+      - swap
+      summary: Create an Order with the agent
+      operationId: createOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+            examples:
+              testing:
+                summary: BTC_ETH
+                value:
+                  from: BTC
+                  to: ETH
+                  amount: 0.51
+      responses:
+        200:
+          description: order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                id: eae4d76c-3ba2-465d-930b-324fcbe17d95
+                from: BTC
+                to: ETH
+                rate: 38.7
+                fromCounterPartyAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
+                toCounterPartyAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
+                orderExpiration: 1562380000
+                minConfirmations: 3
+  /swap/order/{orderId}:
+    parameters:
+    - in: path
+      name: orderId
+      schema:
+        type: string
+        format: uuid
+      required: true
+      description: ID of the Order
+    post:
+      tags:
+      - swap
+      summary: Update order with swap details
+      operationId: updateOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+            examples:
+              testing:
+                summary: BTC_ETH
+                value:
+                  amount: 0.01
+                  fromAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
+                  toAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
+                  fundHash: '39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0'
+                  secretHash: '16d54b643a30110ec13b4122231a0981dae0c3f8e94642222d85d98179e1b5a8'
+                  swapExpiration: 1562386069
+      responses:
+        200:
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        404:
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderError'
+              example:
+                error: Order not found
+    get:
+      tags:
+      - swap
+      summary: Get order details
+      operationId: getOrder
+      responses:
+        200:
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        404:
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderError'
+              example:
+                error: Order not found
+components:
+  schemas:
+    Market:
+        type: object
+        properties:
+          from:
+            type: string
+            description: from currency
+          to:
+            type: string
+            description: to currency
+          estimatedRate:
+            type: number
+            format: float
+            description: The rate of the market
+          min:
+            type: number
+            format: float
+            description: The minimum amount of currency1 that can be traded
+          max:
+            type: number
+            format: float
+            description: The maximum amount of currency1 that can be traded
+        example:
+          from: BTC
+          to: ETH
+          estimatedRate: 38.37
+          min: 0.01
+          max: 1.6
+    OrderRequest:
+      type: object
+      properties:
+        from:
+          type: string
+          description: from currency
+        to:
+          type: string
+          description: to currency
+        amount:
+          type: number
+          description: Amount in from currency
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        from:
+          type: string
+          description: from currency
+        to:
+          type: string
+          description: to currency
+        rate:
+          type: string
+          description: from currency
+        fromCounterPartyAddress:
+          type: string
+          description: Agent's from currency address
+        toCounterPartyAddress:
+          type: string
+          description: Agent's to currency address
+        orderExpiration:
+          type: number
+          description: When the agent will drop the swap request
+        minConfirmations:
+          type: integer
+          description: Minimum number of confirmations the agent will accept to proceed with the swap
+        status:
+          type: string
+          description: Order Status
+          enum:
+          - QUOTE
+          - PENDING
+          - CONFIRMED
+          - CLAIMED
+          - REFUNDED
+          - CANCELLED
+          - REFUNDED
+        amount:
+          type: number
+          format: float
+        fromAddress:
+          type: string
+          description: from currency address
+        toAddress:
+          type: string
+          description: to currency address
+        fundHash:
+          type: string
+          description: Swap funding transaction
+        secretHash:
+          type: string
+          description: Swap secret hash
+        swapExpiration:
+          type: number
+          description: Swap expiration timestamp in seconds
+      example:
+        id: eae4d76c-3ba2-465d-930b-324fcbe17d95
+        from: BTC
+        to: ETH
+        rate: 38.7
+        fromCounterPartyAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
+        toCounterPartyAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
+        orderExpiration: 1562380000
+        minConfirmations: 3
+        status: QUOTE
+        amount: 0.01
+        fromAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
+        toAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
+        fundHash: '39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0'
+        secretHash: '16d54b643a30110ec13b4122231a0981dae0c3f8e94642222d85d98179e1b5a8'
+        swapExpiration: 1562386069
+    OrderError:
+      type: object
+      properties:
+        error:
+          type: string
