@@ -3,21 +3,16 @@
 > Atomic Swap Agent
 
 
-## Deploy your own Atomic Agent
+## Add test data
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+```bash
+npm run migrate
+```
 
 
 ## Run your Atomic Agent locally
 
 ```bash
-npx atomicagent --ui
-```
-
-
-## Development
-
-```bash
-npm i
-npm start
+npm run api
+npm run worker # in a separate shell
 ```
