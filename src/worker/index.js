@@ -12,10 +12,10 @@ agenda.define('verify-user-init-tx', async (job, done) => {
   const order = await Order.findOne({ _id: data.orderId }).exec()
   if (!order) return done()
 
-  // TODO: remove wait() from CAL
   order.status = 'AGENT_PENDING'
   await order.save()
 
+  // TODO: remove wait() from CAL
   await order.fromClient().swap.verifyInitiateSwapTransaction(
     order.fromFundHash,
     order.amount,
@@ -69,6 +69,7 @@ agenda.define('find-claim-swap-tx', async (job, done) => {
     order.secretHash,
     nodeExp
   )
+  console.log('Found claim transaction', claimTx)
 
   order.secret = claimTx.secret
   order.status = 'USER_CLAIMED'
@@ -84,20 +85,27 @@ agenda.define('agent-claim', async (job, done) => {
   const order = await Order.findOne({ _id: data.orderId }).exec()
   if (!order) return done()
 
-  // TODO: remove wait() from CAL
-  await order.fromClient().swap.verifyInitiateSwapTransaction(
-    order.fromFundHash,
-    order.fromCounterPartyAddress,
-    order.fromAddress,
-    order.secret,
-    order.swapExpiration
-  )
-  console.log('Node has claimed the swap', order.id)
+  try {
+    // TODO: remove wait() from CAL
+    await order.fromClient().swap.claimSwap(
+      order.fromFundHash,
+      order.fromCounterPartyAddress,
+      order.fromAddress,
+      order.secret,
+      order.swapExpiration
+    )
+    console.log('Node has claimed the swap', order.id)
 
-  order.status = 'AGENT_CLAIMED'
-  await order.save()
+    order.status = 'AGENT_CLAIMED'
+    await order.save()
 
-  done()
+    done()
+  } catch (e) {
+    console.error(e)
+    job.fail(e)
+    job.schedule('10 seconds from now')
+    await job.save()
+  }
 })
 
 async function start () {

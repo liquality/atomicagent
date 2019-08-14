@@ -19,7 +19,7 @@ const OrderSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
-  minConfirmations: {
+  minConf: {
     type: Number,
     index: true
   },
@@ -78,7 +78,7 @@ const OrderSchema = new mongoose.Schema({
   }
 })
 
-OrderSchema.set('toJSON', { virtuals: true })
+// OrderSchema.set('toJSON', { virtuals: true })
 
 OrderSchema.methods.fromClient = function () {
   return clients[this.from]
@@ -86,6 +86,16 @@ OrderSchema.methods.fromClient = function () {
 
 OrderSchema.methods.toClient = function () {
   return clients[this.to]
+}
+
+OrderSchema.methods.json = function () {
+  const json = this.toJSON()
+  json.id = json._id
+
+  delete json._id
+  delete json.__v
+
+  return json
 }
 
 OrderSchema.methods.setAgentAddresses = async function () {
@@ -98,4 +108,18 @@ OrderSchema.methods.setAgentAddresses = async function () {
   this.toCounterPartyAddress = toAddresses[0].address
 }
 
-module.exports = mongoose.model('Order', OrderSchema)
+OrderSchema.static('fromMarket', function (market, amount) {
+  return new Order({
+    amount,
+    from: market.from,
+    to: market.to,
+    rate: market.rate,
+    minConf: market.minConf,
+
+    orderExpiresAt: Date.now() + market.orderExpiresIn,
+    status: 'QUOTE'
+  })
+})
+
+const Order = mongoose.model('Order', OrderSchema)
+module.exports = Order

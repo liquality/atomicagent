@@ -5,4 +5,4 @@ const MAP = {
   BTC: 1e8
 }
 
-module.exports = (from, amountInLowestDenomination, to, rate) => ((BN(amountInLowestDenomination).div(MAP[from])).times(rate)).times(MAP[to])
+module.exports = (from, amountInHighestDenomination, to, rate) => (BN(amountInHighestDenomination).times(rate)).times(MAP[to])

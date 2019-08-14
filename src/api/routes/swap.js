@@ -13,16 +13,7 @@ router.get('/marketinfo', asyncHandler(async (req, res) => {
 
   const result = await Market.find(q).exec()
 
-  res.json(result.map(r => {
-    const json = r.toJSON()
-
-    // TODO: do this from schema
-    delete json.id
-    delete json._id
-    delete json.__v
-
-    return json
-  }))
+  res.json(result.map(r => r.json()))
 }))
 
 router.post('/order', asyncHandler(async (req, res, next) => {
@@ -37,20 +28,12 @@ router.post('/order', asyncHandler(async (req, res, next) => {
     return next(res.createError(401, 'Invalid amount'))
   }
 
-  const condition = market.findConditionForAmount(amount)
-
-  const order = new Order({
-    ..._.pick(body, ['from', 'to', 'amount']),
-    rate: condition.rate,
-    orderExpiresAt: Date.now() + condition.orderExpiresIn,
-    minConfirmations: condition.minConf,
-    status: 'QUOTE'
-  })
+  const order = Order.fromMarket(market, body.amount)
 
   await order.setAgentAddresses()
   await order.save()
 
-  res.json(order)
+  res.json(order.json())
 }))
 
 router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
@@ -69,7 +52,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   await order.save()
   await agenda.now('verify-user-init-tx', { orderId: order.id })
 
-  res.json(order)
+  res.json(order.json())
 }))
 
 router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
@@ -78,7 +61,7 @@ router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
   const order = await Order.findOne({ _id: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
 
-  res.json(order)
+  res.json(order.json())
 }))
 
 module.exports = router

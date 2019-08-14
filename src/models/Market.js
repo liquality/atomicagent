@@ -14,8 +14,17 @@ const MarketSchema = new mongoose.Schema({
   min: {
     type: Number
   },
-  conditions: {
-    type: Array
+  max: {
+    type: Number
+  },
+  minConf: {
+    type: Number
+  },
+  rate: {
+    type: Number
+  },
+  orderExpiresIn: {
+    type: Number
   },
 
   status: {
@@ -25,28 +34,16 @@ const MarketSchema = new mongoose.Schema({
   }
 })
 
-MarketSchema.set('toJSON', { virtuals: true })
 MarketSchema.index({ from: 1, to: 1 }, { unique: true })
 
-MarketSchema.virtual('lastOffer').get(function () {
-  return this.conditions[this.conditions.length - 1]
-})
+MarketSchema.methods.json = function () {
+  const json = this.toJSON()
 
-MarketSchema.virtual('max').get(function () {
-  return this.lastOffer.max
-})
+  delete json._id
+  delete json.__v
 
-MarketSchema.virtual('conf').get(function () {
-  return this.lastOffer.conf
-})
-
-MarketSchema.virtual('rate').get(function () {
-  return this.lastOffer.rate
-})
-
-MarketSchema.virtual('orderExpiresIn').get(function () {
-  return this.conditions[this.conditions.length - 1].orderExpiresIn
-})
+  return json
+}
 
 MarketSchema.methods.fromClient = function () {
   return clients[this.from]
@@ -54,10 +51,6 @@ MarketSchema.methods.fromClient = function () {
 
 MarketSchema.methods.toClient = function () {
   return clients[this.to]
-}
-
-MarketSchema.methods.findConditionForAmount = function (amount) {
-  return this.conditions.find(condition => amount <= condition.max)
 }
 
 module.exports = mongoose.model('Market', MarketSchema)
