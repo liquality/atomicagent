@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+
+const { loadVariables } = require('./commons')
+
+loadVariables({ defaultPort: 3000, processType: 'api' })
+
+require('../src')
