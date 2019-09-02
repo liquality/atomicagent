@@ -1,9 +1,12 @@
 const mongoose = require('mongoose')
+const axios = require('axios')
 const Agenda = require('agenda')
+const BN = require('bignumber.js')
 
 const agenda = new Agenda({ mongo: mongoose.connection })
 
 const fx = require('../utils/fx')
+const Market = require('../models/Market')
 const Order = require('../models/Order')
 
 agenda.define('verify-user-init-tx', async (job, done) => {
@@ -108,8 +111,37 @@ agenda.define('agent-claim', async (job, done) => {
   }
 })
 
+agenda.define('update-market-data', async (job, done) => {
+  console.log('Updating market data')
+
+  const markets = await Market.find({ status: 'ACTIVE' }).exec()
+  const currencies = Array.from(new Set([].concat(...markets.map(market => [market.from, market.to]))))
+  const MAP = {}
+
+  await Promise.all(currencies.map(currency => {
+    return axios(`https://api.coinbase.com/v2/prices/${currency}-USD/spot`)
+      .then(res => {
+        MAP[currency] = res.data.data.amount
+      })
+  }))
+
+  await Promise.all(markets.map(market => {
+    const from = BN(MAP[market.from])
+    const to = BN(MAP[market.to])
+
+    market.rate = from.div(to).dp(8)
+
+    console.log(`${market.from}_${market.to}`, market.rate)
+
+    return market.save()
+  }))
+
+  done()
+})
+
 async function start () {
   await agenda.start()
+  await agenda.every('5 minutes', 'update-market-data')
 }
 
 async function stop () {
