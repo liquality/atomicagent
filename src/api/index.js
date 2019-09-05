@@ -33,6 +33,7 @@ app.set('etag', false)
 app.set('agenda', agenda)
 
 app.use('/api/swap', require('./routes/swap'))
+app.use('/api/loan', require('./routes/loan'))
 // app.use('/queue', Agendash(agenda))
 
 if (process.env.NODE_ENV === 'production') {

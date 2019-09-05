@@ -7,10 +7,15 @@
     "api": "PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate nodemon src/index.js",
-    "test": "standard"
+    "test": "mocha test",
+    "test:swap": "mocha test/swap",
+    "test:loan": "mocha test/loan"
   },
   "license": "ISC",
   "dependencies": {
+    "@atomicloans/bitcoin-collateral-provider": "^0.2.53",
+    "@atomicloans/bitcoin-collateral-swap-provider": "^0.2.53",
+    "@atomicloans/loan-client": "^0.2.48",
     "@liquality/bitcoin-networks": "^0.3.2",
     "@liquality/bitcoin-node-wallet-provider": "^0.3.2",
     "@liquality/bitcoin-rpc-provider": "^0.3.2",
@@ -37,7 +42,8 @@
     "http-errors": "^1.7.3",
     "ioredis": "^4.11.2",
     "level": "^5.0.1",
-    "mongoose": "^5.6.6"
+    "mongoose": "^5.6.6",
+    "web3": "^1.2.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
