@@ -5,7 +5,7 @@ const BN = require('bignumber.js')
 
 const agenda = new Agenda({ mongo: mongoose.connection })
 
-const fx = require('../utils/fx')
+const { toBaseUnit } = require('../utils/fx')
 const Market = require('../models/Market')
 const Order = require('../models/Order')
 
@@ -42,7 +42,7 @@ agenda.define('reciprocate-init-swap', async (job, done) => {
   const order = await Order.findOne({ _id: data.orderId }).exec()
   if (!order) return done()
 
-  const toAmount = fx(order.from, order.amount, order.to, order.rate).toNumber()
+  const toAmount = toBaseUnit(order.amount, order.to, order.rate).toNumber()
   const nodeExp = order.swapExpiration - (60 * 60 * 6)
 
   const tx = await order.toClient().swap.initiateSwap(toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, nodeExp)

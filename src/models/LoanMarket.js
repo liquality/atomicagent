@@ -59,9 +59,6 @@ LoanMarketSchema.methods.getAgentAddresses = async function () {
   const principalAddresses = await this.principalClient().wallet.getAddresses()
   const collateralAddresses = await this.collateralClient().wallet.getAddresses()
 
-  console.log('principalAddresses', principalAddresses)
-  console.log('collateralAddresses', collateralAddresses)
-
   return { principalAddress: principalAddresses[0].address, collateralAddress: collateralAddresses[0].address }
 }
 
