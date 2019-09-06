@@ -1,8 +1,13 @@
 const mongoose = require('mongoose')
+const uuidv4 = require('uuid/v4')
 
 const clients = require('../utils/clients')
 
 const OrderSchema = new mongoose.Schema({
+  orderId: {
+    type: String,
+    index: true
+  },
   from: {
     type: String,
     index: true
@@ -90,8 +95,8 @@ OrderSchema.methods.toClient = function () {
 
 OrderSchema.methods.json = function () {
   const json = this.toJSON()
-  json.id = json._id
 
+  json.id = json.orderId
   delete json._id
   delete json.__v
 
@@ -110,6 +115,7 @@ OrderSchema.methods.setAgentAddresses = async function () {
 
 OrderSchema.static('fromMarket', function (market, amount) {
   return new Order({
+    orderId: uuidv4(),
     amount,
     from: market.from,
     to: market.to,
