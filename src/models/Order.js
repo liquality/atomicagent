@@ -6,7 +6,8 @@ const clients = require('../utils/clients')
 const OrderSchema = new mongoose.Schema({
   orderId: {
     type: String,
-    index: true
+    index: true,
+    unique: true
   },
   from: {
     type: String,
