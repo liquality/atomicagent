@@ -1,6 +1,7 @@
 const config = require('./config')
 const { Client, providers } = require('@liquality/bundle')
 const MetaMaskConnector = require('node-metamask')
+const Web3 = require('web3')
 
 const metaMaskConnector = new MetaMaskConnector({ port: config.ethereum.metaMaskConnector.port })
 
@@ -11,9 +12,12 @@ const ethereumWithMetaMask = new Client()
 ethereumWithMetaMask.addProvider(new providers.ethereum.EthereumRpcProvider(config.ethereum.rpc.host))
 ethereumWithMetaMask.addProvider(new providers.ethereum.EthereumMetaMaskProvider(metaMaskConnector.getProvider()))
 
+const web3WithMetaMask = new Web3(metaMaskConnector.getProvider())
+
 const chains = {
   ethereumWithNode: { id: 'Ethereum Node', name: 'ethereum', client: ethereumWithNode },
-  ethereumWithMetaMask: { id: 'Ethereum MetaMask', name: 'ethereum', client: ethereumWithMetaMask }
+  ethereumWithMetaMask: { id: 'Ethereum MetaMask', name: 'ethereum', client: ethereumWithMetaMask },
+  web3WithMetaMask: { id: 'Web3 MetaMask', name: 'ethereum', client: web3WithMetaMask }
 }
 
 function connectMetaMask () {

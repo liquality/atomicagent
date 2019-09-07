@@ -2,21 +2,24 @@ const BN = require('bignumber.js')
 
 const currencies = {
   ETH: {
-    baseUnit: 1e18
+    multiplier: 1e18,
+    unit: 'ether'
   },
   BTC: {
-    baseUnit: 1e8
+    multiplier: 1e8
   },
   DAI: {
-    baseUnit: 1e18
+    multiplier: 1e18,
+    unit: 'ether'
   },
   USDC: {
-    baseUnit: 1e6
+    multiplier: 1e6,
+    unit: 'mwei'
   }
 }
 
 function toBaseUnit (amountInHighestDenomination, to, rate) {
-  return (BN(amountInHighestDenomination).times(rate)).times(currencies[to].baseUnit)
+  return (BN(amountInHighestDenomination).times(rate)).times(currencies[to].multiplier)
 }
 
 module.exports = {

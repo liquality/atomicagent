@@ -7,6 +7,7 @@
     "maxPrincipal": 2000,
     "minCollateral": 0.002,
     "maxCollateral": 0.3,
+    "minLoanDuration": 21600,
     "status": "ACTIVE"
   },
   {
@@ -17,6 +18,7 @@
     "maxPrincipal": 2000,
     "minCollateral": 0.002,
     "maxCollateral": 0.3,
+    "minLoanDuration": 21600,
     "status": "ACTIVE"
   }
 ]

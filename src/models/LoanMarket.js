@@ -27,7 +27,9 @@ const LoanMarketSchema = new mongoose.Schema({
   maxCollateral: {
     type: Number
   },
-
+  minLoanDuration: {
+    type: Number
+  },
   status: {
     type: String,
     enum: ['ACTIVE', 'INACTIVE'],

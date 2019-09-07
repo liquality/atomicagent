@@ -5,7 +5,12 @@ const schema = {}
 schema.funds = require('../abi/funds')
 schema.loans = require('../abi/loans')
 schema.sales = require('../abi/sales')
+schema.erc20 = require('../abi/erc20')
 
-export const loadObject = (type, address) => {
-  return web3.eth.contract(schema[type].abi).at(address)
+function loadObject (type, address) {
+  return new web3.eth.Contract(schema[type].abi, address)
+}
+
+module.exports = {
+  loadObject
 }

@@ -19,7 +19,9 @@
     "ignore": [
       "**/lip-0001/**"
     ],
-    "env": [ "mocha" ]
+    "env": [
+      "mocha"
+    ]
   },
   "license": "ISC",
   "dependencies": {
@@ -37,6 +39,7 @@
     "@liquality/ethereum-rpc-provider": "^0.3.2",
     "@liquality/ethereum-swap-provider": "^0.3.2",
     "@liquality/ethereum-utils": "^0.3.3",
+    "@mblackmblack/to-seconds": "^0.1.0",
     "@sentry/node": "^5.5.0",
     "agenda": "^2.0.2",
     "agendash": "^1.0.0",
@@ -48,6 +51,7 @@
     "commander": "^2.20.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
+    "decimal.js": "^10.2.0",
     "dotenv": "^8.0.0",
     "ethereumjs-util": "^6.1.0",
     "express": "^4.17.1",
