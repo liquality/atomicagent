@@ -27,6 +27,7 @@
   "dependencies": {
     "@atomicloans/bitcoin-collateral-provider": "^0.2.53",
     "@atomicloans/bitcoin-collateral-swap-provider": "^0.2.53",
+    "@atomicloans/loan-bundle": "^0.3.0",
     "@atomicloans/loan-client": "^0.2.48",
     "@liquality/bitcoin-networks": "^0.3.2",
     "@liquality/bitcoin-node-wallet-provider": "^0.3.2",
@@ -34,7 +35,7 @@
     "@liquality/bitcoin-swap-provider": "^0.3.2",
     "@liquality/bundle": "^0.3.3",
     "@liquality/client": "^0.3.2",
-    "@liquality/crypto": "^0.3.2",
+    "@liquality/crypto": "^0.3.5",
     "@liquality/ethereum-erc20-provider": "^0.3.3",
     "@liquality/ethereum-rpc-provider": "^0.3.2",
     "@liquality/ethereum-swap-provider": "^0.3.2",
@@ -45,6 +46,8 @@
     "agendash": "^1.0.0",
     "axios": "^0.19.0",
     "bignumber.js": "^9.0.0",
+    "bip39": "^3.0.2",
+    "bitcoinjs-lib": "^5.1.6",
     "body-parser": "^1.19.0",
     "bull": "^3.10.0",
     "chai-as-promised": "^7.1.1",
@@ -70,6 +73,7 @@
     "chai-http": "^4.3.0",
     "mocha": "^6.2.0",
     "nodemon": "^1.19.1",
-    "standard": "^13.1.0"
+    "standard": "^13.1.0",
+    "web3-hdwallet-provider": "^1.0.4-fix2"
   }
 }

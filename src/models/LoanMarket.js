@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 
 const clients = require('../utils/clients')
+const web3 = require('../utils/web3')
 
 const LoanMarketSchema = new mongoose.Schema({
   principal: {
@@ -28,6 +29,12 @@ const LoanMarketSchema = new mongoose.Schema({
     type: Number
   },
   minLoanDuration: {
+    type: Number
+  },
+  minConf: {
+    type: Number
+  },
+  requestExpiresIn: {
     type: Number
   },
   status: {
@@ -58,10 +65,14 @@ LoanMarketSchema.methods.collateralClient = function () {
 }
 
 LoanMarketSchema.methods.getAgentAddresses = async function () {
-  const principalAddresses = await this.principalClient().wallet.getAddresses()
+  const principalAddresses = await web3.currentProvider.getAddresses()
   const collateralAddresses = await this.collateralClient().wallet.getAddresses()
 
-  return { principalAddress: principalAddresses[0].address, collateralAddress: collateralAddresses[0].address }
+  return {
+    principalAddress: principalAddresses[0],
+    collateralAddress: collateralAddresses[0].address,
+    collateralPublicKey: collateralAddresses[0].publicKey
+  }
 }
 
 module.exports = mongoose.model('LoanMarket', LoanMarketSchema)

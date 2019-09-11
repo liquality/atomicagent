@@ -13,6 +13,7 @@ module.exports = {
     rpc: {
       host: 'http://localhost:8545'
     },
+    network: 'local',
     value: 10000000000000000,
     network: 'local',
     metaMaskConnector: {

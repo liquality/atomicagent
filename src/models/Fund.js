@@ -1,6 +1,14 @@
 const mongoose = require('mongoose')
 
 const FundSchema = new mongoose.Schema({
+  principal: {
+    type: String,
+    index: true
+  },
+  collateral: {
+    type: String,
+    index: true
+  },
   lenderAddress: {
     type: String,
     index: true
@@ -77,7 +85,7 @@ FundSchema.methods.json = function () {
   return json
 }
 
-FundSchema.static('fromCustomFundParams', function (fundParams, fundId, initiationHash) {
+FundSchema.static('fromCustomFundParams', function (fundParams, fundId, initiationHash, principal, collateral) {
   return new Fund({
     minLoanAmount: fundParams[0],
     maxLoanAmount: fundParams[1],
@@ -92,7 +100,9 @@ FundSchema.static('fromCustomFundParams', function (fundParams, fundId, initiati
     custom: true,
     confirmed: false,
     initiationHash,
-    fundId
+    fundId,
+    principal,
+    collateral
   })
 })
 

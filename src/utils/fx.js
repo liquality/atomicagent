@@ -3,18 +3,24 @@ const BN = require('bignumber.js')
 const currencies = {
   ETH: {
     multiplier: 1e18,
-    unit: 'ether'
+    unit: 'ether',
+    decimals: 18
   },
   BTC: {
-    multiplier: 1e8
+    multiplier: 1e8,
+    decimals: 8
   },
   DAI: {
     multiplier: 1e18,
-    unit: 'ether'
+    unit: 'ether',
+    chain: 'ETH',
+    decimals: 18
   },
   USDC: {
     multiplier: 1e6,
-    unit: 'mwei'
+    unit: 'mwei',
+    chain: 'ETH',
+    decimals: 6
   }
 }
 
