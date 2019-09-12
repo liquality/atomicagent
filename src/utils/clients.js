@@ -11,7 +11,7 @@ const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider')
 const BitcoinNodeWalletProvider = require('@liquality/bitcoin-node-wallet-provider')
 const BitcoinJsWalletProvider = require('@liquality/bitcoin-js-wallet-provider')
 const BitcoinSwapProvider = require('@liquality/bitcoin-swap-provider')
-const BitcoinCollateralProvider = require('@atomicloans/bitcoin-collateral-provider')
+const BitcoinCollateralProvider = require('../../../chainabstractionlayer-loans/packages/bitcoin-collateral-provider/dist/index.cjs.js')
 const BitcoinCollateralSwapProvider = require('@atomicloans/bitcoin-collateral-swap-provider')
 const BitcoinNetworks = require('@liquality/bitcoin-networks')
 

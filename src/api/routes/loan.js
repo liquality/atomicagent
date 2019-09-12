@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
-const { ensure0x, checksumEncode } = require('@liquality/ethereum-utils')
+const { ensure0x, remove0x, checksumEncode } = require('@liquality/ethereum-utils')
 const BN = require('bignumber.js')
 const { verifySignature } = require('../../utils/signatures')
 const clients = require('../../utils/clients')
@@ -115,6 +115,7 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
 }))
 
 router.post('/requests', asyncHandler(async (req, res, next) => {
+  console.log('start /requests')
   const { body } = req
   const { principal, collateral, principalAmount, loanDuration } = body
 
@@ -141,10 +142,13 @@ router.post('/requests', asyncHandler(async (req, res, next) => {
   await loanRequest.setAgentAddresses()
   await loanRequest.save()
 
+  console.log('end /requests')
+
   res.json(loanRequest.json())
 }))
 
 router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
+  console.log('start /requests/:requestId')
   const currentTime = Date.now()
   const agenda = req.app.get('agenda')
   const { params, body } = req
@@ -158,6 +162,7 @@ router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
   const {
     principal, collateral, principalAmount, minimumCollateralAmount, requestLoanDuration, requestExpiresAt, requestCreatedAt, lenderPrincipalAddress, lenderCollateralPublicKey
   } = loanRequest
+  const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
   const market = await Market.findOne({ from: collateral, to: principal }).exec()
   if (!market) return next(res.createError(401, 'Market not found'))
@@ -187,53 +192,22 @@ router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
   if (!(requestExpiresAt >= timestamp && timestamp >= requestCreatedAt)) return next(res.createError(401, 'Proof of funds tx incorrect timestamp'))
   if (!(requestExpiresAt >= currentTime && currentTime >= requestCreatedAt)) return next(res.createError(401, 'Request details provided too late. Please request again'))
 
-  loanRequest.status = 'QUOTE'
-
   await loanRequest.setSecretHashes(collateralAmount)
 
-  const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
-
-  const fundId = await funds.methods.fundOwner(ensure0x(lenderPrincipalAddress)).call()
-
-  console.log('fundId', fundId)
-
-  const fund = await funds.methods.funds(fundId).call()
-
-  const { lenderSecretHashes } = loanRequest
-
-  const loanParams = [
-    fundId,
-    ensure0x(borrowerPrincipalAddress),
-    BN(principalAmount).times(currencies[principal].multiplier).toFixed(),
-    BN(collateralAmount).times(currencies[collateral].multiplier).toFixed(),
-    requestLoanDuration,
-    borrowerSecretHashes.concat(lenderSecretHashes).map(secretHashes => ensure0x(secretHashes)),
-    ensure0x(borrowerCollateralPublicKey),
-    ensure0x(lenderCollateralPublicKey)
-  ]
-
-  console.log('test1')
-
-  const loanId = await funds.methods.request(...loanParams).call({ from: ensure0x(lenderPrincipalAddress) })
-
-  const { transactionHash } = await funds.methods.request(...loanParams).send({ from: ensure0x(lenderPrincipalAddress), gas: 6000000 })
-
-  console.log('test2')
-
-  const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
-
-  const owedForLoanInWei = await loans.methods.owedForLoan(loanId).call()
-  const owedForLoan = fromWei(owedForLoanInWei, currencies[principal].unit)
-
-  const seizableCollateral = BN(owedForLoan).dividedBy(rate)
-  const refundableCollateral = BN(collateralAmount).minus(seizableCollateral)
-  
-  loanRequest.refundableCollateralAmount = refundableCollateral.toFixed(currencies[collateral].decimals)
-  loanRequest.seizableCollateralAmount = seizableCollateral.toFixed(currencies[collateral].decimals)
-  loanRequest.loanRequestTxHash = transactionHash
-  loanRequest.loanId = hexToNumber(loanId)
-  
   await loanRequest.save()
+
+  await agenda.now('request-loan', { requestId: loanRequest.id })
+
+  console.log('end /requests/:requestId')
+
+  res.json(loanRequest.json())
+}))
+
+router.get('/requests/:requestId', asyncHandler(async (req, res, next) => {
+  const { params } = req
+
+  const loanRequest = await LoanRequest.findOne({ _id: params.requestId }).exec()
+  if (!loanRequest) return next(res.createError(401, 'Loan Request not found'))
 
   res.json(loanRequest.json())
 }))

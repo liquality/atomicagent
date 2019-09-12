@@ -48,6 +48,10 @@ const LoanRequestSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  arbiterPrincipalAddress: {
+    type: String,
+    index: true
+  },
   lenderCollateralPublicKey: {
     type: String,
     index: true
@@ -55,6 +59,16 @@ const LoanRequestSchema = new mongoose.Schema({
   borrowerCollateralPublicKey: {
     type: String,
     index: true
+  },
+  arbiterCollateralPublicKey: {
+    type: String,
+    index: true
+  },
+  collateralRefundableP2SHAddress: {
+    type: String,
+  },
+  collateralSeizableP2SHAddress: {
+    type: String,
   },
   minConf: {
     type: Number,
@@ -80,11 +94,27 @@ const LoanRequestSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  approveTxHash: {
+    type: String,
+    index: true
+  },
   requestLoanDuration: {
     type: String,
     index: true
   },
+  approveExpiration: {
+    type: Number,
+    index: true
+  },
   loanExpiration: {
+    type: Number,
+    index: true
+  },
+  liquidationExpiration: {
+    type: Number,
+    index: true
+  },
+  seizureExpiration: {
     type: Number,
     index: true
   },
@@ -102,7 +132,7 @@ const LoanRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED'],
+    enum: ['QUOTE', 'REQUESTING', 'AWAITING_COLLATERAL', 'APPROVED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED'],
     index: true
   }
 })

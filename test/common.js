@@ -1,6 +1,6 @@
 require('dotenv').config()
 const config = require('./config')
-const { Client, providers } = require('../../../liquality/chainabstractionlayer/packages/bundle/dist/index.cjs.js')
+const { Client, providers } = require('@liquality/bundle')
 const { LoanClient, providers: lproviders } = require('../../../atomicloans/chainabstractionlayer-loans/packages/loan-bundle/dist/index.cjs.js')
 const MetaMaskConnector = require('node-metamask')
 const Web3 = require('web3')
@@ -91,6 +91,15 @@ async function importBitcoinAddresses (chain) {
   await chain.client.getMethod('jsonrpc')('importmulti', addressesToImport, { rescan: false })
 }
 
+async function importBitcoinAddressesByAddress (addresses) {
+  let addressesToImport = []
+  for (const address of addresses) {
+    addressesToImport.push({ 'scriptPubKey': { 'address': address }, 'timestamp': 'now' })
+  }
+
+  await chains.bitcoinWithNode.client.getMethod('jsonrpc')('importmulti', addressesToImport, { rescan: false })
+}
+
 async function fundUnusedBitcoinAddress (chain) {
   const unusedAddress = await chain.client.wallet.getUnusedAddress()
   await chains.bitcoinWithNode.client.chain.sendTransaction(unusedAddress, 100000000)
@@ -109,5 +118,6 @@ module.exports = {
   chains,
   connectMetaMask,
   importBitcoinAddresses,
+  importBitcoinAddressesByAddress,
   fundUnusedBitcoinAddress
 }

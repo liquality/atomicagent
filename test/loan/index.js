@@ -4,17 +4,18 @@ const chai = require('chai')
 const chaiHttp = require('chai-http')
 const chaiAsPromised = require('chai-as-promised')
 const BN = require('bignumber.js')
-const { ensure0x, checksumEncode } = require('@liquality/ethereum-utils')
+const { ensure0x, remove0x, checksumEncode } = require('@liquality/ethereum-utils')
 const { sha256 } = require('@liquality/crypto')
 const toSecs = require('@mblackmblack/to-seconds')
 const bitcoin = require('bitcoinjs-lib')
-const { chains, connectMetaMask, importBitcoinAddresses, fundUnusedBitcoinAddress } = require('../common')
+const { chains, connectMetaMask, importBitcoinAddresses, importBitcoinAddressesByAddress, fundUnusedBitcoinAddress } = require('../common')
 const web3 = require('../../src/utils/web3')
 const { toWei, fromWei, numberToHex } = web3.utils
 const { testLoadObject } = require('./util/contracts')
 const { loadObject } = require('../../src/utils/contracts')
 const { currencies } = require('../../src/utils/fx')
 const { numToBytes32, rateToSec } = require('../../src/utils/finance')
+const { sleep } = require('../../src/utils/async')
 
 chai.should()
 const expect = chai.expect
@@ -25,6 +26,7 @@ chai.use(chaiAsPromised)
 const server = 'http://localhost:3030/api/loan'
 
 describe('loanmarketinfo', () => {
+  connectMetaMask()
   before(async function () {
     await importBitcoinAddresses(chains.bitcoinWithJs)
   })
@@ -53,8 +55,6 @@ describe('loanmarketinfo', () => {
   })
 
   describe('Withdraw excess funds', () => {
-    connectMetaMask()
-
     it('should return eth to metamask user if ETH_SIGNER', async () => {
       const timestamp = Math.floor(new Date().getTime() / 1000)
       const amount = 1
@@ -76,7 +76,6 @@ describe('loanmarketinfo', () => {
   })
 
   describe('Create Custom Loan Fund', () => {
-    connectMetaMask()
     before(async function () {
       await fundArbiter()
       await generateSecretHashesArbiter('DAI')
@@ -119,8 +118,6 @@ describe('loanmarketinfo', () => {
 
       const { address: ethereumWithNodeAddress } = await chains.ethereumWithNode.client.wallet.getUnusedAddress()
 
-      console.log('erc20', process.env[`${principal}_ADDRESS`], chains.web3WithNode, ensure0x(ethereumWithNodeAddress))
-
       const token = await testLoadObject('erc20', process.env[`${principal}_ADDRESS`], chains.web3WithNode, ensure0x(ethereumWithNodeAddress))
       await token.methods.transfer(address, amountToDeposit).send()
 
@@ -154,7 +151,6 @@ describe('loanmarketinfo', () => {
   })
 
   describe('/POST requests', () => {
-    connectMetaMask()
     before(async function () {
       await importBitcoinAddresses(chains.bitcoinWithJs)
       await fundUnusedBitcoinAddress(chains.bitcoinWithJs)
@@ -209,7 +205,6 @@ describe('loanmarketinfo', () => {
       const {
         collateralAmount: collateralAmountActual, borrowerPrincipalAddress: borrowerPrincipalAddressActual, borrowerCollateralPublicKey: borrowerCollateralPublicKeyActual
       } = requestsIdBody
-      const { loanId } = requestsIdBody
 
       expect(requestsIdStatus).to.equal(200)
       requestsIdBody.should.be.a('object')
@@ -218,33 +213,81 @@ describe('loanmarketinfo', () => {
       expect(borrowerCollateralPublicKeyActual).to.equal(borrowerCollateralPublicKey.toString('hex'))
 
       console.log('requestsIdBody', requestsIdBody)
-    })
-  })
 
-  describe('test', () => {
-    connectMetaMask()
+      let requested = false
+      while (!requested) {
+        await sleep(5000)
+        let { body: requestedBody } = await chai.request(server).get(`/requests/${requestId}`)
+        const { status } = requestedBody
+        console.log('status', status)
+        if (status === 'AWAITING_COLLATERAL') requested = true
+      }
 
-    it('should', async () => {
-      const loanId = 1
-      const principal = 'DAI'
+      console.log('awaiting collateral')
 
-      const address = (await chains.web3WithMetaMask.client.eth.getAccounts())[0]
-      const testLoans = await testLoadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`], chains.web3WithMetaMask, address)
 
-      const pubKeys = await testLoans.methods.pubKeys(numToBytes32(loanId)).call()
-      console.log('pubKeys', pubKeys)
+      const { body: requestedBody } = await chai.request(server).get(`/requests/${requestId}`)
 
-      const secretHashes = await testLoans.methods.secretHashes(numToBytes32(loanId)).call()
-      console.log('secretHashes', secretHashes)
+      const { loanId, refundableCollateralAmount, seizableCollateralAmount, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress } = requestedBody
 
-      const approveExpiration = await testLoans.methods.approveExpiration(numToBytes32(loanId)).call()
-      console.log('approveExpiration', approveExpiration)
 
-      const liquidationExpiration = await testLoans.methods.liquidationExpiration(numToBytes32(loanId)).call()
-      console.log('liquidationExpiration', liquidationExpiration)
+      const values = {
+        refundableValue: BN(refundableCollateralAmount).times(currencies[collateral].multiplier).toNumber(),
+        seizableValue: BN(seizableCollateralAmount).times(currencies[collateral].multiplier).toNumber()
+      }
 
-      const seizureExpiration = await testLoans.methods.seizureExpiration(numToBytes32(loanId)).call()
-      console.log('seizureExpiration', seizureExpiration)
+      console.log('values', values)
+
+      await importBitcoinAddressesByAddress([collateralRefundableP2SHAddress, collateralSeizableP2SHAddress])
+
+      const loans = await getTestObject('loans', principal)
+      const approvedBefore = await loans.methods.approved(numToBytes32(loanId)).call()
+      console.log('approvedBefore', approvedBefore)
+
+      const funded = await loans.methods.funded(numToBytes32(loanId)).call()
+      console.log('funded', funded)
+
+      console.log('10s')
+      await sleep(5000)
+      console.log('5s')
+      await sleep(5000)
+      console.log('0s')
+
+      const lockParams = await getLockParams(principal, values, loanId)
+      const tx = await chains.bitcoinWithJs.client.loan.collateral.lock(...lockParams)
+      console.log('tx', tx)
+
+      const balance = await chains.bitcoinWithJs.client.chain.getBalance([collateralRefundableP2SHAddress, collateralSeizableP2SHAddress])
+      console.log('balance', balance)
+
+      console.log('10s')
+      await sleep(5000)
+      console.log('5s')
+      await sleep(5000)
+      console.log('0s')
+
+      await chains.bitcoinWithNode.client.chain.generateBlock(1)
+
+      console.log('10s')
+      await sleep(5000)
+      console.log('5s')
+      await sleep(5000)
+      console.log('0s')
+
+      const approvedAfter = await loans.methods.approved(numToBytes32(loanId)).call()
+      console.log('approvedAfter', approvedAfter)
+
+      const withdrawTx = await loans.methods.withdraw(numToBytes32(loanId), ensure0x(secrets[0])).send({ gas: 6000000 })
+      console.log('withdrawTx', withdrawTx)
+
+      const owedForLoan = await loans.methods.owedForLoan(numToBytes32(loanId)).call()
+      console.log('owedForLoan')
+
+      const token = await getTestObject('erc20', principal)
+      await token.methods.approve(process.env[`${principal}_LOAN_LOANS_ADDRESS`], toWei(owedForLoan, 'wei')).send({ gas: 6000000 })
+
+      const repayTx = await loans.methods.repay(numToBytes32(loanId), owedForLoan).send({ gas: 6000000 })
+      console.log('repayTx', repayTx)
     })
   })
 })
@@ -265,4 +308,31 @@ async function generateSecretHashesArbiter (principal) {
   const testFunds = await testLoadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`], chains.web3WithArbiter, address)
   await testFunds.methods.generate(secretHashes).send({ from: address, gas: 6000000 })
   await testFunds.methods.setPubKey(ensure0x(publicKey.toString('hex'))).send({ from: address, gas: 6000000 })
+}
+
+async function getLockParams (principal, values, loanId) {
+  const address = (await chains.web3WithMetaMask.client.eth.getAccounts())[0]
+  const testLoans = await testLoadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`], chains.web3WithMetaMask, address)
+
+  const { borrowerPubKey, lenderPubKey, arbiterPubKey } = await testLoans.methods.pubKeys(numToBytes32(loanId)).call()
+  const { secretHashA1, secretHashB1, secretHashC1 } = await testLoans.methods.secretHashes(numToBytes32(loanId)).call()
+  const approveExpiration = await testLoans.methods.approveExpiration(numToBytes32(loanId)).call()
+  const liquidationExpiration = await testLoans.methods.liquidationExpiration(numToBytes32(loanId)).call()
+  const seizureExpiration = await testLoans.methods.seizureExpiration(numToBytes32(loanId)).call()
+
+  
+  const pubKeys = { borrowerPubKey: remove0x(borrowerPubKey), lenderPubKey: remove0x(lenderPubKey), agentPubKey: remove0x(arbiterPubKey) }
+  const secretHashes = { secretHashA1: remove0x(secretHashA1), secretHashB1: remove0x(secretHashB1), secretHashC1: remove0x(secretHashC1) }
+  const expirations = { approveExpiration, liquidationExpiration, seizureExpiration }
+
+  return [values, pubKeys, secretHashes, expirations]
+}
+
+async function getTestObject (contract, principal) {
+  const address = (await chains.web3WithMetaMask.client.eth.getAccounts())[0]
+  if (contract === 'erc20') {
+    return testLoadObject(contract, process.env[`${principal}_ADDRESS`], chains.web3WithMetaMask, address)
+  } else {
+    return testLoadObject(contract, process.env[`${principal}_LOAN_${contract.toUpperCase()}_ADDRESS`], chains.web3WithMetaMask, address)
+  }
 }

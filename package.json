@@ -13,7 +13,7 @@
     "test:loan": "mocha test/loan $npm_package_options_mocha"
   },
   "options": {
-    "mocha": "--timeout 20000 --recursive"
+    "mocha": "--timeout 190000 --recursive"
   },
   "standard": {
     "ignore": [
@@ -25,21 +25,21 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@atomicloans/bitcoin-collateral-provider": "^0.2.53",
-    "@atomicloans/bitcoin-collateral-swap-provider": "^0.2.53",
-    "@atomicloans/loan-bundle": "^0.3.0",
-    "@atomicloans/loan-client": "^0.2.48",
-    "@liquality/bitcoin-networks": "^0.3.2",
-    "@liquality/bitcoin-node-wallet-provider": "^0.3.2",
-    "@liquality/bitcoin-rpc-provider": "^0.3.2",
-    "@liquality/bitcoin-swap-provider": "^0.3.2",
-    "@liquality/bundle": "^0.3.3",
-    "@liquality/client": "^0.3.2",
-    "@liquality/crypto": "^0.3.5",
-    "@liquality/ethereum-erc20-provider": "^0.3.3",
-    "@liquality/ethereum-rpc-provider": "^0.3.2",
-    "@liquality/ethereum-swap-provider": "^0.3.2",
-    "@liquality/ethereum-utils": "^0.3.3",
+    "@atomicloans/bitcoin-collateral-provider": "^0.3.1",
+    "@atomicloans/bitcoin-collateral-swap-provider": "^0.3.1",
+    "@atomicloans/loan-bundle": "^0.3.1",
+    "@atomicloans/loan-client": "^0.3.1",
+    "@liquality/bitcoin-networks": "^0.3.6",
+    "@liquality/bitcoin-node-wallet-provider": "^0.3.6",
+    "@liquality/bitcoin-rpc-provider": "^0.3.6",
+    "@liquality/bitcoin-swap-provider": "^0.3.6",
+    "@liquality/bundle": "^0.3.6",
+    "@liquality/client": "^0.3.6",
+    "@liquality/crypto": "^0.3.6",
+    "@liquality/ethereum-erc20-provider": "^0.3.6",
+    "@liquality/ethereum-rpc-provider": "^0.3.6",
+    "@liquality/ethereum-swap-provider": "^0.3.6",
+    "@liquality/ethereum-utils": "^0.3.6",
     "@mblackmblack/to-seconds": "^0.1.0",
     "@sentry/node": "^5.5.0",
     "agenda": "^2.0.2",
