@@ -7,7 +7,7 @@ const { currencies } = require('../utils/fx')
 const web3 = require('../utils/web3')
 const { toWei } = web3.utils
 
-const LoanRequestSchema = new mongoose.Schema({
+const LoanSchema = new mongoose.Schema({
   principal: {
     type: String,
     index: true
@@ -137,15 +137,15 @@ const LoanRequestSchema = new mongoose.Schema({
   }
 })
 
-LoanRequestSchema.methods.principalClient = function () {
+LoanSchema.methods.principalClient = function () {
   return clients[currencies[this.principal].chain]
 }
 
-LoanRequestSchema.methods.collateralClient = function () {
+LoanSchema.methods.collateralClient = function () {
   return clients[this.collateral]
 }
 
-LoanRequestSchema.methods.json = function () {
+LoanSchema.methods.json = function () {
   const json = this.toJSON()
   json.id = json._id
 
@@ -156,7 +156,7 @@ LoanRequestSchema.methods.json = function () {
   return json
 }
 
-LoanRequestSchema.methods.setAgentAddresses = async function () {
+LoanSchema.methods.setAgentAddresses = async function () {
   if (this.lenderPrincipalAddress) throw new Error('Address exists')
 
   const principalAddresses = await web3.currentProvider.getAddresses()
@@ -166,7 +166,7 @@ LoanRequestSchema.methods.setAgentAddresses = async function () {
   this.lenderCollateralPublicKey = collateralAddresses[0].publicKey.toString('hex')
 }
 
-LoanRequestSchema.methods.setSecretHashes = async function (collateralAmount) {
+LoanSchema.methods.setSecretHashes = async function (collateralAmount) {
   const collateralAmountInSats = BN(collateralAmount).times(currencies[this.collateral].multiplier).toNumber()
 
   const secretData = [
@@ -191,8 +191,8 @@ LoanRequestSchema.methods.setSecretHashes = async function (collateralAmount) {
   this.collateralAmount = collateralAmount
 }
 
-LoanRequestSchema.static('fromLoanMarket', function (loanMarket, params, minimumCollateralAmount) {
-  return new LoanRequest({
+LoanSchema.static('fromLoanMarket', function (loanMarket, params, minimumCollateralAmount) {
+  return new Loan({
     principal: params.principal,
     collateral: params.collateral,
     principalAmount: params.principalAmount,
@@ -205,5 +205,5 @@ LoanRequestSchema.static('fromLoanMarket', function (loanMarket, params, minimum
   })
 })
 
-const LoanRequest = mongoose.model('LoanRequest', LoanRequestSchema)
-module.exports = LoanRequest
+const Loan = mongoose.model('Loan', LoanSchema)
+module.exports = Loan

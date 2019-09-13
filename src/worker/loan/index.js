@@ -1,4 +1,4 @@
-const LoanRequest = require('../../models/LoanRequest')
+const Loan = require('../../models/Loan')
 const LoanMarket = require('../../models/LoanMarket')
 const Market = require('../../models/Market')
 const { numToBytes32 } = require('../../utils/finance')
@@ -17,12 +17,12 @@ function defineLoanJobs (agenda) {
 
     console.log('request-loan data:', data)
 
-    const loanRequest = await LoanRequest.findOne({ _id: requestId }).exec()
-    if (!loanRequest) return console.log('Error: Loan Request not found')
+    const loan = await Loan.findOne({ _id: requestId }).exec()
+    if (!loan) return console.log('Error: Loan Request not found')
     const {
       principal, collateral, principalAmount, collateralAmount, borrowerPrincipalAddress, borrowerSecretHashes, lenderSecretHashes,
       lenderPrincipalAddress, requestLoanDuration, borrowerCollateralPublicKey, lenderCollateralPublicKey
-    } = loanRequest
+    } = loan
 
     const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()
     if (!loanMarket) return console.log('Error: Loan Market not found')
@@ -52,9 +52,9 @@ function defineLoanJobs (agenda) {
 
     funds.methods.request(...loanParams).send({ from: ensure0x(lenderPrincipalAddress), gas: 6000000 })
     .on('transactionHash', (transactionHash) => {
-      loanRequest.loanRequestTxHash = transactionHash
-      loanRequest.status = 'REQUESTING'
-      loanRequest.save()
+      loan.loanRequestTxHash = transactionHash
+      loan.status = 'REQUESTING'
+      loan.save()
       console.log('LOAN REQUESTING')
     })
     .on('confirmation', async (confirmationNumber, receipt) => {
@@ -73,8 +73,8 @@ function defineLoanJobs (agenda) {
 
         const { refundableAddress, seizableAddress } = await clients[collateral].loan.collateral.getLockAddresses(pubKeys, secretHashes, expirations)
 
-        loanRequest.collateralRefundableP2SHAddress = refundableAddress
-        loanRequest.collateralSeizableP2SHAddress = seizableAddress
+        loan.collateralRefundableP2SHAddress = refundableAddress
+        loan.collateralSeizableP2SHAddress = seizableAddress
 
         const owedForLoanInWei = await loans.methods.owedForLoan(loanId).call()
         const owedForLoan = fromWei(owedForLoanInWei, currencies[principal].unit)
@@ -82,15 +82,15 @@ function defineLoanJobs (agenda) {
         const seizableCollateral = BN(owedForLoan).dividedBy(rate)
         const refundableCollateral = BN(collateralAmount).minus(seizableCollateral)
 
-        loanRequest.refundableCollateralAmount = refundableCollateral.toFixed(currencies[collateral].decimals)
-        loanRequest.seizableCollateralAmount = seizableCollateral.toFixed(currencies[collateral].decimals)
-        loanRequest.loanId = hexToNumber(loanId)
+        loan.refundableCollateralAmount = refundableCollateral.toFixed(currencies[collateral].decimals)
+        loan.seizableCollateralAmount = seizableCollateral.toFixed(currencies[collateral].decimals)
+        loan.loanId = hexToNumber(loanId)
 
-        loanRequest.status = 'AWAITING_COLLATERAL'
+        loan.status = 'AWAITING_COLLATERAL'
 
-        loanRequest.save()
+        loan.save()
 
-        await agenda.now('verify-lock-collateral', { requestId: loanRequest.id })
+        await agenda.now('verify-lock-collateral', { requestId: loan.id })
 
         done()
       }
@@ -107,33 +107,33 @@ function defineLoanJobs (agenda) {
 
     console.log('data', data)
 
-    const loanRequest = await LoanRequest.findOne({ _id: requestId }).exec()
-    if (!loanRequest) return console.log('Error: Loan Request not found')
+    const loan = await Loan.findOne({ _id: requestId }).exec()
+    if (!loan) return console.log('Error: Loan Request not found')
 
-    const { collateral, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress, refundableCollateralAmount, seizableCollateralAmount, lenderPrincipalAddress } = loanRequest
+    const { collateral, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress, refundableCollateralAmount, seizableCollateralAmount, lenderPrincipalAddress } = loan
 
-    const refundableBalance = await loanRequest.collateralClient().chain.getBalance([collateralRefundableP2SHAddress])
-    const seizableBalance = await loanRequest.collateralClient().chain.getBalance([collateralSeizableP2SHAddress])
+    const refundableBalance = await loan.collateralClient().chain.getBalance([collateralRefundableP2SHAddress])
+    const seizableBalance = await loan.collateralClient().chain.getBalance([collateralSeizableP2SHAddress])
 
 
-    const refundableUnspent = await loanRequest.collateralClient().getMethod('getUnspentTransactions')([collateralRefundableP2SHAddress])
-    const seizableUnspent = await loanRequest.collateralClient().getMethod('getUnspentTransactions')([collateralSeizableP2SHAddress])
+    const refundableUnspent = await loan.collateralClient().getMethod('getUnspentTransactions')([collateralRefundableP2SHAddress])
+    const seizableUnspent = await loan.collateralClient().getMethod('getUnspentTransactions')([collateralSeizableP2SHAddress])
 
     console.log('refundableUnspent', refundableUnspent)
     console.log('seizableUnspent', seizableUnspent)
 
 
     if (refundableBalance.toNumber() >= refundableCollateralAmount && seizableBalance.toNumber() >= seizableCollateralAmount) {
-      const { loanId, principal } = loanRequest
+      const { loanId, principal } = loan
 
       console.log('COLLATERAL LOCKED')
       const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
       
       const tx = await loans.methods.approve(numToBytes32(loanId)).send({ from: lenderPrincipalAddress, gas: 1000000 })
       const { transactionHash } = tx
-      loanRequest.approveTxHash = transactionHash
-      loanRequest.status = 'APPROVED'
-      loanRequest.save()
+      loan.approveTxHash = transactionHash
+      loan.status = 'APPROVED'
+      loan.save()
       console.log('APPROVED')
     } else {
       console.log('COLLATERAL NOT LOCKED')

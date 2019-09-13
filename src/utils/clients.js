@@ -1,5 +1,5 @@
 const Client = require('@liquality/client')
-const LoanClient = require('../../../../atomicloans/chainabstractionlayer-loans/packages/loan-client/dist/index.cjs.js')
+const LoanClient = require('@atomicloans/loan-client')
 
 const {
   BTC_RPC, BTC_USER, BTC_PASS,

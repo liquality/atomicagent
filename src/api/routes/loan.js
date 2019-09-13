@@ -14,7 +14,7 @@ const { toWei, fromWei, hexToNumber, hexToAscii } = web3.utils
 const LoanMarket = require('../../models/LoanMarket')
 const Market = require('../../models/Market')
 const Fund = require('../../models/Fund')
-const LoanRequest = require('../../models/LoanRequest')
+const Loan = require('../../models/Loan')
 
 // TODO: fix http error response codes in all routes
 
@@ -114,8 +114,8 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
   res.json(fund.json())
 }))
 
-router.post('/requests', asyncHandler(async (req, res, next) => {
-  console.log('start /requests')
+router.post('/loans/new', asyncHandler(async (req, res, next) => {
+  console.log('start /loans/new')
   const { body } = req
   const { principal, collateral, principalAmount, loanDuration } = body
 
@@ -137,18 +137,18 @@ router.post('/requests', asyncHandler(async (req, res, next) => {
 
   const minimumCollateralAmount = BN(principalAmount).dividedBy(rate).times(fromWei(liquidationRatio, 'gether')).toFixed(8)
 
-  const loanRequest = LoanRequest.fromLoanMarket(loanMarket, body, minimumCollateralAmount)
+  const loan = Loan.fromLoanMarket(loanMarket, body, minimumCollateralAmount)
 
-  await loanRequest.setAgentAddresses()
-  await loanRequest.save()
+  await loan.setAgentAddresses()
+  await loan.save()
 
-  console.log('end /requests')
+  console.log('end /loans/new')
 
-  res.json(loanRequest.json())
+  res.json(loan.json())
 }))
 
-router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
-  console.log('start /requests/:requestId')
+router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next) => {
+  console.log('start /loans/:loanId/proof_of_funds')
   const currentTime = Date.now()
   const agenda = req.app.get('agenda')
   const { params, body } = req
@@ -157,11 +157,11 @@ router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
   const loanMarket = await LoanMarket.findOne(_.pick(body, ['principal', 'collateral'])).exec()
   if (!loanMarket) return next(res.createError(401, 'Loan Market not found'))
 
-  const loanRequest = await LoanRequest.findOne({ _id: params.requestId }).exec()
-  if (!loanRequest) return next(res.createError(401, 'Loan Request not found'))
+  const loan = await Loan.findOne({ _id: params.loanId }).exec()
+  if (!loan) return next(res.createError(401, 'Loan Request not found'))
   const {
     principal, collateral, principalAmount, minimumCollateralAmount, requestLoanDuration, requestExpiresAt, requestCreatedAt, lenderPrincipalAddress, lenderCollateralPublicKey
-  } = loanRequest
+  } = loan
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
   const market = await Market.findOne({ from: collateral, to: principal }).exec()
@@ -170,7 +170,7 @@ router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
 
   ;['borrowerSecretHashes', 'borrowerCollateralPublicKey', 'borrowerPrincipalAddress'].forEach(key => {
     if (!body[key]) return next(res.createError(401, `${key} is missing`))
-    loanRequest[key] = body[key]
+    loan[key] = body[key]
   })
 
   const proofOfFundsTxValid = (await clients[collateral].getMethod('jsonrpc')('testmempoolaccept', [proofOfFundsTxHex]))[0].allowed
@@ -192,24 +192,24 @@ router.post('/requests/:requestId', asyncHandler(async (req, res, next) => {
   if (!(requestExpiresAt >= timestamp && timestamp >= requestCreatedAt)) return next(res.createError(401, 'Proof of funds tx incorrect timestamp'))
   if (!(requestExpiresAt >= currentTime && currentTime >= requestCreatedAt)) return next(res.createError(401, 'Request details provided too late. Please request again'))
 
-  await loanRequest.setSecretHashes(collateralAmount)
+  await loan.setSecretHashes(collateralAmount)
 
-  await loanRequest.save()
+  await loan.save()
 
-  await agenda.now('request-loan', { requestId: loanRequest.id })
+  await agenda.now('request-loan', { requestId: loan.id })
 
-  console.log('end /requests/:requestId')
+  console.log('end /loans/:loanId/proof_of_funds')
 
-  res.json(loanRequest.json())
+  res.json(loan.json())
 }))
 
-router.get('/requests/:requestId', asyncHandler(async (req, res, next) => {
+router.get('/loans/:loanId', asyncHandler(async (req, res, next) => {
   const { params } = req
 
-  const loanRequest = await LoanRequest.findOne({ _id: params.requestId }).exec()
-  if (!loanRequest) return next(res.createError(401, 'Loan Request not found'))
+  const loan = await Loan.findOne({ _id: params.loanId }).exec()
+  if (!loan) return next(res.createError(401, 'Loan Request not found'))
 
-  res.json(loanRequest.json())
+  res.json(loan.json())
 }))
 
 module.exports = router

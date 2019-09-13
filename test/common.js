@@ -1,7 +1,7 @@
 require('dotenv').config()
 const config = require('./config')
 const { Client, providers } = require('@liquality/bundle')
-const { LoanClient, providers: lproviders } = require('../../../atomicloans/chainabstractionlayer-loans/packages/loan-bundle/dist/index.cjs.js')
+const { LoanClient, providers: lproviders } = require('@atomicloans/loan-bundle')
 const MetaMaskConnector = require('node-metamask')
 const Web3 = require('web3')
 const Web3HDWalletProvider = require('web3-hdwallet-provider')
