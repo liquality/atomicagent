@@ -18,18 +18,14 @@ function defineLoanJobs (agenda) {
     console.log('request-loan data:', data)
 
     const loan = await Loan.findOne({ _id: requestId }).exec()
-    if (!loan) return console.log('Error: Loan Request not found')
+    if (!loan) return console.log('Error: Loan not found')
     const {
       principal, collateral, principalAmount, collateralAmount, borrowerPrincipalAddress, borrowerSecretHashes, lenderSecretHashes,
       lenderPrincipalAddress, requestLoanDuration, borrowerCollateralPublicKey, lenderCollateralPublicKey
     } = loan
 
-    const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()
-    if (!loanMarket) return console.log('Error: Loan Market not found')
+    const { loanMarket, market } = await getMarketModels(principal, collateral)
     const { minConf } = loanMarket
-
-    const market = await Market.findOne({ from: collateral, to: principal }).exec()
-    if (!market) return console.log('Error: Market not found')
     const { rate } = market
 
     const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
@@ -108,7 +104,7 @@ function defineLoanJobs (agenda) {
     console.log('data', data)
 
     const loan = await Loan.findOne({ _id: requestId }).exec()
-    if (!loan) return console.log('Error: Loan Request not found')
+    if (!loan) return console.log('Error: Loan not found')
 
     const { collateral, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress, refundableCollateralAmount, seizableCollateralAmount, lenderPrincipalAddress } = loan
 
@@ -126,14 +122,8 @@ function defineLoanJobs (agenda) {
       const { loanId, principal } = loan
 
       console.log('COLLATERAL LOCKED')
-      const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
-      
-      const tx = await loans.methods.approve(numToBytes32(loanId)).send({ from: lenderPrincipalAddress, gas: 1000000 })
-      const { transactionHash } = tx
-      loan.approveTxHash = transactionHash
-      loan.status = 'APPROVED'
-      loan.save()
-      console.log('APPROVED')
+
+      await agenda.now('approve-loan', { requestId: loan.id })
     } else {
       console.log('COLLATERAL NOT LOCKED')
       agenda.schedule('in 5 seconds', 'verify-lock-collateral', { requestId: requestId })
@@ -142,6 +132,63 @@ function defineLoanJobs (agenda) {
 
     done()
   })
+
+  agenda.define('approve-loan', async (job, done) => {
+    const { data } = job.attrs
+    const { requestId } = data
+
+    console.log('data', data)
+
+    const loan = await Loan.findOne({ _id: requestId }).exec()
+    if (!loan) return console.log('Error: Loan not found')
+
+    const { loanId, principal, collateral, lenderPrincipalAddress } = loan
+
+    const { loanMarket } = await getMarketModels(principal, collateral)
+    const { minConf } = loanMarket
+
+    const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
+
+    const approved = await loans.methods.approved(numToBytes32(loanId)).call()
+
+    if (approved) {
+      console.log('Loan already approved')
+      done()
+    } else {
+      loans.methods.approve(numToBytes32(loanId)).send({ from: ensure0x(lenderPrincipalAddress), gas: 1000000 })
+      .on('transactionHash', (transactionHash) => {
+        loan.approveTxHash = transactionHash
+        console.log('APPROVING')
+        loan.status = 'APPROVING'
+        loan.save()
+      })
+      .on('confirmation', async (confirmationNumber, receipt) => {
+        if (confirmationNumber === minConf) {
+          console.log('receipt', receipt)
+          console.log('APPROVED')
+          loan.status = 'APPROVED'
+          loan.save()
+          done()
+        }
+      })
+      .on('error', (error) => {
+        console.log(error)
+        done()
+      })
+
+      done()
+    }
+  })
+}
+
+async function getMarketModels (principal, collateral) {
+  const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()
+  if (!loanMarket) return console.log('Error: Loan Market not found')
+
+  const market = await Market.findOne({ from: collateral, to: principal }).exec()
+  if (!market) return console.log('Error: Market not found')
+
+  return { loanMarket, market }
 }
 
 module.exports = {

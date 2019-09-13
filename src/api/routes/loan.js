@@ -118,23 +118,12 @@ router.post('/loans/new', asyncHandler(async (req, res, next) => {
   console.log('start /loans/new')
   const { body } = req
   const { principal, collateral, principalAmount, loanDuration } = body
-
-  const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()
-  if (!loanMarket) return next(res.createError(401, 'Loan Market not found'))
-
-  const market = await Market.findOne({ from: collateral, to: principal }).exec()
-  if (!market) return next(res.createError(401, 'Market not found'))
-
-  const fund = await Fund.findOne({ principal, collateral }).exec()
-  if (!fund) return next(res.createError(401, 'Fund not found'))
-
+  const { loanMarket, market, fund } = await findModels(res, principal, collateral)
   const { rate } = market
   const { fundId } = fund
 
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
-
   const liquidationRatio = await funds.methods.liquidationRatio(numToBytes32(fundId)).call()
-
   const minimumCollateralAmount = BN(principalAmount).dividedBy(rate).times(fromWei(liquidationRatio, 'gether')).toFixed(8)
 
   const loan = Loan.fromLoanMarket(loanMarket, body, minimumCollateralAmount)
@@ -151,7 +140,7 @@ router.get('/loans/:loanId', asyncHandler(async (req, res, next) => {
   const { params } = req
 
   const loan = await Loan.findOne({ _id: params.loanId }).exec()
-  if (!loan) return next(res.createError(401, 'Loan Request not found'))
+  if (!loan) return next(res.createError(401, 'Loan not found'))
 
   res.json(loan.json())
 }))
@@ -163,18 +152,16 @@ router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next)
   const { params, body } = req
   const { proofOfFundsTxHex, borrowerSecretHashes, borrowerCollateralPublicKey, borrowerPrincipalAddress } = body
 
-  const loanMarket = await LoanMarket.findOne(_.pick(body, ['principal', 'collateral'])).exec()
-  if (!loanMarket) return next(res.createError(401, 'Loan Market not found'))
-
   const loan = await Loan.findOne({ _id: params.loanId }).exec()
-  if (!loan) return next(res.createError(401, 'Loan Request not found'))
+  if (!loan) return next(res.createError(401, 'Loan not found'))
   const {
     principal, collateral, principalAmount, minimumCollateralAmount, requestLoanDuration, requestExpiresAt, requestCreatedAt, lenderPrincipalAddress, lenderCollateralPublicKey
   } = loan
+
+  const { loanMarket, market } = await findModels(res, principal, collateral)
+
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
-  const market = await Market.findOne({ from: collateral, to: principal }).exec()
-  if (!market) return next(res.createError(401, 'Market not found'))
   const { rate } = market
 
   ;['borrowerSecretHashes', 'borrowerCollateralPublicKey', 'borrowerPrincipalAddress'].forEach(key => {
@@ -213,7 +200,51 @@ router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next)
 }))
 
 router.post('/loans/:loanId/collateral_locked', asyncHandler(async (req, res, next) => {
+  const { params } = req
+  let message
 
+  const loan = await Loan.findOne({ _id: params.loanId }).exec()
+  if (!loan) return next(res.createError(401, 'Loan not found'))
+
+  const { principal, collateral, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress, refundableCollateralAmount, seizableCollateralAmount, lenderPrincipalAddress } = loan
+
+  const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
+  const approved = await loans.methods.approved(numToBytes32(loanId)).call()
+
+  if (approved) {
+    res.json({ message: 'Loan was already approved' })
+  } else {
+    const refundableBalance = await loan.collateralClient().chain.getBalance([collateralRefundableP2SHAddress])
+    const seizableBalance = await loan.collateralClient().chain.getBalance([collateralSeizableP2SHAddress])
+
+    const refundableUnspent = await loan.collateralClient().getMethod('getUnspentTransactions')([collateralRefundableP2SHAddress])
+    const seizableUnspent = await loan.collateralClient().getMethod('getUnspentTransactions')([collateralSeizableP2SHAddress])
+
+    const collateralRequirementsMet = (refundableBalance.toNumber() >= refundableCollateralAmount && seizableBalance.toNumber() >= seizableCollateralAmount)
+    const refundableConfirmationRequirementsMet = refundableUnspent.length === 0 ? false : refundableUnspent[0].confirmations > 0
+    const seizableConfirmationRequirementsMet = seizableUnspent.length === 0 ? false : seizableUnspent[0].confirmations > 0
+
+    if (collateralRequirementsMet && refundableConfirmationRequirementsMet && seizableConfirmationRequirementsMet) {
+      await agenda.now('approve-loan', { requestId: loan.id })
+
+      res.json({ message: 'Approving Loan' })
+    } else {
+      res.json({ message: 'Collateral has not be locked' })
+    }
+  }
 }))
+
+async function findModels (res, principal, collateral) {
+  const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()
+  if (!loanMarket) return next(res.createError(401, 'Loan Market not found'))
+
+  const market = await Market.findOne({ from: collateral, to: principal }).exec()
+  if (!market) return next(res.createError(401, 'Market not found'))
+
+  const fund = await Fund.findOne({ principal, collateral }).exec()
+  if (!fund) return next(res.createError(401, 'Fund not found'))
+
+  return { loanMarket, market, fund }
+}
 
 module.exports = router
