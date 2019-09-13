@@ -115,15 +115,14 @@ function defineLoanJobs (agenda) {
     const refundableBalance = await loan.collateralClient().chain.getBalance([collateralRefundableP2SHAddress])
     const seizableBalance = await loan.collateralClient().chain.getBalance([collateralSeizableP2SHAddress])
 
-
     const refundableUnspent = await loan.collateralClient().getMethod('getUnspentTransactions')([collateralRefundableP2SHAddress])
     const seizableUnspent = await loan.collateralClient().getMethod('getUnspentTransactions')([collateralSeizableP2SHAddress])
 
-    console.log('refundableUnspent', refundableUnspent)
-    console.log('seizableUnspent', seizableUnspent)
+    const collateralRequirementsMet = (refundableBalance.toNumber() >= refundableCollateralAmount && seizableBalance.toNumber() >= seizableCollateralAmount)
+    const refundableConfirmationRequirementsMet = refundableUnspent.length === 0 ? false : refundableUnspent[0].confirmations > 0
+    const seizableConfirmationRequirementsMet = seizableUnspent.length === 0 ? false : seizableUnspent[0].confirmations > 0
 
-
-    if (refundableBalance.toNumber() >= refundableCollateralAmount && seizableBalance.toNumber() >= seizableCollateralAmount) {
+    if (collateralRequirementsMet && refundableConfirmationRequirementsMet && seizableConfirmationRequirementsMet) {
       const { loanId, principal } = loan
 
       console.log('COLLATERAL LOCKED')
