@@ -126,6 +126,9 @@ function defineLoanJobs (agenda) {
       await agenda.now('approve-loan', { requestId: loan.id })
     } else {
       console.log('COLLATERAL NOT LOCKED')
+      // TODO: should not schedule if after approveExpiration
+      // TODO: add reason for canceling (for example, cancelled because collateral wasn't sufficient)
+      // TODO: check current blocktime
       agenda.schedule('in 5 seconds', 'verify-lock-collateral', { requestId: requestId })
       console.log('rescheduled')
     }
@@ -177,6 +180,70 @@ function defineLoanJobs (agenda) {
       })
 
       done()
+    }
+  })
+
+  agenda.define('check-loan-repaid', async (job, done) => {
+    const { data } = job.attrs
+    const { requestId } = data
+
+    // TODO: complete check loan repaid
+  })
+
+  agenda.define('accept-or-cancel-loan', async (job, done) => {
+    const { data } = job.attrs
+    const { requestId } = data
+
+    console.log('data', data)
+
+    const loan = await Loan.findOne({ _id: requestId }).exec()
+    if (!loan) return console.log('Error: Loan not found')
+
+    const { loanId, principal, collateral, lenderPrincipalAddress, lenderSecrets } = loan
+
+    const { loanMarket } = await getMarketModels(principal, collateral)
+    const { minConf } = loanMarket
+
+    const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
+    const { off, paid, withdrawn } = await loans.methods.bools(numToBytes32(loandId)).call()
+
+    // TODO: reformat console.log statements
+    if (!off && (!withdrawn || paid)) {
+      loans.methods.accept(numToBytes32(loanId), ensure0x(lenderSecrets[0])).send({ from: ensure0x(lenderPrincipalAddress), gas: 1000000 })
+      .on('transactionHash', (transactionHash) => {
+        if (paid) {
+          console.log('ACCEPTING')
+          loan.status = 'ACCEPTING'
+        } else {
+          console.log('CANCELLING')
+          loan.status = 'CANCELLING'
+        }
+
+        loan.save()
+      })
+      .on('confirmation', async (confirmationNumber, receipt) => {
+        if (confirmationNumber === minConf) {
+          console.log('receipt', receipt)
+          if (paid) {
+            console.log('ACCEPTED')
+            loan.status = 'ACCEPTED'
+          } else {
+            console.log('CANCELLED')
+            loan.status = 'CANCELLED'
+          }
+
+          loan.save()
+          done()
+        }
+      })
+      .on('error', (error) => {
+        console.log(error)
+        done()
+      })
+
+      done()
+    } else {
+      console.log(`Loan wasn't accepted or cancelled because off: ${off}, withdrawn: ${withdrawn}, paid: ${paid}}`)
     }
   })
 }

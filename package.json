@@ -5,15 +5,17 @@
   "main": "src/index.js",
   "scripts": {
     "lint": "standard $npm_package_options_standard",
-    "api": "PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
-    "worker": "PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "api:lender": "PARTY=lender PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
+    "worker:lender": "PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "api:arbiter": "PARTY=arbiter PORT=3032 PROCESS_TYPE=api nodemon src/index.js",
+    "worker:arbiter": "PARTY=arbiter PORT=3033 PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate nodemon src/index.js",
     "test": "mocha test",
     "test:swap": "mocha test/swap $npm_package_options_mocha",
     "test:loan": "mocha test/loan $npm_package_options_mocha"
   },
   "options": {
-    "mocha": "--timeout 190000 --recursive"
+    "mocha": "--timeout 200000 --recursive"
   },
   "standard": {
     "ignore": [

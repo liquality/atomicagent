@@ -212,7 +212,7 @@ router.post('/loans/:loanId/collateral_locked', asyncHandler(async (req, res, ne
   const approved = await loans.methods.approved(numToBytes32(loanId)).call()
 
   if (approved) {
-    res.json({ message: 'Loan was already approved' })
+    res.json({ message: 'Loan was already approved', status: 1 })
   } else {
     const refundableBalance = await loan.collateralClient().chain.getBalance([collateralRefundableP2SHAddress])
     const seizableBalance = await loan.collateralClient().chain.getBalance([collateralSeizableP2SHAddress])
@@ -227,10 +227,33 @@ router.post('/loans/:loanId/collateral_locked', asyncHandler(async (req, res, ne
     if (collateralRequirementsMet && refundableConfirmationRequirementsMet && seizableConfirmationRequirementsMet) {
       await agenda.now('approve-loan', { requestId: loan.id })
 
-      res.json({ message: 'Approving Loan' })
+      res.json({ message: 'Approving Loan', status: 0 })
     } else {
-      res.json({ message: 'Collateral has not be locked' })
+      res.json({ message: 'Collateral has not be locked', status: 2 })
     }
+  }
+}))
+
+router.post('/loans/:loanId/repaid', asyncHandler(async (req, res, next) => {
+  const { params } = req
+  let message
+
+  const loan = await Loan.findOne({ _id: params.loanId }).exec()
+  if (!loan) return next(res.createError(401, 'Loan not found'))
+
+  const { principal, loanId } = loan
+
+  const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
+  const { off, paid } = await loans.methods.bools(numToBytes32(loandId)).call()
+
+  if (!off && paid) {
+    await agenda.now('accept-loan', { requestId: loan.id })
+
+    res.json({ message: 'Accepting Loan', status: 0 })
+  } else if (!off & !paid) {
+    res.json({ message: 'Loan hasn\'t been paid', status: 1 })
+  } else {
+    res.json({ message: 'Loan was already accepted or refunded', status: 2 })
   }
 }))
 

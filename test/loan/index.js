@@ -23,7 +23,8 @@ const expect = chai.expect
 chai.use(chaiHttp)
 chai.use(chaiAsPromised)
 
-const server = 'http://localhost:3030/api/loan'
+const lenderServer = 'http://localhost:3030/api/loan'
+const arbiterServer = 'http://localhost:3032/api/loan'
 
 describe('loanmarketinfo', () => {
   connectMetaMask()
@@ -33,7 +34,7 @@ describe('loanmarketinfo', () => {
 
   describe('/GET loanmarketinfo', () => {
     it('should GET all the loan markets', (done) => {
-      chai.request(server)
+      chai.request(lenderServer)
         .get('/loanmarketinfo')
         .end((_, res) => {
           res.should.have.status(200)
@@ -46,8 +47,8 @@ describe('loanmarketinfo', () => {
 
   describe('/GET agentinfo/:marketId', () => {
     it('should GET current agent addresses from marketId', async () => {
-      const { body: loanMarkets } = await chai.request(server).get('/loanmarketinfo')
-      const { body: addresses } = await chai.request(server).get(`/agentinfo/${loanMarkets[0].id}`)
+      const { body: loanMarkets } = await chai.request(lenderServer).get('/loanmarketinfo')
+      const { body: addresses } = await chai.request(lenderServer).get(`/agentinfo/${loanMarkets[0].id}`)
       const { principalAddress } = addresses
 
       expect(principalAddress.length / 2).to.equal(21)
@@ -67,7 +68,7 @@ describe('loanmarketinfo', () => {
       const signature = await chains.ethereumWithMetaMask.client.wallet.signMessage(message)
       const balanceBefore = await chains.ethereumWithNode.client.chain.getBalance(address)
 
-      await chai.request(server).post('/withdraw').send({ currency, timestamp, signature, amount, message })
+      await chai.request(lenderServer).post('/withdraw').send({ currency, timestamp, signature, amount, message })
 
       const balanceAfter = await chains.ethereumWithNode.client.chain.getBalance(address)
 
@@ -103,13 +104,13 @@ describe('loanmarketinfo', () => {
       const unit = currencies[principal].unit
       const amountToDeposit = toWei('200', unit)
 
-      const { body: loanMarkets } = await chai.request(server).get('/loanmarketinfo')
-      const { body: addresses } = await chai.request(server).get(`/agentinfo/${loanMarkets[0].id}`)
+      const { body: loanMarkets } = await chai.request(lenderServer).get('/loanmarketinfo')
+      const { body: addresses } = await chai.request(lenderServer).get(`/agentinfo/${loanMarkets[0].id}`)
       const { principalAddress } = addresses
 
       await chains.ethereumWithNode.client.chain.sendTransaction(principalAddress, toWei('1', 'ether'))
 
-      const { body } = await chai.request(server).post('/funds/new').send({
+      const { body } = await chai.request(lenderServer).post('/funds/new').send({
         collateral, principal, custom, arbiter, compoundEnabled, amount, maxLoanDuration, maxFundDuration, liquidationRatio, interest, penalty, fee
       })
       const { fundId } = body
@@ -164,7 +165,7 @@ describe('loanmarketinfo', () => {
       const principalAmount = 25
       const loanDuration = toSecs({ days: 2 })
 
-      const { status: requestsStatus, body: requestsBody } = await chai.request(server).post('/loans/new').send({ principal, collateral, principalAmount, loanDuration })
+      const { status: requestsStatus, body: requestsBody } = await chai.request(lenderServer).post('/loans/new').send({ principal, collateral, principalAmount, loanDuration })
 
       expect(requestsStatus).to.equal(200)
       requestsBody.should.be.a('object')
@@ -199,7 +200,7 @@ describe('loanmarketinfo', () => {
       const secrets = await chains.bitcoinWithJs.client.loan.secrets.generateSecrets(secretMsg, 4)
       const secretHashes = secrets.map(secret => sha256(secret))
 
-      const { status: requestsIdStatus, body: requestsIdBody } = await chai.request(server).post(`/loans/${requestId}/proof_of_funds`).send({
+      const { status: requestsIdStatus, body: requestsIdBody } = await chai.request(lenderServer).post(`/loans/${requestId}/proof_of_funds`).send({
         proofOfFundsTxHex, borrowerSecretHashes: secretHashes, borrowerPrincipalAddress, borrowerCollateralPublicKey: borrowerCollateralPublicKey.toString('hex')
       })
       const {
@@ -217,7 +218,7 @@ describe('loanmarketinfo', () => {
       let requested = false
       while (!requested) {
         await sleep(5000)
-        let { body: requestedBody } = await chai.request(server).get(`/loans/${requestId}`)
+        let { body: requestedBody } = await chai.request(lenderServer).get(`/loans/${requestId}`)
         const { status } = requestedBody
         console.log('status', status)
         if (status === 'AWAITING_COLLATERAL') requested = true
@@ -226,7 +227,7 @@ describe('loanmarketinfo', () => {
       console.log('awaiting collateral')
 
 
-      const { body: requestedBody } = await chai.request(server).get(`/loans/${requestId}`)
+      const { body: requestedBody } = await chai.request(lenderServer).get(`/loans/${requestId}`)
 
       const { loanId, refundableCollateralAmount, seizableCollateralAmount, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress } = requestedBody
 
