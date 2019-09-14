@@ -6,6 +6,12 @@ const MetaMaskConnector = require('node-metamask')
 const Web3 = require('web3')
 const Web3HDWalletProvider = require('web3-hdwallet-provider')
 const { generateMnemonic } = require('bip39')
+const fs = require('fs')
+const path = require('path')
+
+const env = fs.readFileSync(path.resolve(process.cwd(), '.env'), 'utf-8')
+const newEnv = env.replace(/(([a-z])\w+([ ])\w){11}([a-z])\w+/g, generateMnemonic(128))
+fs.writeFileSync(path.resolve(process.cwd(), '.env'), newEnv, 'utf-8')
 
 const metaMaskConnector = new MetaMaskConnector({ port: config.ethereum.metaMaskConnector.port })
 

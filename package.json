@@ -9,6 +9,10 @@
     "worker:lender": "PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
     "api:arbiter": "PARTY=arbiter PORT=3032 PROCESS_TYPE=api nodemon src/index.js",
     "worker:arbiter": "PARTY=arbiter PORT=3033 PROCESS_TYPE=worker nodemon src/index.js",
+    "api:lender:test": "NODE_ENV=test PARTY=lender PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
+    "worker:lender:test": "NODE_ENV=test PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "api:arbiter:test": "NODE_ENV=test PARTY=arbiter PORT=3032 PROCESS_TYPE=api nodemon src/index.js",
+    "worker:arbiter:test": "NODE_ENV=test PARTY=arbiter PORT=3033 PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate nodemon src/index.js",
     "test": "mocha test",
     "test:swap": "mocha test/swap $npm_package_options_mocha",
@@ -62,20 +66,24 @@
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
     "fastq": "^1.6.0",
+    "fs": "0.0.1-security",
     "helmet": "^3.18.0",
     "http-errors": "^1.7.3",
     "ioredis": "^4.11.2",
+    "keccak256": "^1.0.0",
     "level": "^5.0.1",
     "mongoose": "^5.6.6",
     "node-metamask": "^1.1.2",
-    "web3": "^1.2.1"
+    "path": "^0.12.7",
+    "truffle-hdwallet-provider": "^1.0.17",
+    "web3": "^1.2.1",
+    "web3-hdwallet-provider": "^1.0.4-fix2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "mocha": "^6.2.0",
     "nodemon": "^1.19.1",
-    "standard": "^13.1.0",
-    "web3-hdwallet-provider": "^1.0.4-fix2"
+    "standard": "^13.1.0"
   }
 }

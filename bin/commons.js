@@ -15,7 +15,7 @@ module.exports.loadVariables = (config = {}) => {
   program
     .option('-p, --port <port>', 'Application port', config.defaultPort ? config.defaultPort : 3000)
     .option('--mongo <uri>', 'mongoDB uri', 'mongodb://localhost/agent')
-    .option('--btc-rpc <url>', 'Bitcoin RPC endpoint', 'http://localhost:18332')
+    .option('--btc-rpc <url>', 'Bitcoin RPC endpoint', 'http://localhost:18443')
     .option('--btc-user <user>', 'Bitcoin RPC user', 'bitcoin')
     .option('--btc-pass <pass>', 'Bitcoin RPC pass,', 'local321')
     .option('--eth-rpc <url>', 'Ethereum RPC endpoint', 'http://localhost:8545')

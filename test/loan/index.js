@@ -32,6 +32,18 @@ describe('loanmarketinfo', () => {
     await importBitcoinAddresses(chains.bitcoinWithJs)
   })
 
+  describe.only('POST cancel_all', () => {
+    it('should', async () => {
+      const timestamp = Math.floor(new Date().getTime() / 1000)
+      const address = checksumEncode((await chains.ethereumWithMetaMask.client.wallet.getAddresses())[0].address)
+      const message = `Cancel all loans for ${address} at ${timestamp}`
+
+      const signature = await chains.ethereumWithMetaMask.client.wallet.signMessage(message)
+
+      await chai.request(lenderServer).post('/cancel_all').send({ timestamp, signature, message })
+    })
+  })
+
   describe('/GET loanmarketinfo', () => {
     it('should GET all the loan markets', (done) => {
       chai.request(lenderServer)

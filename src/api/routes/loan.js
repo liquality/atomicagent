@@ -56,6 +56,7 @@ router.post('/withdraw', asyncHandler(async (req, res, next) => {
 }))
 
 router.post('/funds/new', asyncHandler(async (req, res, next) => {
+  console.log('start /funds/new')
   let fund
   const { body } = req
   const { principal, collateral, custom, maxLoanDuration, maxFundDuration, compoundEnabled, amount } = body
@@ -110,6 +111,7 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
     fund = Fund.fromFundParams(fundParams, hexToNumber(fundId), transactionHash)
     await fund.save()
   }
+  console.log('end /funds/new')
 
   res.json(fund.json())
 }))
@@ -255,6 +257,26 @@ router.post('/loans/:loanId/repaid', asyncHandler(async (req, res, next) => {
   } else {
     res.json({ message: 'Loan was already accepted or refunded', status: 2 })
   }
+}))
+
+router.post('/loans/cancel_all', asyncHandler(async (req, res, next) => {
+  const currentTime = Math.floor(new Date().getTime() / 1000)
+  const address = checksumEncode(process.env.ETH_SIGNER)
+
+  const { body } = req
+  const { signature, message, amount, timestamp, currency } = body
+
+  if (!verifySignature(signature, message, address)) return next(res.createError(401, 'Signature doesn\'t match address'))
+  if (!(message === `Cancel all loans for ${address} at ${timestamp}`)) return next(res.createError(401, 'Message doesn\'t match params'))
+  if (!(currentTime <= (timestamp + 60))) return next(res.createError(401, 'Signature is stale'))
+
+  const requestedLoans = await Loan.find({ status: 'AWAITING_COLLATERAL' })
+
+  for (const loan of requestedLoans) {
+    await agenda.now('accept-or-cancel-loan', { requestId: loan.id })
+  }
+
+  res.json({ message: 'Cancelling loans', status: 0 })
 }))
 
 async function findModels (res, principal, collateral) {
