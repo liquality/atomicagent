@@ -40,7 +40,7 @@ router.get('/agentinfo/:marketId', asyncHandler(async (req, res) => {
 
 router.post('/withdraw', asyncHandler(async (req, res, next) => {
   const currentTime = Math.floor(new Date().getTime() / 1000)
-  const address = checksumEncode(process.env.ETH_SIGNER)
+  const address = getEthSigner()
 
   const { body } = req
   const { signature, message, amount, timestamp, currency } = body

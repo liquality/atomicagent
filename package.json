@@ -6,20 +6,23 @@
   "scripts": {
     "lint": "standard $npm_package_options_standard",
     "api:lender": "PARTY=lender PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
-    "worker:lender": "PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
-    "api:arbiter": "PARTY=arbiter PORT=3032 PROCESS_TYPE=api nodemon src/index.js",
-    "worker:arbiter": "PARTY=arbiter PORT=3033 PROCESS_TYPE=worker nodemon src/index.js",
     "api:lender:test": "NODE_ENV=test PARTY=lender PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
-    "worker:lender:test": "NODE_ENV=test PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "api:arbiter": "PARTY=arbiter PORT=3032 PROCESS_TYPE=api nodemon src/index.js",
     "api:arbiter:test": "NODE_ENV=test PARTY=arbiter PORT=3032 PROCESS_TYPE=api nodemon src/index.js",
+    "worker:lender:test": "NODE_ENV=test PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "worker:lender": "PARTY=lender PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "worker:arbiter": "PARTY=arbiter PORT=3033 PROCESS_TYPE=worker nodemon src/index.js",
     "worker:arbiter:test": "NODE_ENV=test PARTY=arbiter PORT=3033 PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate nodemon src/index.js",
     "test": "mocha test",
     "test:swap": "mocha test/swap $npm_package_options_mocha",
-    "test:loan": "mocha test/loan $npm_package_options_mocha"
+    "test:loan": "mocha test/loan $npm_package_options_mocha",
+    "test:loan:agent": "mocha test/loan/lender/agent $npm_package_options_mocha",
+    "test:loan:loan_market": "mocha test/loan/lender/loanmarket $npm_package_options_mocha",
+    "test:loan:withdraw": "mocha test/loan/lender/withdraw $npm_package_options_mocha"
   },
   "options": {
-    "mocha": "--timeout 200000 --recursive"
+    "mocha": "--timeout 200000 --recursive --exit"
   },
   "standard": {
     "ignore": [
@@ -84,6 +87,7 @@
     "chai-http": "^4.3.0",
     "mocha": "^6.2.0",
     "nodemon": "^1.19.1",
+    "should": "^13.2.3",
     "standard": "^13.1.0"
   }
 }

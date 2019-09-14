@@ -33,25 +33,6 @@ const arbiterChain = chains.web3WithArbiter
 
 function testLenderAgent (web3Chain, btcChain) {
   describe('loanmarketinfo', () => {
-    // describe.only('POST cancel_all', () => {
-    //   it('should', async () => {
-    //     // await setWeb3EthSigner(chains.web3WithHDWallet)
-
-    //     const timestamp = Math.floor(new Date().getTime() / 1000)
-    //     const address = checksumEncode((await web3Chain.client.currentProvider.getAddresses())[0])
-    //     const message = `Cancel all loans for ${address} at ${timestamp}`
-
-    //     console.log('message', message)
-
-    //     const signature = await web3Chain.client.eth.personal.sign(message, address)
-
-    //     const { status, body, text } = await chai.request(lenderServer).post('/loans/cancel_all').send({ timestamp, signature, message })
-    //     console.log('body', body)
-    //     console.log('text', text)
-    //     expect(status).to.equal(200)
-    //   })
-    // })
-
     describe('/GET loanmarketinfo', () => {
       it('should GET all the loan markets', (done) => {
         chai.request(lenderServer)
@@ -171,7 +152,7 @@ function testLenderAgent (web3Chain, btcChain) {
       })
     })
 
-    describe('/POST loans', () => {
+    describe('E2E Tests', () => {
       before(async function () {
         await fundArbiter()
         await generateSecretHashesArbiter('DAI')
