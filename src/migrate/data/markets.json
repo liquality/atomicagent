@@ -18,5 +18,25 @@
     "rate": 0.028,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
+  },
+  {
+    "from": "BTC",
+    "to": "DAI",
+    "min": 0.001,
+    "max": 0.05,
+    "minConf": 1,
+    "rate": 48.26,
+    "orderExpiresIn": 3600000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "BTC",
+    "to": "USDC",
+    "min": 0.001,
+    "max": 0.05,
+    "minConf": 1,
+    "rate": 48.26,
+    "orderExpiresIn": 3600000,
+    "status": "ACTIVE"
   }
 ]

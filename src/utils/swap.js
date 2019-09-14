@@ -29,7 +29,7 @@ module.exports = async (emitter, client, data) => {
 
   client[ccy1].swap.findClaimSwapTransaction(tx, ccy1CounterPartyAddr, ccy1Addr, secretHash, nodeExp).then(async tx => {
     const { secret } = tx
-    console.log(`Node has found user's claim transaction with secret`, secret)
+    console.log('Node has found user\'s claim transaction with secret', secret)
 
     const claimTx = await client[ccy2].swap.claimSwap(bFundHash, ccy2Addr, ccy2CounterPartyAddr, secret, expiration)
 

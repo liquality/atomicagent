@@ -1,0 +1,28 @@
+[
+  {
+    "collateral": "BTC",
+    "principal": "DAI",
+    "chain": "ETH",
+    "minPrincipal": 10,
+    "maxPrincipal": 2000,
+    "minCollateral": 0.002,
+    "maxCollateral": 0.3,
+    "minLoanDuration": 21600,
+    "requestExpiresIn": 300000,
+    "minConf": 1,
+    "status": "ACTIVE"
+  },
+  {
+    "collateral": "BTC",
+    "principal": "USDC",
+    "chain": "ETH",
+    "minPrincipal": 10,
+    "maxPrincipal": 2000,
+    "minCollateral": 0.002,
+    "maxCollateral": 0.3,
+    "minLoanDuration": 21600,
+    "requestExpiresIn": 300000,
+    "minConf": 1,
+    "status": "ACTIVE"
+  }
+]
