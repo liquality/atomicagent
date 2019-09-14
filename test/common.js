@@ -9,10 +9,6 @@ const { generateMnemonic } = require('bip39')
 const fs = require('fs')
 const path = require('path')
 
-const env = fs.readFileSync(path.resolve(process.cwd(), '.env'), 'utf-8')
-const newEnv = env.replace(/(([a-z])\w+([ ])\w){11}([a-z])\w+/g, generateMnemonic(128))
-fs.writeFileSync(path.resolve(process.cwd(), '.env'), newEnv, 'utf-8')
-
 const metaMaskConnector = new MetaMaskConnector({ port: config.ethereum.metaMaskConnector.port })
 
 const mnemonic = 'shield various crystal grape prize weasel antique raven acoustic course rich stone keep ramp soldier joy matter fetch miracle connect banner apology risk junk'
@@ -70,6 +66,9 @@ const web3WithArbiter = new Web3(provider)
 
 const web3WithNode = new Web3(new Web3.providers.HttpProvider(config.ethereum.rpc.host))
 
+const hdWalletProvider = new Web3HDWalletProvider(getEnvTestValue('ETH_SIGNER_MNEMONIC').toString(), httpProvider)
+const web3WithHDWallet = new Web3(hdWalletProvider)
+
 const chains = {
   bitcoinWithLedger: { id: 'Bitcoin Ledger', name: 'bitcoin', client: bitcoinWithLedger },
   bitcoinWithJs: { id: 'Bitcoin Js', name: 'bitcoin', client: bitcoinWithJs, network: bitcoinNetwork },
@@ -80,7 +79,8 @@ const chains = {
   ethereumArbiter: { id: 'Ethereum Arbiter', name: 'ethereum', client: ethereumArbiter },
   web3WithNode: { id: 'Web3 Node', name: 'ethereum', client: web3WithNode },
   web3WithMetaMask: { id: 'Web3 MetaMask', name: 'ethereum', client: web3WithMetaMask },
-  web3WithArbiter: { id: 'Web3 Arbiter', name: 'ethereum', client: web3WithArbiter }
+  web3WithArbiter: { id: 'Web3 Arbiter', name: 'ethereum', client: web3WithArbiter },
+  web3WithHDWallet: { id: 'Web3 HDWallet', name: 'ethereum', client: web3WithHDWallet }
 }
 
 async function importBitcoinAddresses (chain) {
@@ -112,6 +112,20 @@ async function fundUnusedBitcoinAddress (chain) {
   await chains.bitcoinWithNode.client.chain.generateBlock(1)
 }
 
+function getEnvTestValue (key) {
+  const env = fs.readFileSync(path.resolve(process.cwd(), 'test/env/.env.test'), 'utf-8')
+  const regex = new RegExp(`${key}=("(.*?)"|([0-9a-zA-Z])\w+)`, 'g')
+  const value = env.match(regex)
+  return value.toString().replace(`${key}=`, '').replace('"', '').replace('"', '')
+}
+
+function rewriteEnv (envFile, key, value) {
+  const env = fs.readFileSync(path.resolve(process.cwd(), envFile), 'utf-8')
+  const regex = new RegExp(`${key}=("(.*?)"|([0-9a-zA-Z])\\w+)`, 'g')
+  const newEnv = env.replace(regex, `${key}=${value}`)
+  fs.writeFileSync(path.resolve(process.cwd(), envFile), newEnv, 'utf-8')
+}
+
 function connectMetaMask () {
   before(async () => {
     console.log('\x1b[36m', 'Starting MetaMask connector on http://localhost:3333 - Open in browser to continue', '\x1b[0m')
@@ -125,5 +139,6 @@ module.exports = {
   connectMetaMask,
   importBitcoinAddresses,
   importBitcoinAddressesByAddress,
-  fundUnusedBitcoinAddress
+  fundUnusedBitcoinAddress,
+  rewriteEnv
 }

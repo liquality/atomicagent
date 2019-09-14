@@ -15,6 +15,10 @@ function verifySignature (signature, message, address) {
   const addressBuffer = ethJsUtil.publicToAddress(publicKey)
   const addressFromSignature = ethJsUtil.bufferToHex(addressBuffer)
 
+  console.log('address', address)
+  console.log('addressFromSignature', addressFromSignature)
+  console.log('eth-signer', process.env.ETH_SIGNER)
+
   return checksumEncode(address) === checksumEncode(addressFromSignature)
 }
 

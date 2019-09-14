@@ -7,6 +7,7 @@ const { verifySignature } = require('../../utils/signatures')
 const clients = require('../../utils/clients')
 const { currencies } = require('../../utils/fx')
 const { loadObject } = require('../../utils/contracts')
+const { getEthSigner } = require('../../utils/address')
 const { rateToSec, numToBytes32 } = require('../../utils/finance')
 const web3 = require('../../utils/web3')
 const { toWei, fromWei, hexToNumber, hexToAscii } = web3.utils
@@ -246,7 +247,7 @@ router.post('/loans/:loanId/repaid', asyncHandler(async (req, res, next) => {
   const { principal, loanId } = loan
 
   const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
-  const { off, paid } = await loans.methods.bools(numToBytes32(loandId)).call()
+  const { off, paid } = await loans.methods.bools(numToBytes32(loanId)).call()
 
   if (!off && paid) {
     await agenda.now('accept-loan', { requestId: loan.id })
@@ -260,13 +261,18 @@ router.post('/loans/:loanId/repaid', asyncHandler(async (req, res, next) => {
 }))
 
 router.post('/loans/cancel_all', asyncHandler(async (req, res, next) => {
+  const agenda = req.app.get('agenda')
   const currentTime = Math.floor(new Date().getTime() / 1000)
-  const address = checksumEncode(process.env.ETH_SIGNER)
+  const address = getEthSigner()
 
   const { body } = req
-  const { signature, message, amount, timestamp, currency } = body
+  const { signature, message, timestamp } = body
 
   if (!verifySignature(signature, message, address)) return next(res.createError(401, 'Signature doesn\'t match address'))
+  console.log('message cancel_all', message)
+
+  console.log(`Cancel all loans for ${address} at ${timestamp}`)
+
   if (!(message === `Cancel all loans for ${address} at ${timestamp}`)) return next(res.createError(401, 'Message doesn\'t match params'))
   if (!(currentTime <= (timestamp + 60))) return next(res.createError(401, 'Signature is stale'))
 

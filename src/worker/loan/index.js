@@ -125,6 +125,8 @@ function defineLoanJobs (agenda) {
     txParams.gasPrice = gasPrice
     txParams.gasLimit = gasLimit + 1000000
 
+    console.log('txParams', txParams)
+
     const ethTransaction = EthTransaction.fromTxParams(txParams)
     await ethTransaction.save()
 
@@ -258,7 +260,7 @@ function defineLoanJobs (agenda) {
     const { minConf } = loanMarket
 
     const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
-    const { off, paid, withdrawn } = await loans.methods.bools(numToBytes32(loandId)).call()
+    const { off, paid, withdrawn } = await loans.methods.bools(numToBytes32(loanId)).call()
 
     // TODO: reformat console.log statements
     if (!off && (!withdrawn || paid)) {
