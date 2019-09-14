@@ -60,7 +60,7 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
   console.log('start /funds/new')
   let fund
   const { body } = req
-  const { principal, collateral, custom, maxLoanDuration, maxFundDuration, compoundEnabled, amount } = body
+  const { principal, collateral, custom, maxLoanDuration, fundExpiry, compoundEnabled, amount } = body
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
   const loanMarket = await LoanMarket.findOne(_.pick(body, ['principal', 'collateral'])).exec()
@@ -77,7 +77,7 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
       toWei(maxPrincipal.toString(), currencies[principal].unit),
       minLoanDuration,
       maxLoanDuration,
-      maxFundDuration,
+      fundExpiry,
       toWei((liquidationRatio / 100).toString(), 'gether'), // 150% collateralization ratio
       toWei(rateToSec(interest.toString()), 'gether'), // 16.50%
       toWei(rateToSec(penalty.toString()), 'gether'), //  3.00%
@@ -89,17 +89,16 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
 
     const fundId = await funds.methods.createCustom(...fundParams).call()
 
-    const { transactionHash } = await funds.methods.createCustom(...fundParams).send({ from: principalAddress, gas: 6000000 })
+    const { transactionHash } = await funds.methods.createCustom(...fundParams).send({ from: principalAddress, gas: 600000 })
 
     const fundStruct = await funds.methods.funds(fundId).call()
-    console.log('Fund Created: ', fundStruct)
 
     fund = Fund.fromCustomFundParams(fundParams, hexToNumber(fundId), transactionHash, principal, collateral)
     await fund.save()
   } else {
     const fundParams = [
       maxLoanDuration,
-      maxFundDuration,
+      fundExpiry,
       process.env.ETH_ARBITER,
       compoundEnabled,
       amount
@@ -107,7 +106,7 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
 
     const fundId = await funds.methods.create(...fundParams).call()
 
-    const { transactionHash } = await funds.methods.create(...fundParams).send({ from: principalAddress, gas: 6000000 })
+    const { transactionHash } = await funds.methods.create(...fundParams).send({ from: principalAddress, gas: 600000 })
 
     fund = Fund.fromFundParams(fundParams, hexToNumber(fundId), transactionHash)
     await fund.save()
@@ -269,10 +268,6 @@ router.post('/loans/cancel_all', asyncHandler(async (req, res, next) => {
   const { signature, message, timestamp } = body
 
   if (!verifySignature(signature, message, address)) return next(res.createError(401, 'Signature doesn\'t match address'))
-  console.log('message cancel_all', message)
-
-  console.log(`Cancel all loans for ${address} at ${timestamp}`)
-
   if (!(message === `Cancel all loans for ${address} at ${timestamp}`)) return next(res.createError(401, 'Message doesn\'t match params'))
   if (!(currentTime <= (timestamp + 60))) return next(res.createError(401, 'Signature is stale'))
 

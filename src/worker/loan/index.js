@@ -79,6 +79,10 @@ async function requestLoan (txParams, loan, agenda, done) {
 }
 
 function defineLoanJobs (agenda) {
+  agenda.define('create-fund', async (job, done) => {
+    
+  })
+
   agenda.define('request-loan', async (job, done) => {
     const { data } = job.attrs
     const { requestId } = data

@@ -29,7 +29,7 @@ const FundSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
-  maxFundDuration: {
+  fundExpiry: {
     type: Number,
     index: true
   },
