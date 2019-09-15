@@ -15,7 +15,6 @@ module.exports = {
     },
     network: 'local',
     value: 10000000000000000,
-    network: 'local',
     metaMaskConnector: {
       port: 3333
     }

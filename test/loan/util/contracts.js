@@ -1,5 +1,3 @@
-const { chains } = require('../../common')
-
 const schema = {}
 
 schema.funds = require('../../../src/abi/funds')

@@ -1,11 +1,4 @@
 const mongoose = require('mongoose')
-const BN = require('bignumber.js')
-const { sha256 } = require('@liquality/crypto')
-
-const clients = require('../utils/clients')
-const { currencies } = require('../utils/fx')
-const web3 = require('../utils/web3')
-const { toWei } = web3.utils
 
 const EthTransactionSchema = new mongoose.Schema({
   from: {

@@ -5,7 +5,7 @@ const { sha256 } = require('@liquality/crypto')
 const clients = require('../utils/clients')
 const { currencies } = require('../utils/fx')
 const web3 = require('../utils/web3')
-const { toWei } = web3.utils
+const { toWei } = web3().utils
 
 const LoanSchema = new mongoose.Schema({
   principal: {
@@ -65,10 +65,10 @@ const LoanSchema = new mongoose.Schema({
     index: true
   },
   collateralRefundableP2SHAddress: {
-    type: String,
+    type: String
   },
   collateralSeizableP2SHAddress: {
-    type: String,
+    type: String
   },
   minConf: {
     type: Number,
@@ -122,9 +122,6 @@ const LoanSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
-  minConf: {
-    type: Number
-  },
   requestExpiresAt: {
     type: Number
   },
@@ -163,7 +160,7 @@ LoanSchema.methods.json = function () {
 LoanSchema.methods.setAgentAddresses = async function () {
   if (this.lenderPrincipalAddress) throw new Error('Address exists')
 
-  const principalAddresses = await web3.currentProvider.getAddresses()
+  const principalAddresses = await web3().currentProvider.getAddresses()
   const collateralAddresses = await this.collateralClient().wallet.getAddresses()
 
   this.lenderPrincipalAddress = principalAddresses[0]

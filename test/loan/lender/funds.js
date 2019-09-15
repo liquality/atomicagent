@@ -3,20 +3,17 @@ const chai = require('chai')
 const chaiHttp = require('chai-http')
 const chaiAsPromised = require('chai-as-promised')
 const BN = require('bignumber.js')
-const toSecs = require('@mblackmblack/to-seconds')
-const { ensure0x, checksumEncode } = require('@liquality/ethereum-utils')
+const { checksumEncode } = require('@liquality/ethereum-utils')
 const { generateMnemonic } = require('bip39')
 
-const { chains, connectMetaMask, importBitcoinAddresses, fundUnusedBitcoinAddress, rewriteEnv } = require('../../common')
-const { fundArbiter, fundAgent, fundTokens, getAgentAddress, generateSecretHashesArbiter, getTestObject, getTestObjects, cancelLoans, fundWeb3Address } = require('../loanCommon')
+const { chains, connectMetaMask, rewriteEnv } = require('../../common')
+const { fundArbiter, fundAgent, fundTokens, getAgentAddress, generateSecretHashesArbiter, getTestObjects, cancelLoans, removeFunds, cancelJobs, fundWeb3Address } = require('../loanCommon')
 const fundFixtures = require('./fixtures/fundFixtures')
 const { getWeb3Address } = require('../util/web3Helpers')
 const { currencies } = require('../../../src/utils/fx')
 const { numToBytes32, rateToSec } = require('../../../src/utils/finance')
-const { testLoadObject } = require('../util/contracts')
-const { sleep } = require('../../../src/utils/async')
-const { checkFundCreated } = require('./setup/fundSetup')
-const web3 = require('../../../src/utils/web3')
+const { createCustomFund, checkFundCreated } = require('./setup/fundSetup')
+const web3 = require('web3')
 const { toWei, fromWei } = web3.utils
 
 chai.should()
@@ -35,15 +32,12 @@ function testFunds (web3Chain) {
       const currentTime = Math.floor(new Date().getTime() / 1000)
       const agentPrincipalAddress = await getAgentAddress(server)
       const address = await getWeb3Address(web3Chain)
-      const arbiter = await getWeb3Address(arbiterChain)
       const fundParams = fundFixtures.customFundWithFundExpiryIn100Days(currentTime, 'DAI')
       const { principal, fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
-      const [ token, funds ] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
+      const [token, funds] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
       const unit = currencies[principal].unit
       const amountToDeposit = toWei('200', unit)
       await fundTokens(address, amountToDeposit, principal)
-
-      console.log('agentPrincipalAddress', agentPrincipalAddress)
 
       const { body } = await chai.request(server).post('/funds/new').send(fundParams)
       const { id: fundModelId } = body
@@ -67,22 +61,45 @@ function testFunds (web3Chain) {
       expect(actualFee).to.equal(toWei(rateToSec(fee.toString()), 'gether'))
     })
 
-    it('should return 401 when attempting to create more than one fund', async () => {
+    it('should return 401 when attempting to create more than one fund with same principal', async () => {
+      const currentTime = Math.floor(new Date().getTime() / 1000)
 
+      await createCustomFund(web3Chain, arbiterChain, 200, 'DAI')
+
+      const fundParams = fundFixtures.customFundWithFundExpiryIn100Days(currentTime, 'DAI')
+      const { status } = await chai.request(server).post('/funds/new').send(fundParams)
+
+      expect(status).to.equal(401)
     })
+
+    it('should succeed in creating two funds with different principal', async () => {
+      const currentTime = Math.floor(new Date().getTime() / 1000)
+
+      await createCustomFund(web3Chain, arbiterChain, 200, 'DAI')
+
+      const fundParams = fundFixtures.customFundWithFundExpiryIn100Days(currentTime, 'USDC')
+      const { status } = await chai.request(server).post('/funds/new').send(fundParams)
+
+      expect(status).to.equal(200)
+    })
+
+    // it('should bump tx fee if tx stuck in mempool', async () => {
+
+    // })
   })
 }
 
 async function testSetup (web3Chain) {
+  const address = await getWeb3Address(web3Chain)
+  rewriteEnv('.env', 'ETH_SIGNER', address)
+  await cancelLoans(web3Chain)
+  await cancelJobs()
+  rewriteEnv('.env', 'MNEMONIC', `"${generateMnemonic(128)}"`)
+  await removeFunds()
   await fundAgent(server)
   await fundArbiter()
   await generateSecretHashesArbiter('DAI')
   await fundWeb3Address(web3Chain)
-  const address = await getWeb3Address(web3Chain)
-  rewriteEnv('.env', 'ETH_SIGNER', address)
-  await cancelLoans(web3Chain)
-  rewriteEnv('.env', 'MNEMONIC', `"${generateMnemonic(128)}"`)
-  console.log('before each')
 }
 
 describe('Lender Agent - Funds', () => {

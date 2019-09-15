@@ -9,7 +9,7 @@ const { fundArbiter, fundAgent, generateSecretHashesArbiter, fundWeb3Address, ge
 const { depositToFund } = require('../setup/fundSetup')
 const { currencies } = require('../../../../src/utils/fx')
 const { numToBytes32 } = require('../../../../src/utils/finance')
-const web3 = require('../../../../src/utils/web3')
+const web3 = require('web3')
 
 const { toWei } = web3.utils
 
@@ -20,8 +20,6 @@ chai.use(chaiHttp)
 chai.use(chaiAsPromised)
 
 const server = 'http://localhost:3030/api/loan'
-
-const arbiterChain = chains.web3WithArbiter
 
 const principal = process.env.PRINCIPAL
 const amount = process.env.AMOUNT
@@ -37,7 +35,7 @@ function depositForFund (web3Chain) {
 
       const balanceAfter = await token.methods.balanceOf(process.env[`${principal}_LOAN_FUNDS_ADDRESS`]).call()
       const { lender } = await funds.methods.funds(numToBytes32(fundId)).call()
-      
+
       expect(balanceAfter.toString()).to.equal(BN(balanceBefore).plus(toWei(amount.toString(), currencies[principal].unit)).toString())
       expect(lender).to.equal(agentAddress)
     })

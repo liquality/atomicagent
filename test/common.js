@@ -21,16 +21,16 @@ const bitcoinLoanWithLedger = new LoanClient(bitcoinWithLedger)
 bitcoinWithLedger.loan = bitcoinLoanWithLedger
 bitcoinWithLedger.addProvider(new providers.bitcoin.BitcoinRpcProvider(config.bitcoin.rpc.host, config.bitcoin.rpc.username, config.bitcoin.rpc.password))
 bitcoinWithLedger.addProvider(new providers.bitcoin.BitcoinLedgerProvider({ network: bitcoinNetworks[config.bitcoin.network], segwit: false }))
-bitcoinWithLedger.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh'}))
-bitcoinWithLedger.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralSwapProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh'}))
+bitcoinWithLedger.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh' }))
+bitcoinWithLedger.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralSwapProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh' }))
 
 const bitcoinWithJs = new Client()
 const bitcoinLoanWithJs = new LoanClient(bitcoinWithJs)
 bitcoinWithJs.loan = bitcoinLoanWithJs
 bitcoinWithJs.addProvider(new providers.bitcoin.BitcoinRpcProvider(config.bitcoin.rpc.host, config.bitcoin.rpc.username, config.bitcoin.rpc.password))
 bitcoinWithJs.addProvider(new providers.bitcoin.BitcoinJsWalletProvider(bitcoinNetworks[config.bitcoin.network], config.bitcoin.rpc.host, config.bitcoin.rpc.username, config.bitcoin.rpc.password, generateMnemonic(256), 'bech32'))
-bitcoinWithJs.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh'}))
-bitcoinWithJs.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralSwapProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh'}))
+bitcoinWithJs.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh' }))
+bitcoinWithJs.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralSwapProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh' }))
 
 const bitcoinWithNode = new Client()
 bitcoinWithNode.addProvider(new providers.bitcoin.BitcoinRpcProvider(config.bitcoin.rpc.host, config.bitcoin.rpc.username, config.bitcoin.rpc.password))
@@ -41,8 +41,8 @@ const bitcoinLoanArbiter = new LoanClient(bitcoinArbiter)
 bitcoinArbiter.loan = bitcoinLoanArbiter
 bitcoinArbiter.addProvider(new providers.bitcoin.BitcoinRpcProvider(config.bitcoin.rpc.host, config.bitcoin.rpc.username, config.bitcoin.rpc.password))
 bitcoinArbiter.addProvider(new providers.bitcoin.BitcoinJsWalletProvider(bitcoinNetworks[config.bitcoin.network], config.bitcoin.rpc.host, config.bitcoin.rpc.username, config.bitcoin.rpc.password, mnemonic, 'bech32'))
-bitcoinArbiter.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh'}))
-bitcoinArbiter.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralSwapProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh'}))
+bitcoinArbiter.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh' }))
+bitcoinArbiter.loan.addProvider(new lproviders.bitcoin.BitcoinCollateralSwapProvider({ network: bitcoinNetworks[config.bitcoin.network] }, { script: 'p2wsh', address: 'p2wpkh' }))
 
 const ethereumNetworks = providers.ethereum.networks
 const ethereumNetwork = ethereumNetworks[config.ethereum.network]
@@ -87,20 +87,20 @@ async function importBitcoinAddresses (chain) {
   const nonChangeAddresses = await chain.client.getMethod('getAddresses')(0, 10)
   const changeAddresses = await chain.client.getMethod('getAddresses')(0, 10, true)
 
-  const addresses = [ ...nonChangeAddresses, ...changeAddresses ]
+  const addresses = [...nonChangeAddresses, ...changeAddresses]
 
-  let addressesToImport = []
+  const addressesToImport = []
   for (const address of addresses) {
-    addressesToImport.push({ 'scriptPubKey': { 'address': address.address }, 'timestamp': 'now' })
+    addressesToImport.push({ scriptPubKey: { address: address.address }, timestamp: 'now' })
   }
 
   await chain.client.getMethod('jsonrpc')('importmulti', addressesToImport, { rescan: false })
 }
 
 async function importBitcoinAddressesByAddress (addresses) {
-  let addressesToImport = []
+  const addressesToImport = []
   for (const address of addresses) {
-    addressesToImport.push({ 'scriptPubKey': { 'address': address }, 'timestamp': 'now' })
+    addressesToImport.push({ scriptPubKey: { address: address }, timestamp: 'now' })
   }
 
   await chains.bitcoinWithNode.client.getMethod('jsonrpc')('importmulti', addressesToImport, { rescan: false })
@@ -114,7 +114,7 @@ async function fundUnusedBitcoinAddress (chain) {
 
 function getEnvTestValue (key) {
   const env = fs.readFileSync(path.resolve(process.cwd(), 'test/env/.env.test'), 'utf-8')
-  const regex = new RegExp(`${key}=("(.*?)"|([0-9a-zA-Z])\w+)`, 'g')
+  const regex = new RegExp(`${key}=("(.*?)"|([0-9a-zA-Z])\\w+)`, 'g')
   const value = env.match(regex)
   return value.toString().replace(`${key}=`, '').replace('"', '').replace('"', '')
 }

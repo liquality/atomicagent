@@ -68,7 +68,7 @@ LoanMarketSchema.methods.collateralClient = function () {
 }
 
 LoanMarketSchema.methods.getAgentAddresses = async function () {
-  const principalAddresses = await web3.currentProvider.getAddresses()
+  const principalAddresses = await web3().currentProvider.getAddresses()
   const collateralAddresses = await this.collateralClient().wallet.getAddresses()
 
   return {

@@ -1,6 +1,6 @@
-const web3 = require('./web3')
+const web3 = require('web3')
 const Decimal = require('decimal.js')
-const { numberToHex, padLeft } = web3.utils;
+const { numberToHex, padLeft } = web3.utils
 
 Decimal.set({ precision: 28, rounding: 8 })
 
@@ -9,7 +9,7 @@ function rateToSec (apr) { // Convert interest rate to rate per second (i.e. 16.
   return Decimal(10).toPower(Decimal.log(decRate).dividedBy(60 * 60 * 24 * 365)).toString()
 }
 
-function numToBytes32(num) {
+function numToBytes32 (num) {
   return padLeft(numberToHex(num), 64)
 }
 

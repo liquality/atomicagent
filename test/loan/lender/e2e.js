@@ -5,21 +5,21 @@ const chaiAsPromised = require('chai-as-promised')
 const BN = require('bignumber.js')
 const toSecs = require('@mblackmblack/to-seconds')
 const bitcoin = require('bitcoinjs-lib')
-const { ensure0x, checksumEncode } = require('@liquality/ethereum-utils')
+const { ensure0x } = require('@liquality/ethereum-utils')
 const { generateMnemonic } = require('bip39')
 const { sha256 } = require('@liquality/crypto')
 
 const { chains, connectMetaMask, importBitcoinAddresses, importBitcoinAddressesByAddress, fundUnusedBitcoinAddress, rewriteEnv } = require('../../common')
-const { fundArbiter, fundAgent, fundTokens, getAgentAddress, generateSecretHashesArbiter, getLockParams, getTestObject, getTestObjects, cancelLoans, fundWeb3Address, cancelJobs } = require('../loanCommon')
+const { fundArbiter, fundAgent, generateSecretHashesArbiter, getLockParams, getTestObject, cancelLoans, fundWeb3Address, cancelJobs, removeFunds } = require('../loanCommon')
 const { getWeb3Address } = require('../util/web3Helpers')
 const { currencies } = require('../../../src/utils/fx')
-const { numToBytes32, rateToSec } = require('../../../src/utils/finance')
+const { numToBytes32 } = require('../../../src/utils/finance')
 const { testLoadObject } = require('../util/contracts')
 const { sleep } = require('../../../src/utils/async')
 const { createCustomFund } = require('./setup/fundSetup')
-const web3 = require('../../../src/utils/web3')
+const web3 = require('web3')
 
-const { toWei, fromWei } = web3.utils
+const { toWei } = web3.utils
 
 chai.should()
 const expect = chai.expect
@@ -95,7 +95,7 @@ function testE2E (web3Chain, btcChain) {
       let requested = false
       while (!requested) {
         await sleep(5000)
-        let { body: requestedBody } = await chai.request(server).get(`/loans/${requestId}`)
+        const { body: requestedBody } = await chai.request(server).get(`/loans/${requestId}`)
         const { status } = requestedBody
         console.log('status', status)
         if (status === 'AWAITING_COLLATERAL') requested = true
@@ -114,8 +114,10 @@ function testE2E (web3Chain, btcChain) {
 
       const loans = await getTestObject(web3Chain, 'loans', principal)
       const approvedBefore = await loans.methods.approved(numToBytes32(loanId)).call()
+      expect(approvedBefore).to.equal(false)
 
       const funded = await loans.methods.funded(numToBytes32(loanId)).call()
+      expect(funded).to.equal(true)
 
       await secondsCountDown(4)
 
@@ -170,17 +172,18 @@ async function getLoanStatus (loanId) {
 }
 
 async function testSetup (web3Chain, btcChain) {
+  const address = await getWeb3Address(web3Chain)
+  rewriteEnv('.env', 'ETH_SIGNER', address)
+  await cancelLoans(web3Chain)
+  rewriteEnv('.env', 'MNEMONIC', `"${generateMnemonic(128)}"`)
+  await cancelJobs()
+  await removeFunds()
   await fundAgent(server)
   await fundArbiter()
   await generateSecretHashesArbiter('DAI')
   await importBitcoinAddresses(btcChain)
   await fundUnusedBitcoinAddress(btcChain)
   await fundWeb3Address(web3Chain)
-  const address = await getWeb3Address(web3Chain)
-  rewriteEnv('.env', 'ETH_SIGNER', address)
-  await cancelLoans(web3Chain)
-  await cancelJobs()
-  rewriteEnv('.env', 'MNEMONIC', `"${generateMnemonic(128)}"`)
   await createCustomFund(web3Chain, arbiterChain, 200, 'DAI') // Create Custom Loan Fund with 200 DAI
 }
 

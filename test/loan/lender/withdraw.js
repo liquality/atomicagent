@@ -8,7 +8,7 @@ const { generateMnemonic } = require('bip39')
 const { chains, connectMetaMask, rewriteEnv } = require('../../common')
 const { fundWeb3Address } = require('../loanCommon')
 const { getWeb3Address } = require('../util/web3Helpers')
-const web3 = require('../../../src/utils/web3')
+const web3 = require('web3')
 const { toWei } = web3.utils
 
 chai.should()

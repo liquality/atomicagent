@@ -1,9 +1,9 @@
-const { chains, connectMetaMask, importBitcoinAddresses, importBitcoinAddressesByAddress, fundUnusedBitcoinAddress, rewriteEnv, setNewWeb3HDWallet } = require('../common')
+const { chains } = require('../common')
 const { testLoadObject } = require('./util/contracts')
 const { getWeb3Address } = require('./util/web3Helpers')
 const { ensure0x, remove0x, checksumEncode } = require('@liquality/ethereum-utils')
 const { sha256 } = require('@liquality/crypto')
-const web3 = require('../../src/utils/web3')
+const web3 = require('web3')
 const { numToBytes32 } = require('../../src/utils/finance')
 const { toWei } = web3.utils
 
@@ -12,13 +12,10 @@ const chaiHttp = require('chai-http')
 const chaiAsPromised = require('chai-as-promised')
 
 chai.should()
-const expect = chai.expect
-
 chai.use(chaiHttp)
 chai.use(chaiAsPromised)
 
 const lenderServer = 'http://localhost:3030/api/loan'
-const arbiterServer = 'http://localhost:3032/api/loan'
 
 async function cancelJobs () {
   await chai.request(lenderServer).post('/cancel_jobs').send()
@@ -73,7 +70,7 @@ async function getLockParams (web3Chain, principal, values, loanId) {
   const approveExpiration = await testLoans.methods.approveExpiration(numToBytes32(loanId)).call()
   const liquidationExpiration = await testLoans.methods.liquidationExpiration(numToBytes32(loanId)).call()
   const seizureExpiration = await testLoans.methods.seizureExpiration(numToBytes32(loanId)).call()
-  
+
   const pubKeys = { borrowerPubKey: remove0x(borrowerPubKey), lenderPubKey: remove0x(lenderPubKey), agentPubKey: remove0x(arbiterPubKey) }
   const secretHashes = { secretHashA1: remove0x(secretHashA1), secretHashB1: remove0x(secretHashB1), secretHashC1: remove0x(secretHashC1) }
   const expirations = { approveExpiration, liquidationExpiration, seizureExpiration }
@@ -91,7 +88,7 @@ async function getTestObject (web3Chain, contract, principal) {
 }
 
 async function getTestObjects (web3Chain, principal, contracts) {
-  let objects = []
+  const objects = []
   for (const contract of contracts) {
     const object = await getTestObject(web3Chain, contract, principal)
     objects.push(object)
@@ -114,6 +111,10 @@ async function cancelLoans (chain) {
   await chai.request(lenderServer).post('/loans/cancel_all').send({ timestamp, signature, message })
 }
 
+async function removeFunds () {
+  await chai.request(lenderServer).post('/remove_funds').send()
+}
+
 module.exports = {
   fundArbiter,
   fundAgent,
@@ -125,5 +126,6 @@ module.exports = {
   getTestObjects,
   cancelLoans,
   cancelJobs,
+  removeFunds,
   fundWeb3Address
 }

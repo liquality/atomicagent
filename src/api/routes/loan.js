@@ -1,16 +1,16 @@
 const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
-const { ensure0x, remove0x, checksumEncode } = require('@liquality/ethereum-utils')
+const { ensure0x } = require('@liquality/ethereum-utils')
 const BN = require('bignumber.js')
 const { verifySignature } = require('../../utils/signatures')
 const clients = require('../../utils/clients')
 const { currencies } = require('../../utils/fx')
 const { loadObject } = require('../../utils/contracts')
 const { getEthSigner } = require('../../utils/address')
-const { rateToSec, numToBytes32 } = require('../../utils/finance')
-const web3 = require('../../utils/web3')
-const { toWei, fromWei, hexToNumber, hexToAscii } = web3.utils
+const { numToBytes32 } = require('../../utils/finance')
+const web3 = require('web3')
+const { fromWei, hexToAscii } = web3.utils
 
 const LoanMarket = require('../../models/LoanMarket')
 const Market = require('../../models/Market')
@@ -82,14 +82,12 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
   const agenda = req.app.get('agenda')
   const { body } = req
   const { principal, collateral, custom } = body
-  const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
   fund = await Fund.findOne(_.pick(body, ['principal', 'collateral'])).exec()
   if (fund && fund.status === 'CREATED') return next(res.createError(401, 'Fund was already created. Agent can only have one Loan Fund'))
 
   const loanMarket = await LoanMarket.findOne(_.pick(body, ['principal', 'collateral'])).exec()
   if (!loanMarket) return next(res.createError(401, `LoanMarket not found with ${principal} principal and ${collateral} collateral`))
-  const { principalAddress } = await loanMarket.getAgentAddresses()
 
   if (custom) {
     fund = Fund.fromCustomFundParams(body)
@@ -98,60 +96,8 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
   } else {
     fund = Fund.fromFundParams(body)
 
-    await agenda.now('create-fund', { requestId: loan.id })
+    await agenda.now('create-fund', { requestId: fund.id })
   }
-
-  // TODO: Test non-custom fund
-
-  // else {
-  //   await agenda.now('create-fund', { requestId: loan.id })
-  // }
-
-
-
-  // if (custom) {
-  //   const { liquidationRatio, interest, penalty, fee } = body
-  //   const { minPrincipal, maxPrincipal, minLoanDuration } = loanMarket
-
-  //   const fundParams = [
-  //     toWei(minPrincipal.toString(), currencies[principal].unit),
-  //     toWei(maxPrincipal.toString(), currencies[principal].unit),
-  //     minLoanDuration,
-  //     maxLoanDuration,
-  //     fundExpiry,
-  //     toWei((liquidationRatio / 100).toString(), 'gether'), // 150% collateralization ratio
-  //     toWei(rateToSec(interest.toString()), 'gether'), // 16.50%
-  //     toWei(rateToSec(penalty.toString()), 'gether'), //  3.00%
-  //     toWei(rateToSec(fee.toString()), 'gether'), //  0.75%
-  //     process.env.ETH_ARBITER,
-  //     compoundEnabled,
-  //     amount
-  //   ]
-
-  //   const fundId = await funds.methods.createCustom(...fundParams).call()
-
-  //   const { transactionHash } = await funds.methods.createCustom(...fundParams).send({ from: principalAddress, gas: 600000 })
-
-  //   const fundStruct = await funds.methods.funds(fundId).call()
-
-  //   fund = Fund.fromCustomFundParams(fundParams, hexToNumber(fundId), transactionHash, principal, collateral)
-  //   await fund.save()
-  // } else {
-  //   const fundParams = [
-  //     maxLoanDuration,
-  //     fundExpiry,
-  //     process.env.ETH_ARBITER,
-  //     compoundEnabled,
-  //     amount
-  //   ]
-
-  //   const fundId = await funds.methods.create(...fundParams).call()
-
-  //   const { transactionHash } = await funds.methods.create(...fundParams).send({ from: principalAddress, gas: 600000 })
-
-  //   fund = Fund.fromFundParams(fundParams, hexToNumber(fundId), transactionHash)
-  //   await fund.save()
-  // }
 
   await fund.save()
 
@@ -163,7 +109,7 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
 router.post('/loans/new', asyncHandler(async (req, res, next) => {
   console.log('start /loans/new')
   const { body } = req
-  const { principal, collateral, principalAmount, loanDuration } = body
+  const { principal, collateral, principalAmount } = body
   const { loanMarket, market, fund } = await findModels(res, next, principal, collateral)
   const { rate } = market
   const { fundId } = fund
@@ -196,19 +142,13 @@ router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next)
   const currentTime = Date.now()
   const agenda = req.app.get('agenda')
   const { params, body } = req
-  const { proofOfFundsTxHex, borrowerSecretHashes, borrowerCollateralPublicKey, borrowerPrincipalAddress } = body
+  const { proofOfFundsTxHex } = body
 
   const loan = await Loan.findOne({ _id: params.loanId }).exec()
   if (!loan) return next(res.createError(401, 'Loan not found'))
   const {
-    principal, collateral, principalAmount, minimumCollateralAmount, requestLoanDuration, requestExpiresAt, requestCreatedAt, lenderPrincipalAddress, lenderCollateralPublicKey
+    principal, collateral, principalAmount, minimumCollateralAmount, requestExpiresAt, requestCreatedAt, lenderCollateralPublicKey
   } = loan
-
-  const { loanMarket, market } = await findModels(res, next, principal, collateral)
-
-  const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
-
-  const { rate } = market
 
   ;['borrowerSecretHashes', 'borrowerCollateralPublicKey', 'borrowerPrincipalAddress'].forEach(key => {
     if (!body[key]) return next(res.createError(401, `${key} is missing`))
@@ -223,10 +163,10 @@ router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next)
   const { value: collateralAmount } = rawTx.vout[0]
   if (!(collateralAmount >= minimumCollateralAmount)) return next(res.createError(401, `Proof of funds for ${minimumCollateralAmount} ${collateral} not provided`))
 
-  const [ op, msgHex ] = rawTx.vout[1].scriptPubKey.asm.split(' ')
+  const [, msgHex] = rawTx.vout[1].scriptPubKey.asm.split(' ')
   const msg = hexToAscii(ensure0x(msgHex))
 
-  const [ publicKey, amount, stablecoin, timestamp ] = msg.split(' ')
+  const [publicKey, amount, stablecoin, timestamp] = msg.split(' ')
 
   if (!(publicKey === lenderCollateralPublicKey)) return next(res.createError(401, 'Proof of funds public key does not match lender public key'))
   if (!(parseFloat(amount) === principalAmount)) return next(res.createError(401, 'Amount provided in signature does not match proof of funds'))
@@ -247,15 +187,15 @@ router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next)
 
 router.post('/loans/:loanId/collateral_locked', asyncHandler(async (req, res, next) => {
   const { params } = req
-  let message
+  const agenda = req.app.get('agenda')
 
   const loan = await Loan.findOne({ _id: params.loanId }).exec()
   if (!loan) return next(res.createError(401, 'Loan not found'))
 
-  const { principal, collateral, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress, refundableCollateralAmount, seizableCollateralAmount, lenderPrincipalAddress } = loan
+  const { principal, collateralRefundableP2SHAddress, collateralSeizableP2SHAddress, refundableCollateralAmount, seizableCollateralAmount } = loan
 
   const loans = await loadObject('loans', process.env[`${principal}_LOAN_LOANS_ADDRESS`])
-  const approved = await loans.methods.approved(numToBytes32(loanId)).call()
+  const approved = await loans.methods.approved(numToBytes32(params.loanId)).call()
 
   if (approved) {
     res.json({ message: 'Loan was already approved', status: 1 })
@@ -282,7 +222,7 @@ router.post('/loans/:loanId/collateral_locked', asyncHandler(async (req, res, ne
 
 router.post('/loans/:loanId/repaid', asyncHandler(async (req, res, next) => {
   const { params } = req
-  let message
+  const agenda = req.app.get('agenda')
 
   const loan = await Loan.findOne({ _id: params.loanId }).exec()
   if (!loan) return next(res.createError(401, 'Loan not found'))
@@ -337,6 +277,7 @@ if (process.env.NODE_ENV === 'test') {
     await Fund.deleteMany()
 
     res.json({ message: 'Removed all funds' })
+  }))
 }
 
 async function findModels (res, next, principal, collateral) {
