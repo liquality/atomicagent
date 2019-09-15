@@ -1,5 +1,4 @@
 /* eslint-env mocha */
-
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const chaiAsPromised = require('chai-as-promised')
@@ -10,11 +9,13 @@ const { generateMnemonic } = require('bip39')
 
 const { chains, connectMetaMask, importBitcoinAddresses, fundUnusedBitcoinAddress, rewriteEnv } = require('../../common')
 const { fundArbiter, fundAgent, fundTokens, getAgentAddress, generateSecretHashesArbiter, getTestObject, getTestObjects, cancelLoans, fundWeb3Address } = require('../loanCommon')
-const fundSchemas = require('./schemas/fundSchemas')
+const fundFixtures = require('./fixtures/fundFixtures')
 const { getWeb3Address } = require('../util/web3Helpers')
 const { currencies } = require('../../../src/utils/fx')
 const { numToBytes32, rateToSec } = require('../../../src/utils/finance')
 const { testLoadObject } = require('../util/contracts')
+const { sleep } = require('../../../src/utils/async')
+const { checkFundCreated } = require('./setup/fundSetup')
 const web3 = require('../../../src/utils/web3')
 const { toWei, fromWei } = web3.utils
 
@@ -35,7 +36,7 @@ function testFunds (web3Chain, btcChain) {
       const agentPrincipalAddress = await getAgentAddress(server)
       const address = await getWeb3Address(web3Chain)
       const arbiter = await getWeb3Address(arbiterChain)
-      const fundParams = fundSchemas.customDAIFundWithFundExpiryIn100Days(currentTime)
+      const fundParams = fundFixtures.customDAIFundWithFundExpiryIn100Days(currentTime)
       const { principal, fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
       const [ token, funds ] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
       const unit = currencies[principal].unit
@@ -43,19 +44,21 @@ function testFunds (web3Chain, btcChain) {
       await fundTokens(address, amountToDeposit, principal)
 
       const { body } = await chai.request(server).post('/funds/new').send(fundParams)
-      const { fundId } = body
+      const { id: fundModelId } = body
 
-      await token.methods.approve(process.env[`${principal}_LOAN_FUNDS_ADDRESS`], amountToDeposit).send({ gas: 600000 })
-      await funds.methods.deposit(numToBytes32(fundId), amountToDeposit).send({ gas: 600000 })
+      const fundId = await checkFundCreated(fundModelId)
+
+      await token.methods.approve(process.env[`${principal}_LOAN_FUNDS_ADDRESS`], amountToDeposit).send({ gas: 100000 })
+      await funds.methods.deposit(numToBytes32(fundId), amountToDeposit).send({ gas: 100000 })
 
       const {
-        lender, maxLoanDur, maxFundDur, interest: actualInterest, penalty: actualPenalty, fee: actualFee, liquidationRatio: actualLiquidationRatio, balance
+        lender, maxLoanDur, fundExpiry: actualFundExpiry, interest: actualInterest, penalty: actualPenalty, fee: actualFee, liquidationRatio: actualLiquidationRatio, balance
       } = await funds.methods.funds(numToBytes32(fundId)).call()
 
       expect(fromWei(balance, 'wei')).to.equal(amountToDeposit)
       expect(lender).to.equal(checksumEncode(agentPrincipalAddress))
       expect(maxLoanDur).to.equal(BN(2).pow(256).minus(1).toFixed())
-      expect(maxFundDur).to.equal(fundExpiry.toString())
+      expect(actualFundExpiry).to.equal(fundExpiry.toString())
       expect(actualLiquidationRatio).to.equal(toWei((liquidationRatio / 100).toString(), 'gether'))
       expect(actualInterest).to.equal(toWei(rateToSec(interest.toString()), 'gether'))
       expect(actualPenalty).to.equal(toWei(rateToSec(penalty.toString()), 'gether'))

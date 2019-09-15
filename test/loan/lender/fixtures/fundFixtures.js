@@ -16,8 +16,8 @@ function customDAIFundWithFundExpiryIn100Days (currentTime) {
   }
 }
 
-const fundSchemas = {
+const fundFixtures = {
   customDAIFundWithFundExpiryIn100Days
 }
 
-module.exports = fundSchemas
+module.exports = fundFixtures

@@ -56,61 +56,87 @@ router.post('/withdraw', asyncHandler(async (req, res, next) => {
   res.json({ withdrawHash })
 }))
 
+router.get('/funds/:fundId', asyncHandler(async (req, res, next) => {
+  const { params } = req
+
+  const fund = await Fund.findOne({ _id: params.fundId }).exec()
+  if (!fund) return next(res.createError(401, 'Fund not found'))
+
+  res.json(fund.json())
+}))
+
 router.post('/funds/new', asyncHandler(async (req, res, next) => {
   console.log('start /funds/new')
   let fund
+  const agenda = req.app.get('agenda')
   const { body } = req
-  const { principal, collateral, custom, maxLoanDuration, fundExpiry, compoundEnabled, amount } = body
+  const { principal, collateral, custom } = body
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
   const loanMarket = await LoanMarket.findOne(_.pick(body, ['principal', 'collateral'])).exec()
   if (!loanMarket) return next(res.createError(401, `LoanMarket not found with ${principal} principal and ${collateral} collateral`))
-
   const { principalAddress } = await loanMarket.getAgentAddresses()
 
   if (custom) {
-    const { liquidationRatio, interest, penalty, fee } = body
-    const { minPrincipal, maxPrincipal, minLoanDuration } = loanMarket
+    fund = Fund.fromCustomFundParams(body)
 
-    const fundParams = [
-      toWei(minPrincipal.toString(), currencies[principal].unit),
-      toWei(maxPrincipal.toString(), currencies[principal].unit),
-      minLoanDuration,
-      maxLoanDuration,
-      fundExpiry,
-      toWei((liquidationRatio / 100).toString(), 'gether'), // 150% collateralization ratio
-      toWei(rateToSec(interest.toString()), 'gether'), // 16.50%
-      toWei(rateToSec(penalty.toString()), 'gether'), //  3.00%
-      toWei(rateToSec(fee.toString()), 'gether'), //  0.75%
-      process.env.ETH_ARBITER,
-      compoundEnabled,
-      amount
-    ]
-
-    const fundId = await funds.methods.createCustom(...fundParams).call()
-
-    const { transactionHash } = await funds.methods.createCustom(...fundParams).send({ from: principalAddress, gas: 600000 })
-
-    const fundStruct = await funds.methods.funds(fundId).call()
-
-    fund = Fund.fromCustomFundParams(fundParams, hexToNumber(fundId), transactionHash, principal, collateral)
-    await fund.save()
-  } else {
-    const fundParams = [
-      maxLoanDuration,
-      fundExpiry,
-      process.env.ETH_ARBITER,
-      compoundEnabled,
-      amount
-    ]
-
-    const fundId = await funds.methods.create(...fundParams).call()
-
-    const { transactionHash } = await funds.methods.create(...fundParams).send({ from: principalAddress, gas: 600000 })
-
-    fund = Fund.fromFundParams(fundParams, hexToNumber(fundId), transactionHash)
-    await fund.save()
+    await agenda.now('create-custom-fund', { requestId: fund.id })
   }
+
+  // TODO: Test non-custom fund
+
+  // else {
+  //   await agenda.now('create-fund', { requestId: loan.id })
+  // }
+
+
+
+  // if (custom) {
+  //   const { liquidationRatio, interest, penalty, fee } = body
+  //   const { minPrincipal, maxPrincipal, minLoanDuration } = loanMarket
+
+  //   const fundParams = [
+  //     toWei(minPrincipal.toString(), currencies[principal].unit),
+  //     toWei(maxPrincipal.toString(), currencies[principal].unit),
+  //     minLoanDuration,
+  //     maxLoanDuration,
+  //     fundExpiry,
+  //     toWei((liquidationRatio / 100).toString(), 'gether'), // 150% collateralization ratio
+  //     toWei(rateToSec(interest.toString()), 'gether'), // 16.50%
+  //     toWei(rateToSec(penalty.toString()), 'gether'), //  3.00%
+  //     toWei(rateToSec(fee.toString()), 'gether'), //  0.75%
+  //     process.env.ETH_ARBITER,
+  //     compoundEnabled,
+  //     amount
+  //   ]
+
+  //   const fundId = await funds.methods.createCustom(...fundParams).call()
+
+  //   const { transactionHash } = await funds.methods.createCustom(...fundParams).send({ from: principalAddress, gas: 600000 })
+
+  //   const fundStruct = await funds.methods.funds(fundId).call()
+
+  //   fund = Fund.fromCustomFundParams(fundParams, hexToNumber(fundId), transactionHash, principal, collateral)
+  //   await fund.save()
+  // } else {
+  //   const fundParams = [
+  //     maxLoanDuration,
+  //     fundExpiry,
+  //     process.env.ETH_ARBITER,
+  //     compoundEnabled,
+  //     amount
+  //   ]
+
+  //   const fundId = await funds.methods.create(...fundParams).call()
+
+  //   const { transactionHash } = await funds.methods.create(...fundParams).send({ from: principalAddress, gas: 600000 })
+
+  //   fund = Fund.fromFundParams(fundParams, hexToNumber(fundId), transactionHash)
+  //   await fund.save()
+  // }
+
+  await fund.save()
+
   console.log('end /funds/new')
 
   res.json(fund.json())
@@ -279,6 +305,16 @@ router.post('/loans/cancel_all', asyncHandler(async (req, res, next) => {
 
   res.json({ message: 'Cancelling loans', status: 0 })
 }))
+
+if (process.env.NODE_ENV === 'test') {
+  router.post('/cancel_jobs', asyncHandler(async (req, res, next) => {
+    const agenda = req.app.get('agenda')
+
+    const numRemoved = await agenda.purge()
+
+    res.json({ removed: numRemoved })
+  }))
+}
 
 async function findModels (res, principal, collateral) {
   const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()

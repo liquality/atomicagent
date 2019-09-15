@@ -20,6 +20,10 @@ chai.use(chaiAsPromised)
 const lenderServer = 'http://localhost:3030/api/loan'
 const arbiterServer = 'http://localhost:3032/api/loan'
 
+async function cancelJobs () {
+  await chai.request(lenderServer).post('/cancel_jobs').send()
+}
+
 async function fundArbiter () {
   const unusedAddress = (await chains.web3WithArbiter.client.currentProvider.getAddresses())[0]
   await chains.ethereumWithNode.client.chain.sendTransaction(unusedAddress, toWei('0.05', 'ether'))
@@ -37,7 +41,7 @@ async function fundTokens (recipient, amount, principal) {
   const { address: ethereumWithNodeAddress } = await chains.ethereumWithNode.client.wallet.getUnusedAddress()
 
   const token = await testLoadObject('erc20', process.env[`${principal}_ADDRESS`], chains.web3WithNode, ensure0x(ethereumWithNodeAddress))
-  await token.methods.transfer(recipient, amount).send({ gas: 600000 })
+  await token.methods.transfer(recipient, amount).send({ gas: 100000 })
 }
 
 async function getAgentAddress (server) {
@@ -57,7 +61,7 @@ async function generateSecretHashesArbiter (principal) {
 
   const testFunds = await testLoadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`], chains.web3WithArbiter, address)
   await testFunds.methods.generate(secretHashes).send({ from: address, gas: 6000000 })
-  await testFunds.methods.setPubKey(ensure0x(publicKey.toString('hex'))).send({ from: address, gas: 6000000 })
+  await testFunds.methods.setPubKey(ensure0x(publicKey.toString('hex'))).send({ from: address, gas: 100000 })
 }
 
 async function getLockParams (web3Chain, principal, values, loanId) {
@@ -97,7 +101,7 @@ async function getTestObjects (web3Chain, principal, contracts) {
 
 async function fundWeb3Address (web3Chain) {
   const address = await getWeb3Address(web3Chain)
-  await chains.ethereumWithNode.client.chain.sendTransaction(address, 10000000000000000)
+  await chains.ethereumWithNode.client.chain.sendTransaction(address, 50000000000000000)
 }
 
 async function cancelLoans (chain) {
@@ -120,5 +124,6 @@ module.exports = {
   getTestObject,
   getTestObjects,
   cancelLoans,
+  cancelJobs,
   fundWeb3Address
 }

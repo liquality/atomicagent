@@ -20,7 +20,8 @@
     "test:loan:agent": "mocha test/loan/lender/agent $npm_package_options_mocha",
     "test:loan:loan_market": "mocha test/loan/lender/loanmarket $npm_package_options_mocha",
     "test:loan:withdraw": "mocha test/loan/lender/withdraw $npm_package_options_mocha",
-    "test:loan:funds": "mocha test/loan/lender/funds $npm_package_options_mocha"
+    "test:loan:funds": "mocha test/loan/lender/funds $npm_package_options_mocha",
+    "test:loan:e2e": "mocha test/loan/lender/e2e $npm_package_options_mocha"
   },
   "options": {
     "mocha": "--timeout 200000 --recursive --exit"
