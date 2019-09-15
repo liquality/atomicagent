@@ -20,13 +20,13 @@ chai.use(chaiAsPromised)
 
 const server = 'http://localhost:3030/api/loan'
 
-async function createCustomDAIFund (web3Chain, arbiterChain, amount) {
+async function createCustomFund (web3Chain, arbiterChain, amount, principal) {
   const currentTime = Math.floor(new Date().getTime() / 1000)
   const agentPrincipalAddress = await getAgentAddress(server)
   const address = await getWeb3Address(web3Chain)
   const arbiter = await getWeb3Address(arbiterChain)
-  const fundParams = fundFixtures.customDAIFundWithFundExpiryIn100Days(currentTime)
-  const { principal, fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
+  const fundParams = fundFixtures.customFundWithFundExpiryIn100Days(currentTime, principal)
+  const { fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
   const [ token, funds ] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
   const unit = currencies[principal].unit
   const amountToDeposit = toWei(amount.toString(), unit)
@@ -39,6 +39,8 @@ async function createCustomDAIFund (web3Chain, arbiterChain, amount) {
 
   await token.methods.approve(process.env[`${principal}_LOAN_FUNDS_ADDRESS`], amountToDeposit).send({ gas: 100000 })
   await funds.methods.deposit(numToBytes32(fundId), amountToDeposit).send({ gas: 100000 })
+
+  return fundId
 }
 
 async function checkFundCreated (fundModelId) {
@@ -58,6 +60,6 @@ async function checkFundCreated (fundModelId) {
 }
 
 module.exports = {
-  createCustomDAIFund,
+  createCustomFund,
   checkFundCreated
 }

@@ -73,6 +73,9 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
   const { principal, collateral, custom } = body
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
+  fund = await Fund.findOne(_.pick(body, ['principal', 'collateral'])).exec()
+  if (fund && fund.status === 'CREATED') return next(res.createError(401, 'Fund was already created. Agent can only have one Loan Fund'))
+
   const loanMarket = await LoanMarket.findOne(_.pick(body, ['principal', 'collateral'])).exec()
   if (!loanMarket) return next(res.createError(401, `LoanMarket not found with ${principal} principal and ${collateral} collateral`))
   const { principalAddress } = await loanMarket.getAgentAddresses()
@@ -81,6 +84,10 @@ router.post('/funds/new', asyncHandler(async (req, res, next) => {
     fund = Fund.fromCustomFundParams(body)
 
     await agenda.now('create-custom-fund', { requestId: fund.id })
+  } else {
+    fund = Fund.fromFundParams(body)
+
+    await agenda.now('create-fund', { requestId: loan.id })
   }
 
   // TODO: Test non-custom fund
@@ -146,7 +153,7 @@ router.post('/loans/new', asyncHandler(async (req, res, next) => {
   console.log('start /loans/new')
   const { body } = req
   const { principal, collateral, principalAmount, loanDuration } = body
-  const { loanMarket, market, fund } = await findModels(res, principal, collateral)
+  const { loanMarket, market, fund } = await findModels(res, next, principal, collateral)
   const { rate } = market
   const { fundId } = fund
 
@@ -186,7 +193,7 @@ router.post('/loans/:loanId/proof_of_funds', asyncHandler(async (req, res, next)
     principal, collateral, principalAmount, minimumCollateralAmount, requestLoanDuration, requestExpiresAt, requestCreatedAt, lenderPrincipalAddress, lenderCollateralPublicKey
   } = loan
 
-  const { loanMarket, market } = await findModels(res, principal, collateral)
+  const { loanMarket, market } = await findModels(res, next, principal, collateral)
 
   const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
@@ -316,7 +323,7 @@ if (process.env.NODE_ENV === 'test') {
   }))
 }
 
-async function findModels (res, principal, collateral) {
+async function findModels (res, next, principal, collateral) {
   const loanMarket = await LoanMarket.findOne({ principal, collateral }).exec()
   if (!loanMarket) return next(res.createError(401, 'Loan Market not found'))
 

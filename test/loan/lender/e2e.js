@@ -16,7 +16,7 @@ const { currencies } = require('../../../src/utils/fx')
 const { numToBytes32, rateToSec } = require('../../../src/utils/finance')
 const { testLoadObject } = require('../util/contracts')
 const { sleep } = require('../../../src/utils/async')
-const { createCustomDAIFund } = require('./setup/fundSetup')
+const { createCustomFund } = require('./setup/fundSetup')
 const web3 = require('../../../src/utils/web3')
 
 const { toWei, fromWei } = web3.utils
@@ -181,7 +181,7 @@ async function testSetup (web3Chain, btcChain) {
   await cancelLoans(web3Chain)
   await cancelJobs()
   rewriteEnv('.env', 'MNEMONIC', `"${generateMnemonic(128)}"`)
-  await createCustomDAIFund(web3Chain, arbiterChain, 200) // Create Custom Loan Fund with 200 DAI
+  await createCustomFund(web3Chain, arbiterChain, 200, 'DAI') // Create Custom Loan Fund with 200 DAI
 }
 
 describe('Lender Agent - Funds', () => {
