@@ -49,7 +49,7 @@ async function getAgentAddress (server) {
   const { body: addresses } = await chai.request(server).get(`/agentinfo/${loanMarkets[0].id}`)
   const { principalAddress } = addresses
 
-  return principalAddress
+  return checksumEncode(principalAddress)
 }
 
 async function generateSecretHashesArbiter (principal) {

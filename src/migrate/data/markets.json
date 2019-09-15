@@ -5,7 +5,7 @@
     "min": 0.001,
     "max": 0.05,
     "minConf": 2,
-    "rate": 48.26,
+    "rate": 55.3,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   },
@@ -15,7 +15,7 @@
     "min": 0.25,
     "max": 2.5,
     "minConf": 1,
-    "rate": 0.028,
+    "rate": 0.018,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   },
@@ -25,7 +25,7 @@
     "min": 0.001,
     "max": 0.05,
     "minConf": 1,
-    "rate": 48.26,
+    "rate": 10311.20,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   },
@@ -35,7 +35,7 @@
     "min": 0.001,
     "max": 0.05,
     "minConf": 1,
-    "rate": 48.26,
+    "rate": 10311.20,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   }

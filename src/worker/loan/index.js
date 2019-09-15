@@ -60,6 +60,7 @@ async function requestLoan (txParams, loan, agenda, done) {
         loan.seizableCollateralAmount = seizableCollateral.toFixed(currencies[collateral].decimals)
         loan.loanId = hexToNumber(loanId)
         loan.status = 'AWAITING_COLLATERAL'
+        console.log('AWAITING_COLLATERAL')
 
         loan.save()
 
@@ -187,6 +188,9 @@ function defineLoanJobs (agenda) {
       lenderPrincipalAddress, requestLoanDuration, borrowerCollateralPublicKey, lenderCollateralPublicKey
     } = loan
 
+    console.log('lenderPrincipalAddress', lenderPrincipalAddress)
+    console.log('principal', principal)
+
     const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
 
     const fundId = await funds.methods.fundOwner(ensure0x(lenderPrincipalAddress)).call()
@@ -201,6 +205,8 @@ function defineLoanJobs (agenda) {
       ensure0x(borrowerCollateralPublicKey),
       ensure0x(lenderCollateralPublicKey)
     ]
+
+    console.log('loanParams', loanParams)
 
     const txData = funds.methods.request(...loanParams).encodeABI()
 

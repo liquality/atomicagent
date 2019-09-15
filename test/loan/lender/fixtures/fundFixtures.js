@@ -1,9 +1,9 @@
 const toSecs = require('@mblackmblack/to-seconds')
 
-function customDAIFundWithFundExpiryIn100Days (currentTime) {
+function customFundWithFundExpiryIn100Days (currentTime, principal) {
   return {
     collateral: 'BTC',
-    principal: 'DAI',
+    principal,
     custom: true,
     compoundEnabled: false,
     amount: 0,
@@ -17,7 +17,7 @@ function customDAIFundWithFundExpiryIn100Days (currentTime) {
 }
 
 const fundFixtures = {
-  customDAIFundWithFundExpiryIn100Days
+  customFundWithFundExpiryIn100Days
 }
 
 module.exports = fundFixtures

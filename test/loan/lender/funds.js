@@ -36,12 +36,14 @@ function testFunds (web3Chain, btcChain) {
       const agentPrincipalAddress = await getAgentAddress(server)
       const address = await getWeb3Address(web3Chain)
       const arbiter = await getWeb3Address(arbiterChain)
-      const fundParams = fundFixtures.customDAIFundWithFundExpiryIn100Days(currentTime)
+      const fundParams = fundFixtures.customFundWithFundExpiryIn100Days(currentTime, 'DAI')
       const { principal, fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
       const [ token, funds ] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
       const unit = currencies[principal].unit
       const amountToDeposit = toWei('200', unit)
       await fundTokens(address, amountToDeposit, principal)
+
+      console.log('agentPrincipalAddress', agentPrincipalAddress)
 
       const { body } = await chai.request(server).post('/funds/new').send(fundParams)
       const { id: fundModelId } = body
@@ -64,13 +66,17 @@ function testFunds (web3Chain, btcChain) {
       expect(actualPenalty).to.equal(toWei(rateToSec(penalty.toString()), 'gether'))
       expect(actualFee).to.equal(toWei(rateToSec(fee.toString()), 'gether'))
     })
+
+    it('should return 401 when attempting to create more than one fund', async () => {
+
+    })
   })
 }
 
 async function testSetup (web3Chain, btcChain) {
   await fundAgent(server)
   await fundArbiter()
-  await generateSecretHashesArbiter('DAI')
+  await generateSecretHashesArbiter('USDC')
   await importBitcoinAddresses(btcChain)
   await fundUnusedBitcoinAddress(btcChain)
   await fundWeb3Address(web3Chain)
@@ -81,7 +87,7 @@ async function testSetup (web3Chain, btcChain) {
 }
 
 describe('Lender Agent - Funds', () => {
-  describe.only('Web3HDWallet / BitcoinJs', () => {
+  describe('Web3HDWallet / BitcoinJs', () => {
     before(async function () { await testSetup(chains.web3WithHDWallet, chains.bitcoinWithJs) })
     testFunds(chains.web3WithHDWallet, chains.bitcoinWithJs)
   })
@@ -92,7 +98,7 @@ describe('Lender Agent - Funds', () => {
     testFunds(chains.web3WithMetaMask, chains.bitcoinWithLedger)
   })
 
-  describe('MetaMask / BitcoinJs', () => {
+  describe.only('MetaMask / BitcoinJs', () => {
     connectMetaMask()
     before(async function () { await testSetup(chains.web3WithMetaMask, chains.bitcoinWithJs) })
     testFunds(chains.web3WithMetaMask, chains.bitcoinWithJs)
