@@ -29,7 +29,7 @@ const FundSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
-  maxFundDuration: {
+  fundExpiry: {
     type: Number,
     index: true
   },
@@ -44,6 +44,9 @@ const FundSchema = new mongoose.Schema({
   penalty: {
     type: Number,
     index: true
+  },
+  fee: {
+    type: Number
   },
   balance: {
     type: Number,
@@ -69,8 +72,17 @@ const FundSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  amountToDepositOnCreate: {
+    type: Number,
+    index: true
+  },
   fundId: {
     type: Number,
+    index: true
+  },
+  status: {
+    type: String,
+    enum: ['CREATING', 'CREATED'],
     index: true
   }
 })
@@ -85,26 +97,43 @@ FundSchema.methods.json = function () {
   return json
 }
 
-FundSchema.static('fromCustomFundParams', function (fundParams, fundId, initiationHash, principal, collateral) {
+FundSchema.static('fromCustomFundParams', function (params) {
   return new Fund({
-    minLoanAmount: fundParams[0],
-    maxLoanAmount: fundParams[1],
-    minLoanDuration: fundParams[2],
-    maxLoanDuration: fundParams[3],
-    maxFundDuration: fundParams[4],
-    liquidationRatio: fundParams[5],
-    interest: fundParams[6],
-    penalty: fundParams[7],
-    fee: fundParams[8],
-    compoundEnabled: fundParams[10],
-    custom: true,
-    confirmed: false,
-    initiationHash,
-    fundId,
-    principal,
-    collateral
+    principal: params.principal,
+    collateral: params.collateral,
+    custom: params.custom,
+    maxLoanDuration: params.maxLoanDuration,
+    fundExpiry: params.fundExpiry,
+    compoundEnabled: params.compoundEnabled,
+    liquidationRatio: params.liquidationRatio,
+    interest: params.interest,
+    penalty: params.penalty,
+    fee: params.fee,
+    amountToDepositOnCreate: params.amount,
+    status: 'CREATING'
   })
 })
+
+// FundSchema.static('fromCustomFundParams', function (fundParams, fundId, initiationHash, principal, collateral) {
+//   return new Fund({
+//     minLoanAmount: fundParams[0],
+//     maxLoanAmount: fundParams[1],
+//     minLoanDuration: fundParams[2],
+//     maxLoanDuration: fundParams[3],
+//     maxFundDuration: fundParams[4],
+//     liquidationRatio: fundParams[5],
+//     interest: fundParams[6],
+//     penalty: fundParams[7],
+//     fee: fundParams[8],
+//     compoundEnabled: fundParams[10],
+//     custom: true,
+//     confirmed: false,
+//     initiationHash,
+//     fundId,
+//     principal,
+//     collateral
+//   })
+// })
 
 const Fund = mongoose.model('Fund', FundSchema)
 module.exports = Fund

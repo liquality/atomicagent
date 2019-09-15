@@ -15,7 +15,6 @@ function checkEnv () {
     const path = require('path')
     const env = fs.readFileSync(path.resolve(process.cwd(), '.env'), 'utf-8')
     process.env.ETH_SIGNER = env.match(/ETH_SIGNER=([0-9a-z])\w+/g).toString().replace('ETH_SIGNER=', '')
-    console.log('reset eth_signer', process.env.ETH_SIGNER)
   }
 }
 

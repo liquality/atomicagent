@@ -20,10 +20,36 @@ chai.use(chaiAsPromised)
 const lenderServer = 'http://localhost:3030/api/loan'
 const arbiterServer = 'http://localhost:3032/api/loan'
 
+async function cancelJobs () {
+  await chai.request(lenderServer).post('/cancel_jobs').send()
+}
+
 async function fundArbiter () {
   const unusedAddress = (await chains.web3WithArbiter.client.currentProvider.getAddresses())[0]
-  console.log('arbiterUnusedAddress', unusedAddress)
-  await chains.ethereumWithNode.client.chain.sendTransaction(unusedAddress, toWei('1', 'ether'))
+  await chains.ethereumWithNode.client.chain.sendTransaction(unusedAddress, toWei('0.05', 'ether'))
+}
+
+async function fundAgent (server) {
+  const { body: loanMarkets } = await chai.request(server).get('/loanmarketinfo')
+  const { body: addresses } = await chai.request(server).get(`/agentinfo/${loanMarkets[0].id}`)
+  const { principalAddress } = addresses
+
+  await chains.ethereumWithNode.client.chain.sendTransaction(principalAddress, toWei('0.05', 'ether'))
+}
+
+async function fundTokens (recipient, amount, principal) {
+  const { address: ethereumWithNodeAddress } = await chains.ethereumWithNode.client.wallet.getUnusedAddress()
+
+  const token = await testLoadObject('erc20', process.env[`${principal}_ADDRESS`], chains.web3WithNode, ensure0x(ethereumWithNodeAddress))
+  await token.methods.transfer(recipient, amount).send({ gas: 100000 })
+}
+
+async function getAgentAddress (server) {
+  const { body: loanMarkets } = await chai.request(server).get('/loanmarketinfo')
+  const { body: addresses } = await chai.request(server).get(`/agentinfo/${loanMarkets[0].id}`)
+  const { principalAddress } = addresses
+
+  return principalAddress
 }
 
 async function generateSecretHashesArbiter (principal) {
@@ -35,7 +61,7 @@ async function generateSecretHashesArbiter (principal) {
 
   const testFunds = await testLoadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`], chains.web3WithArbiter, address)
   await testFunds.methods.generate(secretHashes).send({ from: address, gas: 6000000 })
-  await testFunds.methods.setPubKey(ensure0x(publicKey.toString('hex'))).send({ from: address, gas: 6000000 })
+  await testFunds.methods.setPubKey(ensure0x(publicKey.toString('hex'))).send({ from: address, gas: 100000 })
 }
 
 async function getLockParams (web3Chain, principal, values, loanId) {
@@ -64,17 +90,24 @@ async function getTestObject (web3Chain, contract, principal) {
   }
 }
 
+async function getTestObjects (web3Chain, principal, contracts) {
+  let objects = []
+  for (const contract of contracts) {
+    const object = await getTestObject(web3Chain, contract, principal)
+    objects.push(object)
+  }
+  return objects
+}
+
 async function fundWeb3Address (web3Chain) {
   const address = await getWeb3Address(web3Chain)
-  await chains.ethereumWithNode.client.chain.sendTransaction(address, 10000000000000000)
+  await chains.ethereumWithNode.client.chain.sendTransaction(address, 50000000000000000)
 }
 
 async function cancelLoans (chain) {
   const timestamp = Math.floor(new Date().getTime() / 1000)
   const address = await getWeb3Address(chain)
   const message = `Cancel all loans for ${address} at ${timestamp}`
-
-  console.log('message', message)
 
   const signature = await chain.client.eth.personal.sign(message, address)
 
@@ -83,9 +116,14 @@ async function cancelLoans (chain) {
 
 module.exports = {
   fundArbiter,
+  fundAgent,
+  fundTokens,
+  getAgentAddress,
   generateSecretHashesArbiter,
   getLockParams,
   getTestObject,
+  getTestObjects,
   cancelLoans,
+  cancelJobs,
   fundWeb3Address
 }

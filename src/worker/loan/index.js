@@ -1,8 +1,9 @@
+const Fund = require('../../models/Fund')
 const Loan = require('../../models/Loan')
 const LoanMarket = require('../../models/LoanMarket')
 const Market = require('../../models/Market')
 const EthTransaction = require('../../models/EthTransaction')
-const { numToBytes32 } = require('../../utils/finance')
+const { rateToSec, numToBytes32 } = require('../../utils/finance')
 const { loadObject } = require('../../utils/contracts')
 const { ensure0x, remove0x } = require('@liquality/ethereum-utils')
 const keccak256 = require('keccak256')
@@ -13,7 +14,6 @@ const web3 = require('../../utils/web3')
 const { toWei, fromWei, hexToNumber, hexToAscii } = web3.utils
 
 async function requestLoan (txParams, loan, agenda, done) {
-  console.log('requestLoan txParams: ', txParams)
   web3.eth.sendTransaction(txParams)
   .on('transactionHash', (transactionHash) => {
     loan.loanRequestTxHash = transactionHash
@@ -59,7 +59,6 @@ async function requestLoan (txParams, loan, agenda, done) {
         loan.refundableCollateralAmount = refundableCollateral.toFixed(currencies[collateral].decimals)
         loan.seizableCollateralAmount = seizableCollateral.toFixed(currencies[collateral].decimals)
         loan.loanId = hexToNumber(loanId)
-
         loan.status = 'AWAITING_COLLATERAL'
 
         loan.save()
@@ -78,7 +77,103 @@ async function requestLoan (txParams, loan, agenda, done) {
   })
 }
 
+async function createFund (txParams, fund, done) {
+  web3.eth.sendTransaction(txParams)
+  .on('transactionHash', (transactionHash) => {
+    fund.fundCreateTxHash = transactionHash
+    fund.save()
+    console.log('FUND CREATING')
+  })
+  .on('confirmation', async (confirmationNumber, receipt) => {
+    const { principal, collateral } = fund
+    const { loanMarket, market } = await getMarketModels(principal, collateral)
+    const { minConf } = loanMarket
+
+    if (confirmationNumber === minConf) {
+      const fundCreateLog = receipt.logs.filter(log => log.topics[0] === ensure0x(keccak256('Create(bytes32)').toString('hex')))
+
+      if (fundCreateLog.length > 0) {
+        const { data: fundId } = fundCreateLog[0]
+
+        fund.fundId = hexToNumber(fundId)
+        fund.status = 'CREATED'
+        fund.save()
+        console.log('FUND CREATED')
+      } else {
+        console.error('Error: Fund Id could not be found in transaction logs')
+      }
+    }
+  })
+  .on('error', (error) => {
+    console.log(error)
+    done()
+  })
+}
+
 function defineLoanJobs (agenda) {
+  agenda.define('create-custom-fund', async (job, done) => {
+    const { data } = job.attrs
+    const { requestId } = data
+
+    const fund = await Fund.findOne({ _id: requestId }).exec()
+    if (!fund) return console.log('Error: Fund not found')
+
+    const {
+      principal, collateral, custom, maxLoanDuration, fundExpiry, compoundEnabled, liquidationRatio, interest, penalty, fee, amountToDepositOnCreate
+    } = fund
+
+    const { loanMarket } = await getMarketModels(principal, collateral)
+    const { minPrincipal, maxPrincipal, minLoanDuration } = loanMarket
+    const { principalAddress: lenderPrincipalAddress } = await loanMarket.getAgentAddresses()
+
+    const fundParams = [
+      toWei(minPrincipal.toString(), currencies[principal].unit),
+      toWei(maxPrincipal.toString(), currencies[principal].unit),
+      minLoanDuration,
+      maxLoanDuration,
+      fundExpiry,
+      toWei((liquidationRatio / 100).toString(), 'gether'), // 150% collateralization ratio
+      toWei(rateToSec(interest.toString()), 'gether'), // 16.50%
+      toWei(rateToSec(penalty.toString()), 'gether'), //  3.00%
+      toWei(rateToSec(fee.toString()), 'gether'), //  0.75%
+      process.env.ETH_ARBITER,
+      compoundEnabled,
+      toWei(amountToDepositOnCreate.toString(), currencies[principal].unit)
+    ]
+
+    const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
+
+    const txData = funds.methods.createCustom(...fundParams).encodeABI()
+
+    const txParams = {
+      from: ensure0x(lenderPrincipalAddress),
+      to: process.env[`${principal}_LOAN_FUNDS_ADDRESS`],
+      data: txData
+    }
+
+    const [ nonce, gasPrice, gasLimit ] = await Promise.all([
+      web3.eth.getTransactionCount(ensure0x(lenderPrincipalAddress)),
+      web3.eth.getGasPrice(),
+      web3.eth.estimateGas(txParams)
+    ])
+
+    txParams.nonce = nonce
+    txParams.gasPrice = gasPrice
+    txParams.gasLimit = gasLimit + 1000000
+
+    const ethTransaction = EthTransaction.fromTxParams(txParams)
+    await ethTransaction.save()
+
+    // TODO
+    // await agenda.schedule('in 2 minutes', 'verify-create-custom-fund', { ethTransactionId: ethTransaction.id, fundId: fund.id })
+
+    await createFund(txParams, fund, done)
+  })
+
+  agenda.define('create-fund', async (job, done) => {
+
+  })
+
   agenda.define('request-loan', async (job, done) => {
     const { data } = job.attrs
     const { requestId } = data
@@ -125,8 +220,6 @@ function defineLoanJobs (agenda) {
     txParams.gasPrice = gasPrice
     txParams.gasLimit = gasLimit + 1000000
 
-    console.log('txParams', txParams)
-
     const ethTransaction = EthTransaction.fromTxParams(txParams)
     await ethTransaction.save()
 
@@ -138,8 +231,6 @@ function defineLoanJobs (agenda) {
   agenda.define('verify-request-loan', async (job, done) => {
     const { data } = job.attrs
     const { ethTransactionId, loanId } = data
-
-    console.log('verify-request loan')
 
     const ethTransaction = await EthTransaction.findOne({ _id: ethTransactionId }).exec()
     if (!ethTransaction) return console.log('Error: EthTransaction not found')
@@ -222,7 +313,6 @@ function defineLoanJobs (agenda) {
       })
       .on('confirmation', async (confirmationNumber, receipt) => {
         if (confirmationNumber === minConf) {
-          console.log('receipt', receipt)
           console.log('APPROVED')
           loan.status = 'APPROVED'
           loan.save()
@@ -278,7 +368,6 @@ function defineLoanJobs (agenda) {
       })
       .on('confirmation', async (confirmationNumber, receipt) => {
         if (confirmationNumber === minConf) {
-          console.log('receipt', receipt)
           if (paid) {
             console.log('ACCEPTED')
             loan.status = 'ACCEPTED'

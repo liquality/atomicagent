@@ -37,6 +37,9 @@ const LoanMarketSchema = new mongoose.Schema({
   requestExpiresIn: {
     type: Number
   },
+  fundCreateTxHash: {
+    type: String
+  },
   status: {
     type: String,
     enum: ['ACTIVE', 'INACTIVE'],
