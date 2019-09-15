@@ -65,6 +65,17 @@ router.get('/funds/:fundId', asyncHandler(async (req, res, next) => {
   res.json(fund.json())
 }))
 
+router.get('/funds/ticker/:principal', asyncHandler(async (req, res, next) => {
+  const { params } = req
+
+  console.log('params', params)
+
+  const fund = await Fund.findOne({ principal: params.principal }).exec()
+  if (!fund) return next(res.createError(401, 'Fund not found'))
+
+  res.json(fund.json())
+}))
+
 router.post('/funds/new', asyncHandler(async (req, res, next) => {
   console.log('start /funds/new')
   let fund

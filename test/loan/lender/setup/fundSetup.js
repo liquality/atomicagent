@@ -43,6 +43,24 @@ async function createCustomFund (web3Chain, arbiterChain, amount, principal) {
   return fundId
 }
 
+async function depositToFund (web3Chain, amount, principal) {
+  const address = await getWeb3Address(web3Chain)
+  const [ token, funds ] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
+  const unit = currencies[principal].unit
+  const amountToDeposit = toWei(amount.toString(), unit)
+  await fundTokens(address, amountToDeposit, principal)
+
+  const { body, status } = await chai.request(server).get(`/funds/ticker/${principal}`)
+  console.log('body', body)
+  console.log('status', status)
+  const { fundId } = body
+
+  await token.methods.approve(process.env[`${principal}_LOAN_FUNDS_ADDRESS`], amountToDeposit).send({ gas: 100000 })
+  await funds.methods.deposit(numToBytes32(fundId), amountToDeposit).send({ gas: 100000 })
+
+  return fundId
+}
+
 async function checkFundCreated (fundModelId) {
   let created = false
   let fundId
@@ -61,5 +79,6 @@ async function checkFundCreated (fundModelId) {
 
 module.exports = {
   createCustomFund,
+  depositToFund,
   checkFundCreated
 }
