@@ -29,7 +29,7 @@ const server = 'http://localhost:3030/api/loan'
 
 const arbiterChain = chains.web3WithArbiter
 
-function testFunds (web3Chain, btcChain) {
+function testFunds (web3Chain) {
   describe('Create Custom Loan Fund', () => {
     it('should create a new loan fund and deposit funds into it', async () => {
       const currentTime = Math.floor(new Date().getTime() / 1000)
@@ -73,34 +73,33 @@ function testFunds (web3Chain, btcChain) {
   })
 }
 
-async function testSetup (web3Chain, btcChain) {
+async function testSetup (web3Chain) {
   await fundAgent(server)
   await fundArbiter()
-  await generateSecretHashesArbiter('USDC')
-  await importBitcoinAddresses(btcChain)
-  await fundUnusedBitcoinAddress(btcChain)
+  await generateSecretHashesArbiter('DAI')
   await fundWeb3Address(web3Chain)
   const address = await getWeb3Address(web3Chain)
   rewriteEnv('.env', 'ETH_SIGNER', address)
   await cancelLoans(web3Chain)
   rewriteEnv('.env', 'MNEMONIC', `"${generateMnemonic(128)}"`)
+  console.log('before each')
 }
 
 describe('Lender Agent - Funds', () => {
-  describe('Web3HDWallet / BitcoinJs', () => {
-    before(async function () { await testSetup(chains.web3WithHDWallet, chains.bitcoinWithJs) })
+  describe.only('Web3HDWallet / BitcoinJs', () => {
+    beforeEach(async function () { await testSetup(chains.web3WithHDWallet, chains.bitcoinWithJs) })
     testFunds(chains.web3WithHDWallet, chains.bitcoinWithJs)
   })
 
   describe('MetaMask / Ledger', () => {
     connectMetaMask()
-    before(async function () { await testSetup(chains.web3WithMetaMask, chains.bitcoinWithLedger) })
+    beforeEach(async function () { await testSetup(chains.web3WithMetaMask, chains.bitcoinWithLedger) })
     testFunds(chains.web3WithMetaMask, chains.bitcoinWithLedger)
   })
 
-  describe.only('MetaMask / BitcoinJs', () => {
+  describe('MetaMask / BitcoinJs', () => {
     connectMetaMask()
-    before(async function () { await testSetup(chains.web3WithMetaMask, chains.bitcoinWithJs) })
+    beforeEach(async function () { await testSetup(chains.web3WithMetaMask, chains.bitcoinWithJs) })
     testFunds(chains.web3WithMetaMask, chains.bitcoinWithJs)
   })
 })

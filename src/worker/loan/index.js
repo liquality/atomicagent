@@ -82,6 +82,7 @@ async function createFund (txParams, fund, done) {
   web3.eth.sendTransaction(txParams)
   .on('transactionHash', (transactionHash) => {
     fund.fundCreateTxHash = transactionHash
+    fund.status = 'CREATING'
     fund.save()
     console.log('FUND CREATING')
   })
@@ -172,7 +173,53 @@ function defineLoanJobs (agenda) {
   })
 
   agenda.define('create-fund', async (job, done) => {
+    const { data } = job.attrs
+    const { requestId } = data
 
+    const fund = await Fund.findOne({ _id: requestId }).exec()
+    if (!fund) return console.log('Error: Fund not found')
+
+    const { principal, collateral, custom, maxLoanDuration, fundExpiry, compoundEnabled, amountToDepositOnCreate } = fund
+
+    const { loanMarket } = await getMarketModels(principal, collateral)
+    const { minPrincipal, maxPrincipal, minLoanDuration } = loanMarket
+    const { principalAddress: lenderPrincipalAddress } = await loanMarket.getAgentAddresses()
+
+    const fundParams = [
+      maxLoanDuration,
+      fundExpiry,
+      process.env.ETH_ARBITER,
+      compoundEnabled,
+      toWei(amountToDepositOnCreate.toString(), currencies[principal].unit)
+    ]
+
+    const funds = await loadObject('funds', process.env[`${principal}_LOAN_FUNDS_ADDRESS`])
+
+    const txData = funds.methods.create(...fundParams).encodeABI()
+
+    const txParams = {
+      from: ensure0x(lenderPrincipalAddress),
+      to: process.env[`${principal}_LOAN_FUNDS_ADDRESS`],
+      data: txData
+    }
+
+    const [ nonce, gasPrice, gasLimit ] = await Promise.all([
+      web3.eth.getTransactionCount(ensure0x(lenderPrincipalAddress)),
+      web3.eth.getGasPrice(),
+      web3.eth.estimateGas(txParams)
+    ])
+
+    txParams.nonce = nonce
+    txParams.gasPrice = gasPrice
+    txParams.gasLimit = gasLimit + 1000000
+
+    const ethTransaction = EthTransaction.fromTxParams(txParams)
+    await ethTransaction.save()
+
+    // TODO
+    // await agenda.schedule('in 2 minutes', 'verify-create-custom-fund', { ethTransactionId: ethTransaction.id, fundId: fund.id })
+
+    await createFund(txParams, fund, done)
   })
 
   agenda.define('request-loan', async (job, done) => {

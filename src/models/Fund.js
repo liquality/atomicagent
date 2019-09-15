@@ -82,7 +82,7 @@ const FundSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['CREATING', 'CREATED'],
+    enum: ['INITIATED', 'CREATING', 'CREATED'],
     index: true
   }
 })
@@ -110,7 +110,20 @@ FundSchema.static('fromCustomFundParams', function (params) {
     penalty: params.penalty,
     fee: params.fee,
     amountToDepositOnCreate: params.amount,
-    status: 'CREATING'
+    status: 'INITIATED'
+  })
+})
+
+FundSchema.static('fromFundParams', function (params) {
+  return new Fund({
+    principal: params.principal,
+    collateral: params.collateral,
+    custom: params.custom,
+    maxLoanDuration: params.maxLoanDuration,
+    fundExpiry: params.fundExpiry,
+    compoundEnabled: params.compoundEnabled,
+    amountToDepositOnCreate: params.amount,
+    status: 'INITIATED'
   })
 })
 

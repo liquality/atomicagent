@@ -332,6 +332,11 @@ if (process.env.NODE_ENV === 'test') {
 
     res.json({ removed: numRemoved })
   }))
+
+  router.post('/remove_funds', asyncHandler(async (req, res, next) => {
+    await Fund.deleteMany()
+
+    res.json({ message: 'Removed all funds' })
 }
 
 async function findModels (res, next, principal, collateral) {
