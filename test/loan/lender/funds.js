@@ -27,33 +27,25 @@ const server = 'http://localhost:3030/api/loan'
 
 const arbiterChain = chains.web3WithArbiter
 
+const WAD = BN(10).pow(18)
+
 function testFunds (web3Chain) {
   describe('Create Custom Loan Fund', () => {
     it('should create a new loan fund and deposit funds into it', async () => {
-      const currentTime = Math.floor(new Date().getTime() / 1000)
-      const agentPrincipalAddress = await getAgentAddress(server)
-      const address = await getWeb3Address(web3Chain)
-      const fundParams = fundFixtures.customFundWithFundExpiryIn100Days(currentTime, 'DAI')
-      const { principal, fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
-      const [token, funds] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
-      const unit = currencies[principal].unit
-      const amountToDeposit = toWei('200', unit)
-      await fundTokens(address, amountToDeposit, principal)
+      const principal = 'DAI'
+      const amount = 200
+      const fixture = fundFixtures.customFundWithFundExpiryIn100Days
+      const [funds] = await getTestObjects(web3Chain, principal, ['funds'])
 
-      const { body } = await chai.request(server).post('/funds/new').send(fundParams)
-      const { id: fundModelId } = body
-
-      const fundId = await checkFundCreated(fundModelId)
-
-      await token.methods.approve(process.env[`${principal}_LOAN_FUNDS_ADDRESS`], amountToDeposit).send({ gas: 100000 })
-      await funds.methods.deposit(numToBytes32(fundId), amountToDeposit).send({ gas: 100000 })
+      const { fundId, fundParams, amountDeposited, agentAddress } = await createFundFromFixture(web3Chain, fixture, principal, amount)
+      const { fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
 
       const {
         lender, maxLoanDur, fundExpiry: actualFundExpiry, interest: actualInterest, penalty: actualPenalty, fee: actualFee, liquidationRatio: actualLiquidationRatio, balance
       } = await funds.methods.funds(numToBytes32(fundId)).call()
 
-      expect(fromWei(balance, 'wei')).to.equal(amountToDeposit)
-      expect(lender).to.equal(checksumEncode(agentPrincipalAddress))
+      expect(fromWei(balance, 'wei')).to.equal(amountDeposited)
+      expect(lender).to.equal(checksumEncode(agentAddress))
       expect(maxLoanDur).to.equal(BN(2).pow(256).minus(1).toFixed())
       expect(actualFundExpiry).to.equal(fundExpiry.toString())
       expect(actualLiquidationRatio).to.equal(toWei((liquidationRatio / 100).toString(), 'gether'))
@@ -83,14 +75,34 @@ function testFunds (web3Chain) {
 
       expect(status).to.equal(200)
     })
-
-    // it('should bump tx fee if tx stuck in mempool', async () => {
-
-    // })
   })
 
   describe('Create Custom Loan Fund with Compound Enabled', () => {
-    
+    it('should create a new loan fund and deposit funds into it', async () => {
+      const principal = 'DAI'
+      const amount = 200
+      const fixture = fundFixtures.customFundWithFundExpiryIn100DaysAndCompoundEnabled
+      const [funds, ctoken] = await getTestObjects(web3Chain, principal, ['funds', 'ctoken'])
+
+      const { fundId, fundParams, amountDeposited, agentAddress } = await createFundFromFixture(web3Chain, fixture, principal, amount)
+      const { fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
+
+      const {
+        lender, maxLoanDur, fundExpiry: actualFundExpiry, interest: actualInterest, penalty: actualPenalty, fee: actualFee, liquidationRatio: actualLiquidationRatio, cBalance
+      } = await funds.methods.funds(numToBytes32(fundId)).call()
+
+      const exchangeRateCurrent = await ctoken.methods.exchangeRateCurrent().call()
+      const expectedCBalance = BN(amountDeposited).times(WAD).dividedBy(exchangeRateCurrent).toString()
+
+      expect(fromWei(cBalance, 'wei')).to.equal(expectedCBalance)
+      expect(lender).to.equal(checksumEncode(agentAddress))
+      expect(maxLoanDur).to.equal(BN(2).pow(256).minus(1).toFixed())
+      expect(actualFundExpiry).to.equal(fundExpiry.toString())
+      expect(actualLiquidationRatio).to.equal(toWei((liquidationRatio / 100).toString(), 'gether'))
+      expect(actualInterest).to.equal(toWei(rateToSec(interest.toString()), 'gether'))
+      expect(actualPenalty).to.equal(toWei(rateToSec(penalty.toString()), 'gether'))
+      expect(actualFee).to.equal(toWei(rateToSec(fee.toString()), 'gether'))
+    })
   })
 
   describe('Create Regular Loan Fund', () => {
@@ -103,7 +115,6 @@ function testFunds (web3Chain) {
       const [token, funds] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
       const unit = currencies[principal].unit
       const amountToDeposit = toWei('200', unit)
-      await fundTokens(address, amountToDeposit, principal)
       await fundTokens(address, amountToDeposit, principal)
 
       const { body } = await chai.request(server).post('/funds/new').send(fundParams)
@@ -126,8 +137,50 @@ function testFunds (web3Chain) {
   })
 
   describe('Create Regular Loan Fund with Compound Enabled', () => {
+    it('should create a new loan fund and deposit funds into it', async () => {
+      const principal = 'DAI'
+      const amount = 200
+      const fixture = fundFixtures.fundWithFundExpiryIn100DaysAndCompoundEnabled
+      const [funds, ctoken] = await getTestObjects(web3Chain, principal, ['funds', 'ctoken'])
 
+      const { fundId, fundParams, amountDeposited, agentAddress } = await createFundFromFixture(web3Chain, fixture, principal, amount)
+      const { fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
+
+      const {
+        lender, maxLoanDur, fundExpiry: actualFundExpiry, interest: actualInterest, penalty: actualPenalty, fee: actualFee, liquidationRatio: actualLiquidationRatio, cBalance
+      } = await funds.methods.funds(numToBytes32(fundId)).call()
+
+      const exchangeRateCurrent = await ctoken.methods.exchangeRateCurrent().call()
+      const expectedCBalance = BN(amountDeposited).times(WAD).dividedBy(exchangeRateCurrent).toString()
+
+      expect(fromWei(cBalance, 'wei')).to.equal(expectedCBalance)
+      expect(lender).to.equal(checksumEncode(agentAddress))
+      expect(maxLoanDur).to.equal(BN(2).pow(256).minus(1).toFixed())
+      expect(actualFundExpiry).to.equal(fundExpiry.toString())
+    })
   })
+}
+
+async function createFundFromFixture (web3Chain, fixture, principal_, amount) {
+  const currentTime = Math.floor(new Date().getTime() / 1000)
+  const agentPrincipalAddress = await getAgentAddress(server)
+  const address = await getWeb3Address(web3Chain)
+  const fundParams = fixture(currentTime, principal_)
+  const { principal, fundExpiry, liquidationRatio, interest, penalty, fee } = fundParams
+  const [token, funds] = await getTestObjects(web3Chain, principal, ['erc20', 'funds'])
+  const unit = currencies[principal].unit
+  const amountToDeposit = toWei(amount.toString(), unit)
+  await fundTokens(address, amountToDeposit, principal)
+
+  const { body } = await chai.request(server).post('/funds/new').send(fundParams)
+  const { id: fundModelId } = body
+
+  const fundId = await checkFundCreated(fundModelId)
+
+  await token.methods.approve(process.env[`${principal}_LOAN_FUNDS_ADDRESS`], amountToDeposit).send({ gas: 500000 })
+  await funds.methods.deposit(numToBytes32(fundId), amountToDeposit).send({ gas: 2000000 })
+
+  return { fundId, fundParams, agentAddress: agentPrincipalAddress, amountDeposited: amountToDeposit }
 }
 
 async function testSetup (web3Chain) {
@@ -144,9 +197,9 @@ async function testSetup (web3Chain) {
 }
 
 describe('Lender Agent - Funds', () => {
-  describe.only('Web3HDWallet / BitcoinJs', () => {
-    beforeEach(async function () { await testSetup(chains.web3WithHDWallet, chains.bitcoinWithJs) })
-    testFunds(chains.web3WithHDWallet, chains.bitcoinWithJs)
+  describe('Web3HDWallet / BitcoinJs', () => {
+    beforeEach(async function () { await testSetup(chains.web3WithHDWallet) })
+    testFunds(chains.web3WithHDWallet)
   })
 
   // describe('MetaMask / Ledger', () => {

@@ -80,8 +80,9 @@ async function getLockParams (web3Chain, principal, values, loanId) {
 
 async function getTestObject (web3Chain, contract, principal) {
   const address = await getWeb3Address(web3Chain)
-  if (contract === 'erc20') {
-    return testLoadObject(contract, process.env[`${principal}_ADDRESS`], web3Chain, address)
+  if (contract === 'erc20' || contract === 'ctoken') {
+    const cPrefix = contract === 'ctoken' ? 'C' : ''
+    return testLoadObject(contract, process.env[`${cPrefix}${principal}_ADDRESS`], web3Chain, address)
   } else {
     return testLoadObject(contract, process.env[`${principal}_LOAN_${contract.toUpperCase()}_ADDRESS`], web3Chain, address)
   }
@@ -98,7 +99,7 @@ async function getTestObjects (web3Chain, principal, contracts) {
 
 async function fundWeb3Address (web3Chain) {
   const address = await getWeb3Address(web3Chain)
-  await chains.ethereumWithNode.client.chain.sendTransaction(address, 50000000000000000)
+  await chains.ethereumWithNode.client.chain.sendTransaction(address, 140000000000000000)
 }
 
 async function cancelLoans (chain) {
