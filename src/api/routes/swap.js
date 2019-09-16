@@ -40,7 +40,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   const agenda = req.app.get('agenda')
   const { params, body } = req
 
-  const order = await Order.findOne({ _id: params.orderId }).exec()
+  const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
 
   ;['fromAddress', 'toAddress', 'fromFundHash', 'secretHash', 'swapExpiration'].forEach(key => {
@@ -58,7 +58,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
 router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
   const { params } = req
 
-  const order = await Order.findOne({ _id: params.orderId }).exec()
+  const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
 
   res.json(order.json())
