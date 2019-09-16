@@ -16,8 +16,22 @@ function customFundWithFundExpiryIn100Days (currentTime, principal) {
   }
 }
 
+function fundWithFundExpiryIn100Days (currentTime, principal) {
+  return {
+    collateral: 'BTC',
+    principal,
+    custom: false,
+    compoundEnabled: false,
+    amount: 0,
+    maxLoanDuration: 0,
+    fundExpiry: currentTime + toSecs({ days: 100 }),
+  }
+}
+
+
 const fundFixtures = {
-  customFundWithFundExpiryIn100Days
+  customFundWithFundExpiryIn100Days,
+  fundWithFundExpiryIn100Days
 }
 
 module.exports = fundFixtures
