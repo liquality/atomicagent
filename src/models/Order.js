@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const uuidv4 = require('uuid/v4')
 
 const clients = require('../utils/clients')
+const crypto = require('../utils/crypto')
 
 const OrderSchema = new mongoose.Schema({
   orderId: {
@@ -77,6 +78,14 @@ const OrderSchema = new mongoose.Schema({
     index: true
   },
 
+  passphraseHash: {
+    type: String
+  },
+
+  passphraseSalt: {
+    type: String
+  },
+
   status: {
     type: String,
     enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED'],
@@ -102,6 +111,24 @@ OrderSchema.methods.json = function () {
   delete json.__v
 
   return json
+}
+
+OrderSchema.methods.setPassphrase = function (passphrase) {
+  if (this.passphraseHash) throw new Error('Passphrase already exists')
+
+  const {
+    salt,
+    hash
+  } = crypto.hash(passphrase)
+
+  this.passphraseSalt = salt
+  this.passphraseHash = hash
+}
+
+OrderSchema.methods.verifyPassphrase = function (passphrase) {
+  if (!this.passphraseHash) throw new Error('Passphrase doesn\'t exists')
+
+  return crypto.verify(passphrase, this.passphraseSalt, this.passphraseHash)
 }
 
 OrderSchema.methods.setAgentAddresses = async function () {
