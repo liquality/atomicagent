@@ -29,6 +29,11 @@ router.post('/order', asyncHandler(async (req, res, next) => {
   }
 
   const order = Order.fromMarket(market, body.amount)
+  const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
+
+  if (passphrase) {
+    order.setPassphrase(passphrase)
+  }
 
   await order.setAgentAddresses()
   await order.save()
@@ -43,6 +48,13 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
 
+  if (order.passphraseHash) {
+    const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
+
+    if (!passphrase) return next(res.createError(401, 'You are not authorised'))
+    if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
+  }
+
   ;['fromAddress', 'toAddress', 'fromFundHash', 'secretHash', 'swapExpiration'].forEach(key => {
     if (!body[key]) return next(res.createError(401, `${key} is missing`))
     order[key] = body[key]
@@ -50,16 +62,23 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
 
   order.status = 'QUOTE'
   await order.save()
-  await agenda.now('verify-user-init-tx', { orderId: order.id })
+  await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
   res.json(order.json())
 }))
 
 router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
-  const { params } = req
+  const { params, query } = req
 
   const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
+
+  if (order.passphraseHash) {
+    const passphrase = query.passphrase || req.get('X-Liquality-Agent-Passphrase')
+
+    if (!passphrase) return next(res.createError(401, 'You are not authorised'))
+    if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
+  }
 
   res.json(order.json())
 }))
