@@ -12,7 +12,7 @@ module.exports = agenda => async (job, done) => {
   // TODO: remove wait() from CAL
   await order.fromClient().swap.verifyInitiateSwapTransaction(
     order.fromFundHash,
-    order.amount,
+    order.fromAmount,
     order.fromCounterPartyAddress,
     order.fromAddress,
     order.secretHash,

@@ -34,7 +34,7 @@ describe('marketinfo', () => {
         .send({
           "from": "BTC",
           "to": "ETH",
-          "amount": 0.51
+          "fromAmount": 51000000
         })
         .end((err, res) => {
           res.should.have.status(200);
@@ -50,7 +50,6 @@ describe('marketinfo', () => {
       chai.request(server)
         .post('/order')
         .send({
-          "amount": 0.01,
           "fromAddress": "mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk",
           "toAddress": "0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b",
           "fundHash": "39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0",
