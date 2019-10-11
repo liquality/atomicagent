@@ -4,7 +4,8 @@ const cryptoassets = require('@liquality/cryptoassets').default
 function calculateToAmount (from, to, fromAmount, rate) {
   const fromAmountBase = cryptoassets[from.toLowerCase()].unitToCurrency(fromAmount)
   const toBaseAmount = BN(fromAmountBase).times(rate).toNumber()
-  return cryptoassets[to.toLowerCase()].currencyToUnit(toBaseAmount)
+  const toAmount = Math.floor(cryptoassets[to.toLowerCase()].currencyToUnit(toBaseAmount))
+  return toAmount
 }
 
 module.exports = { calculateToAmount }
