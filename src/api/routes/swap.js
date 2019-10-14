@@ -22,13 +22,13 @@ router.post('/order', asyncHandler(async (req, res, next) => {
   const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
   if (!market) return next(res.createError(401, 'Market not found'))
 
-  const { amount } = body
-  if (!(market.min <= amount &&
-      amount <= market.max)) {
+  const { fromAmount } = body
+  if (!(market.min <= fromAmount &&
+    fromAmount <= market.max)) {
     return next(res.createError(401, 'Invalid amount'))
   }
 
-  const order = Order.fromMarket(market, body.amount)
+  const order = Order.fromMarket(market, body.fromAmount)
   const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
   if (passphrase) {

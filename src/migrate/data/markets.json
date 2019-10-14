@@ -2,8 +2,8 @@
   {
     "from": "BTC",
     "to": "ETH",
-    "min": 0.001,
-    "max": 0.05,
+    "min": 100000,
+    "max": 5000000,
     "minConf": 2,
     "rate": 48.26,
     "orderExpiresIn": 3600000,
@@ -12,8 +12,8 @@
   {
     "from": "ETH",
     "to": "BTC",
-    "min": 0.25,
-    "max": 2.5,
+    "min": 250000000000000000,
+    "max": 2500000000000000000,
     "minConf": 1,
     "rate": 0.028,
     "orderExpiresIn": 3600000,

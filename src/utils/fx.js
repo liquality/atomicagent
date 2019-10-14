@@ -1,8 +1,11 @@
 const BN = require('bignumber.js')
+const cryptoassets = require('@liquality/cryptoassets').default
 
-const MAP = {
-  ETH: 1e18,
-  BTC: 1e8
+function calculateToAmount (from, to, fromAmount, rate) {
+  const fromAmountBase = cryptoassets[from.toLowerCase()].unitToCurrency(fromAmount)
+  const toBaseAmount = BN(fromAmountBase).times(rate).toNumber()
+  const toAmount = Math.floor(cryptoassets[to.toLowerCase()].currencyToUnit(toBaseAmount))
+  return toAmount
 }
 
-module.exports = (from, amountInHighestDenomination, to, rate) => (BN(amountInHighestDenomination).times(rate)).times(MAP[to])
+module.exports = { calculateToAmount }

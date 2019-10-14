@@ -3,6 +3,7 @@ const uuidv4 = require('uuid/v4')
 const assets = require('@liquality/cryptoassets').default
 const clients = require('../utils/clients')
 const crypto = require('../utils/crypto')
+const { calculateToAmount } = require('../utils/fx')
 
 const OrderSchema = new mongoose.Schema({
   orderId: {
@@ -18,7 +19,11 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     index: true
   },
-  amount: {
+  fromAmount: {
+    type: Number,
+    index: true
+  },
+  toAmount: {
     type: Number,
     index: true
   },
@@ -141,10 +146,11 @@ OrderSchema.methods.setAgentAddresses = async function () {
   this.toCounterPartyAddress = assets[this.to.toLowerCase()].formatAddress(toAddresses.address)
 }
 
-OrderSchema.static('fromMarket', function (market, amount) {
+OrderSchema.static('fromMarket', function (market, fromAmount) {
   return new Order({
     orderId: uuidv4(),
-    amount,
+    fromAmount,
+    toAmount: calculateToAmount(market.from, market.to, fromAmount, market.rate),
     from: market.from,
     to: market.to,
     rate: market.rate,
