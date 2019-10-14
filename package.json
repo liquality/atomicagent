@@ -17,6 +17,7 @@
     "@liquality/bitcoin-swap-provider": "^0.3.2",
     "@liquality/client": "^0.3.2",
     "@liquality/crypto": "^0.3.2",
+    "@liquality/cryptoassets": "0.0.8",
     "@liquality/ethereum-rpc-provider": "^0.3.2",
     "@liquality/ethereum-swap-provider": "^0.3.2",
     "@sentry/node": "^5.5.0",

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const uuidv4 = require('uuid/v4')
-
+const assets = require('@liquality/cryptoassets').default
 const clients = require('../utils/clients')
 const crypto = require('../utils/crypto')
 
@@ -134,11 +134,11 @@ OrderSchema.methods.verifyPassphrase = function (passphrase) {
 OrderSchema.methods.setAgentAddresses = async function () {
   if (this.fromCounterPartyAddress) throw new Error('Address exists')
 
-  const fromAddresses = await this.fromClient().wallet.getAddresses()
-  const toAddresses = await this.toClient().wallet.getAddresses()
+  const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
+  const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = fromAddresses[0].address
-  this.toCounterPartyAddress = toAddresses[0].address
+  this.fromCounterPartyAddress = assets[this.from.toLowerCase()].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = assets[this.to.toLowerCase()].formatAddress(toAddresses.address)
 }
 
 OrderSchema.static('fromMarket', function (market, amount) {
