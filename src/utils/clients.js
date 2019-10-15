@@ -1,7 +1,7 @@
 const Client = require('@liquality/client')
 
 const {
-  BTC_RPC, BTC_USER, BTC_PASS,
+  BTC_RPC, BTC_NETWORK, BTC_USER, BTC_PASS,
   ETH_RPC, ETH_USER, ETH_PASS
 } = process.env
 
@@ -15,8 +15,8 @@ const EthereumSwapProvider = require('@liquality/ethereum-swap-provider')
 
 const BTC = new Client()
 BTC.addProvider(new BitcoinRpcProvider(BTC_RPC, BTC_USER, BTC_PASS))
-BTC.addProvider(new BitcoinNodeWalletProvider(BitcoinNetworks['bitcoin_regtest'], BTC_RPC, BTC_USER, BTC_PASS))
-BTC.addProvider(new BitcoinSwapProvider({ network: BitcoinNetworks['bitcoin_regtest'] }))
+BTC.addProvider(new BitcoinNodeWalletProvider(BitcoinNetworks[BTC_NETWORK], BTC_RPC, BTC_USER, BTC_PASS))
+BTC.addProvider(new BitcoinSwapProvider({ network: BitcoinNetworks[BTC_NETWORK] }))
 
 const ETH = new Client()
 ETH.addProvider(new EthereumRpcProvider(ETH_RPC, ETH_USER, ETH_PASS))
