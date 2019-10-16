@@ -7,7 +7,6 @@ module.exports = agenda => async (job, done) => {
   if (!order) return done()
 
   try {
-    // TODO: remove wait() from CAL
     await order.fromClient().swap.claimSwap(
       order.fromFundHash,
       order.fromCounterPartyAddress,
