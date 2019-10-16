@@ -35,7 +35,7 @@ const OrderSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
-  orderExpiresAt: {
+  expiresAt: {
     type: Number,
     index: true
   },
@@ -93,7 +93,7 @@ const OrderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED'],
+    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'EXPIRED'],
     index: true
   }
 })
@@ -156,7 +156,7 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     rate: market.rate,
     minConf: market.minConf,
 
-    orderExpiresAt: Date.now() + market.orderExpiresIn,
+    expiresAt: Date.now() + market.orderExpiresIn,
     status: 'QUOTE'
   })
 })
