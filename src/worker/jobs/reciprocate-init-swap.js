@@ -6,9 +6,7 @@ module.exports = agenda => async (job, done) => {
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return done()
 
-  const nodeExp = order.swapExpiration - (60 * 60 * 6)
-
-  const tx = await order.toClient().swap.initiateSwap(order.toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, nodeExp)
+  const tx = await order.toClient().swap.initiateSwap(order.toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, order.nodeExpiration)
   console.log('Initiated funding transaction', order.orderId, tx)
 
   order.toFundHash = tx
