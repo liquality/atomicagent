@@ -5,6 +5,8 @@ const clients = require('../utils/clients')
 const crypto = require('../utils/crypto')
 const { calculateToAmount } = require('../utils/fx')
 
+const NODE_EXPIRATION_DIFFERENCE = 60 * 60 * 6
+
 const OrderSchema = new mongoose.Schema({
   orderId: {
     type: String,
@@ -93,12 +95,16 @@ const OrderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'EXPIRED'],
+    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'EXPIRED'],
     index: true
   }
 })
 
 // OrderSchema.set('toJSON', { virtuals: true })
+
+OrderSchema.virtual('nodeExpiration').get(function () { // TODO: this should come from the initiating party
+  return this.swapExpiration - NODE_EXPIRATION_DIFFERENCE
+})
 
 OrderSchema.methods.fromClient = function () {
   return clients[this.from]

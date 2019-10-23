@@ -1,7 +1,6 @@
 const Order = require('../../models/Order')
 
 async function findClaim (order, lastScannedBlock, currentBlock) {
-  const nodeExp = order.swapExpiration - (60 * 60 * 6)
   const newBlocksExist = !lastScannedBlock || (currentBlock > lastScannedBlock)
   if (newBlocksExist) {
     let blockNumber = lastScannedBlock ? lastScannedBlock + 1 : currentBlock
@@ -11,7 +10,7 @@ async function findClaim (order, lastScannedBlock, currentBlock) {
         order.toAddress,
         order.toCounterPartyAddress,
         order.secretHash,
-        nodeExp,
+        order.nodeExpiration,
         blockNumber
       )
       if (claimTx) return claimTx
@@ -31,10 +30,15 @@ module.exports = agenda => async (job) => {
   const lastScannedBlock = currentBlock // TODO: persist last scanned block to prevent situation where agent going offline loses state.
 
   if (!claimTx) {
-    // TODO: use block times as schedule?
-    agenda.schedule('in 10 seconds', 'find-claim-swap-tx', { orderId: data.orderId, lastScannedBlock })
-    // TODO: stop looking after a while (expiration)
-    return
+    const block = await order.toClient().chain.getBlockByNumber(currentBlock)
+    if (block.timestamp <= order.nodeExpiration) {
+      // TODO: use block times as schedule?
+      agenda.schedule('in 10 seconds', 'find-claim-swap-tx', { orderId: data.orderId, lastScannedBlock })
+      return
+    } else {
+      agenda.now('agent-refund', { orderId: order.orderId })
+      return
+    }
   }
 
   order.secret = claimTx.secret

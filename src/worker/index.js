@@ -7,6 +7,7 @@ agenda.define('verify-user-init-tx', require('./jobs/verify-user-init-tx')(agend
 agenda.define('reciprocate-init-swap', require('./jobs/reciprocate-init-swap')(agenda))
 agenda.define('find-claim-swap-tx', require('./jobs/find-claim-swap-tx')(agenda))
 agenda.define('agent-claim', require('./jobs/agent-claim')(agenda))
+agenda.define('agent-refund', require('./jobs/agent-refund')(agenda))
 agenda.define('update-market-data', require('./jobs/update-market-data')(agenda))
 
 async function start () {
