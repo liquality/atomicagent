@@ -4,7 +4,7 @@
     "to": "ETH",
     "min": 100000,
     "max": 5000000,
-    "minConf": 2,
+    "minConf": 1,
     "rate": 48.26,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
@@ -16,6 +16,16 @@
     "max": 2500000000000000000,
     "minConf": 1,
     "rate": 0.028,
+    "orderExpiresIn": 3600000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "DAI",
+    "to": "BTC",
+    "min": 1000000000000000000,
+    "max": 100000000000000000000,
+    "minConf": 1,
+    "rate": 0.000135,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   }

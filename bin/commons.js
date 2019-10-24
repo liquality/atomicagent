@@ -1,5 +1,7 @@
 const program = require('commander')
 
+// TODO: Conform this to the new way of supplying config 
+
 const CONFIG_ENV_MAP = {
   port: 'PORT',
   mongo: 'MONGODB_URI',

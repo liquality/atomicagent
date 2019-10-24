@@ -1,0 +1,31 @@
+# Sample Agent Config
+
+hostname = "agent"
+
+[database]
+uri = "mongodb://localhost:27017/liquality"
+debug = true
+
+[assets]
+
+  [assets.BTC]
+  network = "bitcoin_regtest"
+  addressType = "bech32"
+  swapMode = "p2wsh"
+  feeNumberOfBlocks = 2
+    [assets.BTC.rpc]
+    url = "http://localhost:17772"
+    username = "bitcoin"
+    password = "local321"
+
+
+  [assets.ETH]
+    [assets.ETH.rpc]
+    url = "http://localhost:7545"
+
+  [assets.DAI]
+  type = "ERC20"
+  contractAddress = "0xf6316f11abfc4c6bd72bcb893a52d88fbb22a719"
+    [assets.DAI.rpc]
+    url = "http://localhost:7545"
+

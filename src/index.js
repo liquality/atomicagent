@@ -1,14 +1,11 @@
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config()
-}
-
 const mongoose = require('mongoose')
+const config = require('./config')
 
-if (process.env.MONGOOSE_DEBUG === 'true') {
+if (config.database.debug === 'true') {
   mongoose.set('debug', true)
 }
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useCreateIndex: true })
+mongoose.connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
 
 switch (process.env.PROCESS_TYPE) {
   case 'api':
