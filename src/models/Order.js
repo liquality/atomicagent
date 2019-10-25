@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const uuidv4 = require('uuid/v4')
 const assets = require('@liquality/cryptoassets').default
-const clients = require('../utils/clients')
+const { getClient } = require('../utils/clients')
 const crypto = require('../utils/crypto')
 const { calculateToAmount } = require('../utils/fx')
 
@@ -107,11 +107,11 @@ OrderSchema.virtual('nodeExpiration').get(function () { // TODO: this should com
 })
 
 OrderSchema.methods.fromClient = function () {
-  return clients[this.from]
+  return getClient(this.from)
 }
 
 OrderSchema.methods.toClient = function () {
-  return clients[this.to]
+  return getClient(this.to)
 }
 
 OrderSchema.methods.json = function () {

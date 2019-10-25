@@ -2,6 +2,6 @@
 
 const { loadVariables } = require('./commons')
 
-loadVariables({ defaultPort: 3000, processType: 'api' })
+loadVariables({ defaultPort: 3030, processType: 'api' })
 
 require('../src')
