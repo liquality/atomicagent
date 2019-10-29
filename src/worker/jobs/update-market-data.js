@@ -2,7 +2,7 @@ const axios = require('axios')
 const BN = require('bignumber.js')
 const Market = require('../../models/Market')
 
-module.exports = agenda => async (job, done) => {
+module.exports = agenda => async (job) => {
   console.log('Updating market data')
 
   const markets = await Market.find({ status: 'ACTIVE' }).exec()
@@ -20,12 +20,14 @@ module.exports = agenda => async (job, done) => {
     const from = BN(MAP[market.from])
     const to = BN(MAP[market.to])
 
-    market.rate = from.div(to).dp(8)
+    let rate = from.div(to) // Market rate
+    rate = rate.times(BN(1).minus(BN(market.spread))) // Remove spread
+    rate = rate.dp(8)
+
+    market.rate = rate
 
     console.log(`${market.from}_${market.to}`, market.rate)
 
     return market.save()
   }))
-
-  done()
 }
