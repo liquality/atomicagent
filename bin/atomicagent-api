@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
-const { loadVariables } = require('./commons')
+const program = require('commander')
+const { addCommonOptions } = require('./common')
 
-loadVariables({ defaultPort: 3030, processType: 'api' })
+addCommonOptions(program)
+
+program
+  .parse(process.argv)
+
+process.env.PROCESS_TYPE = 'api'
 
 require('../src')

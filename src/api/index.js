@@ -6,15 +6,12 @@ const compression = require('compression')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const Agenda = require('agenda')
+const config = require('../config')
 // const Agendash = require('agendash')
 
 const cors = require('../middlewares/cors')
 const httpHelpers = require('../middlewares/httpHelpers')
 const handleError = require('../middlewares/handleError')
-
-const {
-  PORT
-} = process.env
 
 const agenda = new Agenda({ mongo: mongoose.connection })
 const app = express()
@@ -41,4 +38,4 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(handleError())
 
-app.listen(PORT)
+app.listen(config.apiPort)
