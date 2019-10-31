@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const program = require('commander')
+const { addCommonOptions } = require('./common')
 const pkg = require('../package.json')
 
 program
@@ -11,6 +12,9 @@ program
 
 program
   .command('worker', 'Run agent worker')
+
+program
+  .command('wallet', 'Communicate with asset wallets')
 
 program
   .parse(process.argv)

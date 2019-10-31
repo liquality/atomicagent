@@ -6,6 +6,9 @@ hostname = "agent"
 uri = "mongodb://localhost:27017/liquality"
 debug = true
 
+[application]
+apiPort = 3030
+
 [assets]
 
   [assets.BTC]

@@ -6,6 +6,7 @@
     "max": 5000000,
     "minConf": 1,
     "rate": 48.26,
+    "spread": 0.05,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   },
@@ -16,6 +17,7 @@
     "max": 2500000000000000000,
     "minConf": 1,
     "rate": 0.028,
+    "spread": 0.05,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   },
@@ -26,6 +28,7 @@
     "max": 100000000000000000000,
     "minConf": 1,
     "rate": 0.000135,
+    "spread": 0.05,
     "orderExpiresIn": 3600000,
     "status": "ACTIVE"
   }

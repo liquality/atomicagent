@@ -23,6 +23,9 @@ const MarketSchema = new mongoose.Schema({
   rate: {
     type: Number
   },
+  spread: {
+    type: Number
+  },
   orderExpiresIn: {
     type: Number
   },
