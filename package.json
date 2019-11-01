@@ -4,8 +4,8 @@
   "description": "Atomic Swap Agent",
   "main": "src/index.js",
   "scripts": {
-    "api": "PORT=3030 PROCESS_TYPE=api nodemon src/index.js",
-    "worker": "PORT=3031 PROCESS_TYPE=worker nodemon src/index.js",
+    "api": "PROCESS_TYPE=api nodemon src/index.js",
+    "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate nodemon src/index.js",
     "test": "mocha ./test/index.js"
   },

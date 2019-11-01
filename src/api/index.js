@@ -38,4 +38,4 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(handleError())
 
-app.listen(config.apiPort)
+app.listen(config.application.apiPort)
