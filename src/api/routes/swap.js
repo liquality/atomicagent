@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
+const BigNumber = require('bignumber.js')
 
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
@@ -29,6 +30,14 @@ router.post('/order', asyncHandler(async (req, res, next) => {
   }
 
   const order = Order.fromMarket(market, body.fromAmount)
+
+  const addresses = await order.toClient().wallet.getUsedAddresses()
+  const balance = await order.toClient().chain.getBalance(addresses)
+
+  if (BigNumber(balance).isLessThan(BigNumber(order.toAmount))) {
+    return next(res.createError(401, 'Insufficient balance'))
+  }
+
   const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
   if (passphrase) {
