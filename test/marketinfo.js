@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 const chai = require('chai')
+const should = chai.should()
 const chaiHttp = require('chai-http')
 
-const { prepare } = require('./utils')
+const { prepare, mongoose } = require('./utils')
 
-chai.should()
 chai.use(chaiHttp)
 
 const app = require('../src/api')
@@ -20,5 +20,11 @@ describe('Market Info', () => {
         res.body.should.be.a('array')
         res.body.length.should.be.eql(3)
       })
+  })
+
+  it('should run update job at a 5 min interval', async function () {
+    const job = await mongoose.connection.db.collection('agendaJobs').findOne({ name: 'update-market-data', repeatInterval: '5 minutes' })
+
+    should.exist(job)
   })
 })

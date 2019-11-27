@@ -16,3 +16,5 @@ module.exports.prepare = () => mongoose
 module.exports.sleep = duration => new Promise((resolve, reject) => {
   setTimeout(resolve, duration)
 })
+
+module.exports.mongoose = mongoose
