@@ -4,7 +4,7 @@ module.exports = () => (err, req, res, next) => {
   const status = err.statusCode || 500
   const message = err.message || err.toString()
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
     console.error(err)
   }
 

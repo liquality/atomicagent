@@ -1,4 +1,5 @@
 const Order = require('../../models/Order')
+const debug = require('debug')('liquality:agent:worker')
 
 module.exports = agenda => async (job) => {
   const { data } = job.attrs
@@ -21,7 +22,7 @@ module.exports = agenda => async (job) => {
   const orderExpired = Date.now() > order.expiresAt
 
   if (orderExpired) { // Forget about the swap
-    console.log(`Order ${order.orderId} expired`)
+    debug(`Order ${order.orderId} expired`)
     order.status = 'EXPIRED'
     await order.save()
     return
@@ -36,7 +37,7 @@ module.exports = agenda => async (job) => {
     return
   }
 
-  console.log('Found & verified funding transaction', order.orderId)
+  debug('Found & verified funding transaction', order.orderId)
 
   order.status = 'USER_FUNDED'
   await order.save()

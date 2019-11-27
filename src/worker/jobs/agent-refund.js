@@ -1,4 +1,5 @@
 const Order = require('../../models/Order')
+const debug = require('debug')('liquality:agent:worker')
 
 module.exports = agenda => async (job) => {
   const { data } = job.attrs
@@ -14,7 +15,7 @@ module.exports = agenda => async (job) => {
       order.secretHash,
       order.nodeExpiration
     )
-    console.log('Node has refunded the swap', order.orderId)
+    debug('Node has refunded the swap', order.orderId)
 
     order.status = 'AGENT_REFUNDED'
     await order.save()

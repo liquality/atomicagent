@@ -1,3 +1,6 @@
+const config = require('../config')
+require('mongoose').connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+
 const Market = require('../models/Market')
 const markets = require('./data/markets.json')
 

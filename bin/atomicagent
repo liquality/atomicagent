@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const program = require('commander')
-const { addCommonOptions } = require('./common')
+// const { addCommonOptions } = require('./common')
 const pkg = require('../package.json')
 
 program

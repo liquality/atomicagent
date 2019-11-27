@@ -1,14 +1,18 @@
+const fs = require('fs')
+const path = require('path')
+
 const mongoose = require('mongoose')
 const Agenda = require('agenda')
 
+const JOBS_DIR = path.join(__dirname, 'jobs')
 const agenda = new Agenda({ mongo: mongoose.connection })
 
-agenda.define('verify-user-init-tx', require('./jobs/verify-user-init-tx')(agenda))
-agenda.define('reciprocate-init-swap', require('./jobs/reciprocate-init-swap')(agenda))
-agenda.define('find-claim-swap-tx', require('./jobs/find-claim-swap-tx')(agenda))
-agenda.define('agent-claim', require('./jobs/agent-claim')(agenda))
-agenda.define('agent-refund', require('./jobs/agent-refund')(agenda))
-agenda.define('update-market-data', require('./jobs/update-market-data')(agenda))
+fs.readdirSync(JOBS_DIR)
+  .forEach(job => {
+    const jobName = path.basename(job, '.js')
+
+    agenda.define(jobName, require(path.join(JOBS_DIR, job))(agenda))
+  })
 
 async function start () {
   await agenda.start()

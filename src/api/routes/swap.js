@@ -64,12 +64,19 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
     if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
   }
 
-  ;['fromAddress', 'toAddress', 'fromFundHash', 'secretHash', 'swapExpiration'].forEach(key => {
-    if (!body[key]) return next(res.createError(401, `${key} is missing`))
-    order[key] = body[key]
-  })
+  const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash', 'swapExpiration']
 
-  order.status = 'QUOTE'
+  for (let i = 0; i < keysToBeCopied.length; i++) {
+    const key = keysToBeCopied[i]
+
+    if (!body[key]) return next(res.createError(401, `${key} is missing`))
+    if (order[key]) return next(res.createError(401, `${key} already exist`))
+
+    order[key] = body[key]
+  }
+
+  order.status = 'USER_FUNDED_UNVERIFIED'
+
   await order.save()
   await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 

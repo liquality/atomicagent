@@ -95,7 +95,7 @@ const OrderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'EXPIRED'],
+    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED_UNVERIFIED', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'EXPIRED'],
     index: true
   }
 })
