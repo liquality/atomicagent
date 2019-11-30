@@ -1,4 +1,5 @@
 const Order = require('../../models/Order')
+const debug = require('debug')('liquality:agent:worker')
 
 async function findClaim (order, lastScannedBlock, currentBlock) {
   const newBlocksExist = !lastScannedBlock || (currentBlock > lastScannedBlock)
@@ -18,7 +19,7 @@ async function findClaim (order, lastScannedBlock, currentBlock) {
   }
 }
 
-module.exports = agenda => async (job) => {
+module.exports = agenda => async job => {
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
@@ -33,16 +34,19 @@ module.exports = agenda => async (job) => {
     const block = await order.toClient().chain.getBlockByNumber(currentBlock)
     if (block.timestamp <= order.nodeExpiration) {
       // TODO: use block times as schedule?
-      agenda.schedule('in 10 seconds', 'find-claim-swap-tx', { orderId: data.orderId, lastScannedBlock })
+      await agenda.schedule('in 10 seconds', 'find-claim-swap-tx', { orderId: data.orderId, lastScannedBlock })
       return
     } else {
-      agenda.now('agent-refund', { orderId: order.orderId })
+      await agenda.now('agent-refund', { orderId: order.orderId })
       return
     }
   }
 
   order.secret = claimTx.secret
   order.status = 'USER_CLAIMED'
+
+  debug('Node found user\'s claim swap transaction', order.orderId)
+
   await order.save()
   await agenda.now('agent-claim', { orderId: order.orderId })
 }

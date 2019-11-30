@@ -1,13 +1,13 @@
 const Order = require('../../models/Order')
 const debug = require('debug')('liquality:agent:worker')
 
-module.exports = agenda => async (job) => {
+module.exports = agenda => async job => {
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
-
   order.status = 'AGENT_PENDING'
+
   await order.save()
 
   const verified = await order.fromClient().swap.verifyInitiateSwapTransaction(
@@ -33,13 +33,13 @@ module.exports = agenda => async (job) => {
 
   if (!accepted) {
     // TODO: schedule based on block times?
-    agenda.schedule('in 10 seconds', 'verify-user-init-tx', { orderId: order.orderId })
-    return
+    throw new Error('Transaction hasn\'t been verified yet')
   }
 
   debug('Found & verified funding transaction', order.orderId)
 
   order.status = 'USER_FUNDED'
   await order.save()
+
   await agenda.now('reciprocate-init-swap', { orderId: order.orderId })
 }

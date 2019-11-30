@@ -6,7 +6,7 @@
   "scripts": {
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
-    "migrate": "PROCESS_TYPE=migrate nodemon src/index.js",
+    "migrate": "PROCESS_TYPE=migrate node src/index.js",
     "test": "NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js",
     "postinstall": "node install_mongo.js"
   },

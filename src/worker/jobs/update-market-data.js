@@ -3,7 +3,7 @@ const BN = require('bignumber.js')
 const Market = require('../../models/Market')
 const debug = require('debug')('liquality:agent:worker')
 
-module.exports = agenda => async (job) => {
+module.exports = agenda => async job => {
   debug('Updating market data')
 
   const markets = await Market.find({ status: 'ACTIVE' }).exec()
