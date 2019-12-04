@@ -38,11 +38,15 @@ module.exports.start = async () => {
     }
   })
 
-  process.on('SIGTERM', module.exports.stop)
-  process.on('SIGINT', module.exports.stop)
-
   await agenda.start()
   await agenda.every('5 minutes', 'update-market-data')
 }
 
-module.exports.stop = async () => agenda.stop()
+module.exports.stop = () => {
+  if (agenda) {
+    agenda.stop().then(() => process.exit(0))
+  }
+}
+
+process.on('SIGTERM', module.exports.stop)
+process.on('SIGINT', module.exports.stop)
