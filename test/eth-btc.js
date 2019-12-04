@@ -44,7 +44,9 @@ describe('ETH -> BTC', () => {
           })
       })
 
-      it('should accept a quote', async () => {
+      it('should accept a quote', async function () {
+        this.timeout(15 * 1000)
+
         return chai.request(app())
           .post('/api/swap/order')
           .send({
