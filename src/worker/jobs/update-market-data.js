@@ -1,9 +1,10 @@
 const axios = require('axios')
 const BN = require('bignumber.js')
 const Market = require('../../models/Market')
+const debug = require('debug')('liquality:agent:worker')
 
-module.exports = agenda => async (job) => {
-  console.log('Updating market data')
+module.exports = agenda => async job => {
+  debug('Updating market data')
 
   const markets = await Market.find({ status: 'ACTIVE' }).exec()
   const currencies = Array.from(new Set([].concat(...markets.map(market => [market.from, market.to]))))
@@ -26,7 +27,7 @@ module.exports = agenda => async (job) => {
 
     market.rate = rate
 
-    console.log(`${market.from}_${market.to}`, market.rate)
+    debug(`${market.from}_${market.to}`, market.rate)
 
     return market.save()
   }))
