@@ -9,7 +9,7 @@ const { getClient } = require('../src/utils/clients')
 chai.should()
 chai.use(chaiHttp)
 
-const app = require('../src/api')
+const { app } = require('../src/api')
 
 describe('BTC -> ETH', () => {
   let quote
@@ -32,7 +32,7 @@ describe('BTC -> ETH', () => {
   describe('POST /api/swap/order', () => {
     describe('Quote', () => {
       it('should refuse quote with invalid amount', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .post('/api/swap/order')
           .send({
             from: 'BTC',
@@ -45,7 +45,7 @@ describe('BTC -> ETH', () => {
       })
 
       it('should accept a quote', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .post('/api/swap/order')
           .send({
             from: 'BTC',
@@ -65,7 +65,7 @@ describe('BTC -> ETH', () => {
       })
 
       it('should get quote by id', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
@@ -80,7 +80,7 @@ describe('BTC -> ETH', () => {
       })
 
       it('should throw an error when quote id is incorrect', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .get('/api/swap/order/abc')
           .then(res => {
             res.should.have.status(401)
@@ -116,7 +116,7 @@ describe('BTC -> ETH', () => {
         return toClient.chain.getBlockHeight().then(blockNumber => {
           fromBlock = blockNumber
 
-          return chai.request(app)
+          return chai.request(app())
             .post(`/api/swap/order/${quote.orderId}`)
             .send({
               fromAddress,
@@ -142,7 +142,7 @@ describe('BTC -> ETH', () => {
 
       it('should not allow update to already funded quote', async () => {
         // try updating the quote with random data
-        return chai.request(app)
+        return chai.request(app())
           .post(`/api/swap/order/${quote.orderId}`)
           .send({
             fromAddress: '0x572E7610B0FC9a00cb4A441F398c9C7a5517DE32',
@@ -158,7 +158,7 @@ describe('BTC -> ETH', () => {
       it('should verify funding of the quote', async function () {
         this.timeout(30 * 1000)
 
-        const check = () => sleep(5000).then(() => chai.request(app)
+        const check = () => sleep(5000).then(() => chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
@@ -176,7 +176,7 @@ describe('BTC -> ETH', () => {
       it('should reciprocate by funding the swap', async function () {
         this.timeout(30 * 1000)
 
-        const check = () => sleep(5000).then(() => chai.request(app)
+        const check = () => sleep(5000).then(() => chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
@@ -225,7 +225,7 @@ describe('BTC -> ETH', () => {
       it('should claim the swap', async function () {
         this.timeout(30 * 1000)
 
-        const check = () => sleep(5000).then(() => chai.request(app)
+        const check = () => sleep(5000).then(() => chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)

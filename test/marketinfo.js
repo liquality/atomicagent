@@ -7,13 +7,13 @@ const { prepare, mongoose } = require('./utils')
 
 chai.use(chaiHttp)
 
-const app = require('../src/api')
+const { app } = require('../src/api')
 
 describe('Market Info', () => {
   before(() => prepare())
 
   it('should get all the assets', async () => {
-    return chai.request(app)
+    return chai.request(app())
       .get('/api/swap/marketinfo')
       .then(res => {
         res.should.have.status(200)
@@ -22,8 +22,9 @@ describe('Market Info', () => {
       })
   })
 
-  it('should run update job at a 5 min interval', async function () {
-    const job = await mongoose.connection.db.collection('agendaJobs').findOne({ name: 'update-market-data', repeatInterval: '5 minutes' })
+  it('should find update-market-data job', async function () {
+    const job = await mongoose.connection.db.collection('agendaJobs')
+      .findOne({ name: 'update-market-data', repeatInterval: '5 minutes' })
 
     should.exist(job)
   })

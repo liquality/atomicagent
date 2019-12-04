@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const config = require('./config')
 
-if (config.database.debug === 'true') {
+if (config.database.debug) {
   mongoose.set('debug', true)
 }
 
@@ -9,15 +9,15 @@ mongoose.connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: t
 
 switch (process.env.PROCESS_TYPE) {
   case 'api':
-    require('./api')
+    require('./api').start()
     break
 
   case 'worker':
-    require('./worker')
+    require('./worker').start()
     break
 
   case 'migrate':
-    require('./migrate')
+    require('./migrate').run()
     break
 
   default:

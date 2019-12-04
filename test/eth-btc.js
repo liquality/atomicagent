@@ -9,7 +9,7 @@ const { getClient } = require('../src/utils/clients')
 chai.should()
 chai.use(chaiHttp)
 
-const app = require('../src/api')
+const { app } = require('../src/api')
 
 describe('ETH -> BTC', () => {
   let quote
@@ -32,7 +32,7 @@ describe('ETH -> BTC', () => {
   describe('POST /api/swap/order', () => {
     describe('Quote', () => {
       it('should refuse quote with invalid amount', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .post('/api/swap/order')
           .send({
             from: 'ETH',
@@ -45,7 +45,7 @@ describe('ETH -> BTC', () => {
       })
 
       it('should accept a quote', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .post('/api/swap/order')
           .send({
             from: 'ETH',
@@ -65,7 +65,7 @@ describe('ETH -> BTC', () => {
       })
 
       it('should get quote by id', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
@@ -80,7 +80,7 @@ describe('ETH -> BTC', () => {
       })
 
       it('should throw an error when quote id is incorrect', async () => {
-        return chai.request(app)
+        return chai.request(app())
           .get('/api/swap/order/abc')
           .then(res => {
             res.should.have.status(401)
@@ -115,9 +115,8 @@ describe('ETH -> BTC', () => {
 
         return toClient.chain.getBlockHeight().then(blockNumber => {
           fromBlock = blockNumber
-          console.log('fromBlock', fromBlock)
 
-          return chai.request(app)
+          return chai.request(app())
             .post(`/api/swap/order/${quote.orderId}`)
             .send({
               fromAddress,
@@ -143,7 +142,7 @@ describe('ETH -> BTC', () => {
 
       it('should not allow update to already funded quote', async () => {
         // try updating the quote with random data
-        return chai.request(app)
+        return chai.request(app())
           .post(`/api/swap/order/${quote.orderId}`)
           .send({
             fromAddress: '0x572E7610B0FC9a00cb4A441F398c9C7a5517DE32',
@@ -159,7 +158,7 @@ describe('ETH -> BTC', () => {
       it('should verify funding of the quote', async function () {
         this.timeout(30 * 1000)
 
-        const check = () => sleep(5000).then(() => chai.request(app)
+        const check = () => sleep(5000).then(() => chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
@@ -168,7 +167,7 @@ describe('ETH -> BTC', () => {
               return check()
             }
 
-            res.body.status.should.equal('USER_FUNDED')
+            res.body.status.should.be.oneOf(['USER_FUNDED', 'AGENT_FUNDED'])
           }))
 
         return check()
@@ -177,7 +176,7 @@ describe('ETH -> BTC', () => {
       it('should reciprocate by funding the swap', async function () {
         this.timeout(30 * 1000)
 
-        const check = () => sleep(5000).then(() => chai.request(app)
+        const check = () => sleep(5000).then(() => chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
@@ -192,55 +191,56 @@ describe('ETH -> BTC', () => {
         return check()
       })
 
-      it('should find the agent\'s funding tx', async () => {
-        const findInitSwapTx = async (startBlock, endBlock) => {
-          console.log(startBlock, endBlock)
+      it('should find the agent\'s funding tx', async function () {
+        this.timeout(30 * 1000)
 
+        const findInitSwapTx = async (startBlock, endBlock) => {
           if (startBlock > endBlock) {
             throw new Error('No init swap tx found')
           }
 
-          console.log(quote.toAmount,
-            quote.toAddress,
-            quote.toCounterPartyAddress,
-            quote.secretHash,
-            quote.swapExpiration - (60 * 60 * 6),
-            startBlock)
+          try {
+            const initSwapTx = await toClient.swap.findInitiateSwapTransaction(
+              quote.toAmount,
+              quote.toAddress,
+              quote.toCounterPartyAddress,
+              quote.secretHash,
+              quote.swapExpiration - (60 * 60 * 6),
+              startBlock
+            )
 
-          const initSwapTx = await toClient.swap.findInitiateSwapTransaction(
-            quote.toAmount,
-            quote.toAddress,
-            quote.toCounterPartyAddress,
-            quote.secretHash,
-            quote.swapExpiration - (60 * 60 * 6),
-            startBlock
-          )
+            if (initSwapTx) return initSwapTx
 
-          if (initSwapTx) return initSwapTx
+            return findInitSwapTx(startBlock + 1, endBlock)
+          } catch (e) {
+            if (e.message.includes('Block height out of range')) {
+              return sleep(5000).then(() => findInitSwapTx(startBlock, endBlock))
+            }
 
-          return findInitSwapTx(startBlock + 1, endBlock)
+            throw e
+          }
         }
 
         return toClient.chain.getBlockHeight()
-          .then(blockNumber => findInitSwapTx(fromBlock, blockNumber))
+          .then(blockNumber => findInitSwapTx(fromBlock, blockNumber + 2))
           .then(tx => (toInitSwapTxHash = tx.hash))
       })
     })
 
     describe('Claim', () => {
       before(async () => {
-        return toClient.swap.claimSwap(toInitSwapTxHash, toAddress, quote.toCounterPartyAddress, secret, swapExpiration)
+        return toClient.swap.claimSwap(toInitSwapTxHash, quote.toAddress, quote.toCounterPartyAddress, secret, swapExpiration - (60 * 60 * 6))
       })
 
       it('should claim the swap', async function () {
-        this.timeout(30 * 1000)
+        this.timeout(60 * 1000)
 
-        const check = () => sleep(5000).then(() => chai.request(app)
+        const check = () => sleep(5000).then(() => chai.request(app())
           .get(`/api/swap/order/${quote.orderId}`)
           .then(res => {
             res.should.have.status(200)
 
-            if (res.body.status === 'USER_CLAIMED') {
+            if (['AGENT_FUNDED', 'USER_CLAIMED'].includes(res.body.status)) {
               return check()
             }
 
