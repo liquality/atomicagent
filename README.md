@@ -2,6 +2,9 @@
 
 > Atomic Swap Agent
 
+## Setup
+
+Follow these steps to setup your local environment: https://github.com/liquality/documentation/blob/dev/_posts/2019-11-13-installation.md#prerequisites
 
 ## Demo
 
