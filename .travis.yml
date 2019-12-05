@@ -28,6 +28,7 @@ install:
 before_script:
   - cp sample.config.toml test.config.toml
   - cd test/docker && docker-compose up -d --build
+  - sleep 10
 
 script:
   - npm test
