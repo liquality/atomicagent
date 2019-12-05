@@ -1,5 +1,9 @@
 version: '3'
 services:
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
   bitcoin:
     image: ruimarinho/bitcoin-core
     command:
