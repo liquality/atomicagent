@@ -27,14 +27,14 @@ install:
 
 before_script:
   - cp sample.config.toml test.config.toml
-  - cd test/docker && docker-compose up -d --build
+  - docker-compose -f ./test/docker/docker-compose.yml up -d --build
   - sleep 10
 
 script:
   - npm test
 
 after_script:
-  - cd test/docker && docker-compose down
+  - docker-compose -f ./test/docker/docker-compose.yml down
 
 before_cache:
   - docker save -o docker_images/images.tar $(docker images -a -q)
