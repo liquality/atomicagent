@@ -21,8 +21,8 @@ install:
   - npm ci
 
 before_script:
-  - cd test/docker && docker-compose up -d --build
   - cp sample.config.toml test.config.toml
+  - cd test/docker && docker-compose up -d --build
 
 script:
   - npm test
