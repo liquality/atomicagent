@@ -18,10 +18,10 @@ apiPort = 3030
 
   [assets.ETH]
     [assets.ETH.rpc]
-    url = "http://localhost:7545"
+    url = "http://localhost:8545"
 
   [assets.DAI]
   type = "ERC20"
   contractAddress = "0xf6316f11abfc4c6bd72bcb893a52d88fbb22a719"
     [assets.DAI.rpc]
-    url = "http://localhost:7545"
+    url = "http://localhost:8545"

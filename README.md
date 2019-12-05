@@ -1,4 +1,4 @@
-# 💥 Atomic Agent
+# 💥 Atomic Agent [![Build Status](https://travis-ci.com/liquality/agent.svg?branch=dev)](https://travis-ci.com/liquality/agent)
 
 > Atomic Swap Agent
 
