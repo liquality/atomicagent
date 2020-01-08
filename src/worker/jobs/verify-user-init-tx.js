@@ -6,9 +6,13 @@ module.exports = agenda => async job => {
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
-  order.status = 'AGENT_PENDING'
 
-  await order.save()
+  if (Date.now() > order.expiresAt) { // Expected the swap sooner. Quote expired.
+    debug(`Order ${order.orderId} expired due to expiresAt`)
+    order.status = 'QUOTE_EXPIRED'
+    await order.save()
+    return
+  }
 
   const verified = await order.fromClient().swap.verifyInitiateSwapTransaction(
     order.fromFundHash,
@@ -18,15 +22,6 @@ module.exports = agenda => async job => {
     order.secretHash,
     order.swapExpiration
   )
-
-  const orderExpired = Date.now() > order.expiresAt
-
-  if (orderExpired) { // Forget about the swap
-    debug(`Order ${order.orderId} expired`)
-    order.status = 'EXPIRED'
-    await order.save()
-    return
-  }
 
   const initiationTx = await order.fromClient().chain.getTransactionByHash(order.fromFundHash)
   const accepted = verified && initiationTx.confirmations >= order.minConf

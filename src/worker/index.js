@@ -29,9 +29,14 @@ module.exports.start = async () => {
     if (err) {}
 
     if (job.attrs.failCount <= 5) {
-      debug('Retrying again in 15 seconds', job.attrs)
+      debug('Retrying', job.attrs)
 
-      job.schedule('in 15 seconds')
+      if (process.env.NODE_ENV === 'test') {
+        job.schedule('in 2 seconds')
+      } else {
+        job.schedule('in 15 seconds')
+      }
+
       await job.save()
     } else {
       debug('Max attempts reached. Job has failed', job.attrs)

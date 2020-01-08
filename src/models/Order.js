@@ -5,7 +5,7 @@ const { getClient } = require('../utils/clients')
 const crypto = require('../utils/crypto')
 const { calculateToAmount } = require('../utils/fx')
 
-const NODE_EXPIRATION_DIFFERENCE = 60 * 60 * 6
+const TEST_ENV = process.env.NODE_ENV === 'test'
 
 const OrderSchema = new mongoose.Schema({
   orderId: {
@@ -61,7 +61,8 @@ const OrderSchema = new mongoose.Schema({
 
   fromFundHash: {
     type: String,
-    index: true
+    index: true,
+    unique: true
   },
   toFundHash: {
     type: String,
@@ -76,6 +77,10 @@ const OrderSchema = new mongoose.Schema({
     index: true
   },
   swapExpiration: {
+    type: Number,
+    index: true
+  },
+  nodeSwapExpiration: {
     type: Number,
     index: true
   },
@@ -95,16 +100,12 @@ const OrderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['QUOTE', 'AGENT_PENDING', 'USER_FUNDED_UNVERIFIED', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'EXPIRED'],
+    enum: ['QUOTE', 'USER_FUNDED_UNVERIFIED', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'QUOTE_EXPIRED', 'SWAP_EXPIRED'],
     index: true
   }
 })
 
 // OrderSchema.set('toJSON', { virtuals: true })
-
-OrderSchema.virtual('nodeExpiration').get(function () { // TODO: this should come from the initiating party
-  return this.swapExpiration - NODE_EXPIRATION_DIFFERENCE
-})
 
 OrderSchema.methods.fromClient = function () {
   return getClient(this.from)
@@ -150,6 +151,14 @@ OrderSchema.methods.setAgentAddresses = async function () {
 
   this.fromCounterPartyAddress = assets[this.from.toLowerCase()].formatAddress(fromAddresses.address)
   this.toCounterPartyAddress = assets[this.to.toLowerCase()].formatAddress(toAddresses.address)
+}
+
+OrderSchema.methods.setExpiration = async function () {
+  const buffer = TEST_ENV ? 30 : (60 * 60 * 6)
+  const now = Math.ceil(Date.now() / 1000)
+
+  this.swapExpiration = now + (buffer * 2)
+  this.nodeSwapExpiration = now + buffer
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {

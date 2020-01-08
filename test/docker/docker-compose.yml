@@ -35,12 +35,15 @@ services:
       - SERVER_PORT=18443
     depends_on:
       - bitcoin
-  bitcoin-miner:
+  miner:
     build:
       context: .
       dockerfile: miner.Dockerfile
     environment:
-      - TARGET_HOST=bitcoin
-      - TARGET_PORT=18443
+      - BTC_HOST=bitcoin
+      - BTC_PORT=18443
+      - ETH_HOST=ethereum
+      - ETH_PORT=8545
     depends_on:
       - bitcoin
+      - ethereum
