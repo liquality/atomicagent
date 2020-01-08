@@ -2,7 +2,7 @@
 const swap = require('./swap')
 const { prepare } = require('./utils')
 
-describe.only('BTC -> ETH', () => {
+describe('BTC -> ETH', () => {
   before(() => prepare())
 
   describe('Successful swap', () => {
