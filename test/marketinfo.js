@@ -2,15 +2,17 @@
 const chai = require('chai')
 const should = chai.should()
 const chaiHttp = require('chai-http')
-
-const { prepare, mongoose } = require('./utils')
-
 chai.use(chaiHttp)
 
+const { prepare, mongoose } = require('./utils')
 const { app } = require('../src/api')
 
 describe('Market Info', () => {
-  before(() => prepare())
+  before(async function () {
+    this.timeout(10000)
+
+    await prepare()
+  })
 
   it('should get all the assets', async () => {
     return chai.request(app())
