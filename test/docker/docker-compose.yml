@@ -5,7 +5,7 @@ services:
     ports:
       - "27017:27017"
   bitcoin:
-    image: ruimarinho/bitcoin-core
+    image: ruimarinho/bitcoin-core:0.18
     command:
       -regtest=1
       -txindex
