@@ -23,7 +23,7 @@ install:
 before_script:
   - cp sample.config.toml test.config.toml
   - docker-compose -f ./test/docker/docker-compose.yml up -d --build
-  - sleep 45
+  - sleep 10
 
 script:
-  - npm test
+  - DEBUG=liquality:agent* npm test
