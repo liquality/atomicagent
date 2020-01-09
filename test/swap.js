@@ -205,45 +205,56 @@ module.exports = (from, to, fromAmount, refund) => {
       return check()
     })
 
-    it('should find the agent\'s funding tx', async () => {
+    it('should find the agent\'s funding tx', async function () {
+      this.timeout(90 * 1000)
+
       const findInitSwapTx = async (startBlock, endBlock) => {
         if (startBlock > endBlock) {
           throw new Error('No init swap tx found')
         }
 
-        const args = [
-          quote.toAmount,
-          quote.toAddress,
-          quote.toCounterPartyAddress,
-          quote.secretHash,
-          quote.nodeSwapExpiration,
-          startBlock
-        ]
+        try {
+          const initSwapTx = await toClient.swap.findInitiateSwapTransaction(
+            quote.toAmount,
+            quote.toAddress,
+            quote.toCounterPartyAddress,
+            quote.secretHash,
+            quote.nodeSwapExpiration,
+            startBlock
+          )
 
-        const initSwapTx = await toClient.swap.findInitiateSwapTransaction(...args)
+          if (initSwapTx) return initSwapTx
 
-        if (initSwapTx) return initSwapTx
+          return findInitSwapTx(startBlock + 1, endBlock)
+        } catch (e) {
+          if (e.message.includes('Block height out of range')) {
+            return sleep(5000).then(() => findInitSwapTx(startBlock, endBlock))
+          }
 
-        return findInitSwapTx(startBlock + 1, endBlock)
+          throw e
+        }
       }
 
       return toClient.chain.getBlockHeight()
-        .then(blockNumber => findInitSwapTx(fromBlock, blockNumber))
+        .then(blockNumber => findInitSwapTx(fromBlock, blockNumber + 5))
         .then(tx => (toInitSwapTxHash = tx.hash))
     })
   })
 
   describe(refund ? 'Refund' : 'Claim', () => {
     if (!refund) {
-      before(async () => {
-        return toClient.swap.claimSwap(toInitSwapTxHash, toAddress, quote.toCounterPartyAddress, secret, swapExpiration)
+      before(async function () {
+        this.timeout(30 * 1000)
+
+        await sleep(10000)
+
+        return toClient.swap.claimSwap(toInitSwapTxHash, toAddress, quote.toCounterPartyAddress, secret, nodeSwapExpiration)
       })
     }
 
     it(`should ${refund ? 'refund' : 'claim'} the swap`, async function () {
-      this.timeout(90 * 1000)
+      this.timeout(120 * 1000)
 
-      const skipStatus = refund ? 'AGENT_FUNDED' : 'USER_CLAIMED'
       const expectedStatus = refund ? 'AGENT_REFUNDED' : 'AGENT_CLAIMED'
 
       const check = () => sleep(5000).then(() => chai.request(app())
@@ -251,7 +262,7 @@ module.exports = (from, to, fromAmount, refund) => {
         .then(res => {
           res.should.have.status(200)
 
-          if (res.body.status === skipStatus) {
+          if (['AGENT_FUNDED', 'USER_CLAIMED'].includes(res.body.status)) {
             return check()
           }
 

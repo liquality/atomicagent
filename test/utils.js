@@ -17,7 +17,7 @@ module.exports.prepare = () => mongoose
   .then(() => mongoose.connection.db.collection('agendaJobs').deleteMany({}))
   .then(() => require('../src/api').start())
   .then(() => require('../src/worker').start())
-  .then(() => sleep(1000))
+  .then(() => sleep(5000))
 
 module.exports.sleep = sleep
 

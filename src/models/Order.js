@@ -154,7 +154,7 @@ OrderSchema.methods.setAgentAddresses = async function () {
 }
 
 OrderSchema.methods.setExpiration = async function () {
-  const buffer = TEST_ENV ? 30 : (60 * 60 * 6)
+  const buffer = TEST_ENV ? 60 : (60 * 60 * 6)
   const now = Math.ceil(Date.now() / 1000)
 
   this.swapExpiration = now + (buffer * 2)
