@@ -44,6 +44,8 @@ router.post('/order', asyncHandler(async (req, res, next) => {
     order.setPassphrase(passphrase)
   }
 
+  order.setExpiration()
+
   await order.setAgentAddresses()
   await order.save()
 
@@ -64,7 +66,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
     if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
   }
 
-  const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash', 'swapExpiration']
+  const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
 
   for (let i = 0; i < keysToBeCopied.length; i++) {
     const key = keysToBeCopied[i]

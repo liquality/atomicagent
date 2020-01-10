@@ -11,16 +11,11 @@ env:
 services:
   - docker
 
-cache:
-  directories:
-  - docker_images
-
 before_install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-  - docker load -i docker_images/images.tar || true
 
 install:
   - npm ci
@@ -28,13 +23,7 @@ install:
 before_script:
   - cp sample.config.toml test.config.toml
   - docker-compose -f ./test/docker/docker-compose.yml up -d --build
-  - sleep 10
+  - sleep 30
 
 script:
-  - npm test
-
-after_script:
-  - docker-compose -f ./test/docker/docker-compose.yml down
-
-before_cache:
-  - docker save -o docker_images/images.tar $(docker images -a -q)
+  - DEBUG=liquality:agent* npm test

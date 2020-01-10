@@ -12,7 +12,7 @@ module.exports = agenda => async job => {
     order.toAddress,
     order.toCounterPartyAddress,
     order.secretHash,
-    order.nodeExpiration
+    order.nodeSwapExpiration
   )
 
   debug('Node has refunded the swap', order.orderId)
