@@ -68,7 +68,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
 
   if (order.status !== 'QUOTE') return next(res.createError(401, 'Order was already updated'))
 
-  const fromFundHashExists = await Order.findOne({ fromFundHash: order.fromFundHash }).exec()
+  const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
   if (fromFundHashExists) return next(res.createError(401, 'Duplicate fromFundHash'))
 
   const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
