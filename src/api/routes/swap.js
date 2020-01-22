@@ -66,13 +66,17 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
     if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
   }
 
+  if (order.status !== 'QUOTE') return next(res.createError(401, 'Order was already updated'))
+
+  const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
+  if (fromFundHashExists) return next(res.createError(401, 'Duplicate fromFundHash'))
+
   const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
 
   for (let i = 0; i < keysToBeCopied.length; i++) {
     const key = keysToBeCopied[i]
 
     if (!body[key]) return next(res.createError(401, `${key} is missing`))
-    if (order[key]) return next(res.createError(401, `${key} already exist`))
 
     order[key] = body[key]
   }

@@ -61,8 +61,7 @@ const OrderSchema = new mongoose.Schema({
 
   fromFundHash: {
     type: String,
-    index: true,
-    unique: true
+    index: true
   },
   toFundHash: {
     type: String,
