@@ -1,5 +1,7 @@
-const Order = require('../../models/Order')
 const debug = require('debug')('liquality:agent:worker')
+
+const Order = require('../../models/Order')
+const config = require('../../config')
 
 module.exports = agenda => async job => {
   const { data } = job.attrs
@@ -23,12 +25,22 @@ module.exports = agenda => async job => {
     order.swapExpiration
   )
 
-  const initiationTx = await order.fromClient().chain.getTransactionByHash(order.fromFundHash)
-  const accepted = verified && initiationTx.confirmations >= order.minConf
+  try {
+    if (!verified) {
+      debug(`Reschedule ${order.orderId}: Transaction not found`)
+      throw new Error('Reschedule')
+    }
 
-  if (!accepted) {
-    // TODO: schedule based on block times?
-    throw new Error('Transaction hasn\'t been verified yet')
+    const initiationTx = await order.fromClient().chain.getTransactionByHash(order.fromFundHash)
+    if (initiationTx.confirmations < order.minConf) {
+      debug(`Reschedule ${order.orderId}: Need more confirmations (${initiationTx.confirmations} < ${order.minConf})`)
+      throw new Error('Reschedule')
+    }
+  } catch (e) {
+    const when = 'in ' + config.assets[order.from].blockTime
+    debug(`Reschedule ${order.orderId} ${when}`)
+    await agenda.schedule(when, 'verify-user-init-tx', { orderId: data.orderId })
+    return
   }
 
   debug('Found & verified funding transaction', order.orderId)
