@@ -5,6 +5,8 @@ const debug = require('debug')('liquality:agent:worker')
 const mongoose = require('mongoose')
 const Agenda = require('agenda')
 
+const config = require('../config')
+
 const JOBS_DIR = path.join(__dirname, 'jobs')
 
 let agenda
@@ -28,14 +30,10 @@ module.exports.start = async () => {
   agenda.on('fail', async (err, job) => {
     if (err) {}
 
-    if (job.attrs.failCount <= 5) {
+    if (job.attrs.failCount <= config.worker.maxJobRetry) {
       debug('Retrying', job.attrs)
 
-      if (process.env.NODE_ENV === 'test') {
-        job.schedule('in 2 seconds')
-      } else {
-        job.schedule('in 15 seconds')
-      }
+      job.schedule('in ' + config.worker.jobRetryDelay)
 
       await job.save()
     } else {

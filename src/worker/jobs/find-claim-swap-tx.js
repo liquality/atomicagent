@@ -1,7 +1,7 @@
-const Order = require('../../models/Order')
 const debug = require('debug')('liquality:agent:worker')
 
-const TEST_ENV = process.env.NODE_ENV === 'test'
+const Order = require('../../models/Order')
+const config = require('../../config')
 
 async function findClaim (order, lastScannedBlock, currentBlock) {
   const newBlocksExist = !lastScannedBlock || (currentBlock > lastScannedBlock)
@@ -36,9 +36,11 @@ module.exports = agenda => async job => {
     const block = await order.toClient().chain.getBlockByNumber(currentBlock)
 
     if (block.timestamp >= order.nodeSwapExpiration) {
+      debug(`Get refund ${order.orderId} (${block.timestamp} >= ${order.nodeSwapExpiration})`)
       await agenda.now('agent-refund', { orderId: order.orderId })
     } else {
-      const when = TEST_ENV ? 'in 2 seconds' : 'in 10 seconds'
+      const when = 'in ' + config.assets[order.to].blockTime
+      debug(`Reschedule ${order.orderId}: Claim transaction not found (last scanned block: ${currentBlock})`)
       await agenda.schedule(when, 'find-claim-swap-tx', { orderId: data.orderId, lastScannedBlock: currentBlock })
     }
 
