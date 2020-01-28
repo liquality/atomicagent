@@ -7,7 +7,7 @@
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
-    "test": "NODE_ENV=test CONFIG_PATH=sample.config.toml mocha --exit ./test/*.js"
+    "test": "NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js"
   },
   "license": "ISC",
   "dependencies": {
@@ -27,10 +27,10 @@
     "@liquality/ethereum-networks": "^0.4.19",
     "@liquality/ethereum-rpc-provider": "^0.4.19",
     "@liquality/ethereum-swap-provider": "^0.4.19",
-    "@sentry/node": "^5.9.0",
-    "agenda": "^2.2.0",
+    "@sentry/node": "^5.11.1",
+    "agenda": "^2.3.0",
     "agendash": "^1.0.0",
-    "axios": "^0.19.0",
+    "axios": "^0.19.2",
     "bignumber.js": "^9.0.0",
     "body-parser": "^1.19.0",
     "bull": "^3.12.1",
@@ -45,9 +45,9 @@
     "http-errors": "^1.7.3",
     "ioredis": "^4.14.1",
     "level": "^5.0.1",
-    "mongoose": "^5.7.13",
+    "mongoose": "^5.8.9",
     "toml": "^3.0.0",
-    "uuid": "^3.3.3"
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
