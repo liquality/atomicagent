@@ -1,3 +1,5 @@
+const Sentry = require('@sentry/node')
+
 const fs = require('fs')
 const path = require('path')
 const debug = require('debug')('liquality:agent:worker')
@@ -28,7 +30,10 @@ module.exports.start = async () => {
     })
 
   agenda.on('fail', async (err, job) => {
-    if (err) {}
+    Sentry.withScope((scope) => {
+      scope.setTag('orderId', job.data && job.data.orderId)
+      Sentry.captureException(err)
+    })
 
     if (job.attrs.failCount <= config.worker.maxJobRetry) {
       debug('Retrying', job.attrs)
