@@ -13,7 +13,13 @@ if (config.database.debug) {
   mongoose.set('debug', true)
 }
 
-mongoose.connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+mongoose.connect(config.database.uri, {
+  useNewUrlParser: true,
+  useCreateIndex: true,
+  autoReconnect: true,
+  reconnectTries: Number.MAX_VALUE,
+  reconnectInterval: 1000
+})
 
 switch (process.env.PROCESS_TYPE) {
   case 'api':
