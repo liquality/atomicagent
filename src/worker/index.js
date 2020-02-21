@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const { fork } = require('child_process')
 const debug = require('debug')('liquality:agent:worker')
 
 const mongoose = require('mongoose')
@@ -26,6 +27,18 @@ module.exports.start = async () => {
           .catch(e => done(e))
       })
     })
+
+  if (config.jobReporter) {
+    ;['start', 'success', 'fail'].forEach(event => {
+      agenda.on(event, (...args) => {
+        const error = JSON.stringify(event.startsWith('fail') ? args[0] : null)
+        const job = event.startsWith('fail') ? args[1] : args[0]
+        const attrs = JSON.stringify(job.attrs)
+
+        fork(config.jobReporter, [event, error, attrs])
+      })
+    })
+  }
 
   agenda.on('fail', async (err, job) => {
     if (err) {}
