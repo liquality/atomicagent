@@ -41,7 +41,10 @@ module.exports = agenda => async job => {
     } else {
       const when = 'in ' + config.assets[order.to].blockTime
       debug(`Reschedule ${order.orderId}: Claim transaction not found (last scanned block: ${currentBlock})`)
-      await agenda.schedule(when, 'find-claim-swap-tx', { orderId: data.orderId, lastScannedBlock: currentBlock })
+
+      job.attrs.data.lastScannedBlock = currentBlock
+      job.schedule(when)
+      await job.save()
     }
 
     return

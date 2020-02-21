@@ -39,7 +39,9 @@ module.exports = agenda => async job => {
   } catch (e) {
     const when = 'in ' + config.assets[order.from].blockTime
     debug(`Reschedule ${order.orderId} ${when}`)
-    await agenda.schedule(when, 'verify-user-init-tx', { orderId: data.orderId })
+
+    job.schedule(when)
+    await job.save()
     return
   }
 
