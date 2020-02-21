@@ -16,6 +16,7 @@ jobs:
       - run: npm install
       - run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
       - run: npm publish --access public
+      - run: sleep 10
 
   deploy:
     needs: publish
