@@ -27,4 +27,4 @@ jobs:
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
-          script: ${{secrets.SSH_SCRIPT}}
+          script: ./update_reload
