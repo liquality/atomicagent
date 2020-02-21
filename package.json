@@ -1,8 +1,14 @@
 {
   "name": "atomicagent",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Atomic Swap Agent",
   "main": "src/index.js",
+  "bin": {
+    "atomicagent": "./bin/atomicagent",
+    "atomicagent-api": "./bin/atomicagent-api",
+    "atomicagent-wallet": "./bin/atomicagent-wallet",
+    "atomicagent-worker": "./bin/atomicagent-worker"
+  },
   "scripts": {
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
