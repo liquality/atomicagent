@@ -25,5 +25,6 @@ jobs:
         with:
           host: ${{secrets.SSH_HOST}}
           username: ${{secrets.SSH_USER}}
-          port: ${{secrets.SSH_KEY}}
+          key: ${{secrets.SSH_KEY}}
+          port: 22
           script: ${{secrets.SSH_SCRIPT}}
