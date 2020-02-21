@@ -13,7 +13,17 @@ if (config.database.debug) {
   mongoose.set('debug', true)
 }
 
-mongoose.connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+const mongooseOnError = err => {
+  console.error(err)
+  process.exit(1)
+}
+
+mongoose
+  .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+  .catch(mongooseOnError)
+
+mongoose
+  .connection.on('error', mongooseOnError)
 
 switch (process.env.PROCESS_TYPE) {
   case 'api':
