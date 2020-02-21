@@ -35,7 +35,7 @@ const MarketSchema = new mongoose.Schema({
     enum: ['ACTIVE', 'INACTIVE'],
     index: true
   }
-})
+}, { timestamps: true })
 
 MarketSchema.index({ from: 1, to: 1 }, { unique: true })
 

@@ -102,7 +102,7 @@ const OrderSchema = new mongoose.Schema({
     enum: ['QUOTE', 'USER_FUNDED_UNVERIFIED', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'QUOTE_EXPIRED', 'SWAP_EXPIRED'],
     index: true
   }
-})
+}, { timestamps: true })
 
 // OrderSchema.set('toJSON', { virtuals: true })
 
