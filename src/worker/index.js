@@ -1,3 +1,6 @@
+const Sentry = require('@sentry/node')
+const _ = require('lodash')
+
 const fs = require('fs')
 const path = require('path')
 const { fork } = require('child_process')
@@ -41,7 +44,14 @@ module.exports.start = async () => {
   }
 
   agenda.on('fail', async (err, job) => {
-    if (err) {}
+    Sentry.withScope(scope => {
+      scope.setTag('jobName', _.get(job, 'attrs.name'))
+      scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
+
+      scope.setExtra('attrs', job.attrs)
+
+      Sentry.captureException(err)
+    })
 
     if (job.attrs.failCount <= config.worker.maxJobRetry) {
       debug('Retrying', job.attrs)
