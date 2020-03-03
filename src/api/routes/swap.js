@@ -3,8 +3,13 @@ const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
 
+const mongoose = require('mongoose')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
+
+const jobs = require('../../utils/jobs')
+
+const pkg = require('../../../package.json')
 
 // TODO: fix http error response codes in all routes
 
@@ -102,7 +107,18 @@ router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
     if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
   }
 
-  res.json(order.json())
+  const json = order.json()
+
+  if (query.verbose === 'true') {
+    try {
+      json.agent_version = pkg.version
+      json.job_data = await jobs.find(params.orderId)
+    } catch (e) {
+      json.verbose_error = e.toString()
+    }
+  }
+
+  res.json(json)
 }))
 
 module.exports = router
