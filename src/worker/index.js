@@ -49,6 +49,7 @@ module.exports.start = async () => {
       scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
 
       scope.setExtra('attrs', job.attrs)
+      scope.setExtra('response_body', _.get(err, 'response.body') || _.get(err, 'response.data'))
 
       Sentry.captureException(err)
     })
