@@ -1,34 +1,50 @@
-const axios = require('axios')
+const Sentry = require('@sentry/node')
+const Bluebird = require('bluebird')
 const BN = require('bignumber.js')
-const Market = require('../../models/Market')
 const debug = require('debug')('liquality:agent:worker')
+
+const Market = require('../../models/Market')
+const config = require('../../config')
+const rateProviders = require('../rate')
 
 module.exports = agenda => async job => {
   debug('Updating market data')
 
   const markets = await Market.find({ status: 'ACTIVE' }).exec()
-  const currencies = Array.from(new Set([].concat(...markets.map(market => [market.from, market.to]))))
-  const MAP = {}
 
-  await Promise.all(currencies.map(currency => {
-    return axios(`https://api.coinbase.com/v2/prices/${currency}-USD/spot`)
-      .then(res => {
-        MAP[currency] = res.data.data.amount
+  await Bluebird.map(markets, async market => {
+    const pair = `${market.from}-${market.to}`
+
+    try {
+      const pairConfig = config.rate.pairs[pair]
+      const { provider, type, base, flip } = pairConfig
+      let { from, to } = market
+
+      if (flip) {
+        from = market.to
+        to = market.from
+      }
+
+      const providerFn = rateProviders[provider][type]
+
+      let rate = await providerFn(from, to, base)
+
+      if (flip) {
+        rate = BN(1).div(rate)
+      }
+
+      market.rate = BN(rate).times(BN(1).minus(BN(market.spread))).dp(8).toNumber()
+
+      debug(pair, market.rate)
+
+      return market.save()
+    } catch (e) {
+      Sentry.withScope(scope => {
+        scope.setTag('pair', pair)
+        Sentry.captureException(e)
       })
-  }))
 
-  await Promise.all(markets.map(market => {
-    const from = BN(MAP[market.from])
-    const to = BN(MAP[market.to])
-
-    let rate = from.div(to) // Market rate
-    rate = rate.times(BN(1).minus(BN(market.spread))) // Remove spread
-    rate = rate.dp(8)
-
-    market.rate = rate
-
-    debug(`${market.from}_${market.to}`, market.rate)
-
-    return market.save()
-  }))
+      debug(e)
+    }
+  }, { concurrency: 1 })
 }
