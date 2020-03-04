@@ -10,6 +10,26 @@ maxJobRetry = 5
 jobRetryDelay = "5 seconds"
 # jobReporter = "/Users/user/slack.js"
 
+[rate]
+  updateInterval = "5 minutes"
+
+  [rate.pairs.BTC-ETH]
+  provider = "coinbase-pro"
+  type = "pair"
+  flip = true
+
+  [rate.pairs.ETH-BTC]
+  provider = "coinbase-pro"
+  type = "pair"
+
+  [rate.pairs.DAI-BTC]
+  provider = "coinmarketcap"
+  type = "pair"
+
+[rateProvider]
+  [rateProvider.coinmarketcap]
+  apiKey = ""
+
 [assets]
   [assets.BTC]
   network = "bitcoin_regtest"
