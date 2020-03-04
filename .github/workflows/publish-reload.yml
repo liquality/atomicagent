@@ -3,7 +3,7 @@ name: Publish & reload atomicagent
 on:
   create:
     tags:
-      - v*
+      - 'v*'
 
 jobs:
   publish:

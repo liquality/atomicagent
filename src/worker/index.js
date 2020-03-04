@@ -66,7 +66,7 @@ module.exports.start = async () => {
   })
 
   await agenda.start()
-  await agenda.every('5 minutes', 'update-market-data')
+  await agenda.every(config.rate.updateInterval, 'update-market-data')
 }
 
 module.exports.stop = () => {
