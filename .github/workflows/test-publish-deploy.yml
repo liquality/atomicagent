@@ -1,4 +1,4 @@
-name: Publish & reload
+name: Test, publish & deploy
 
 on:
   push:
@@ -6,7 +6,21 @@ on:
       - v*
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 8
+      - run: cp sample.config.toml test.config.toml
+      - run: docker-compose -f ./test/docker/docker-compose.yml up -d --build
+      - run: sleep 30
+      - run: npm ci
+      - run: DEBUG=liquality:agent* npm test
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
