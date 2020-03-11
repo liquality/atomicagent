@@ -1,4 +1,4 @@
-name: Publish & reload atomicagent
+name: Publish & reload
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 8
-      - run: npm install
+      - run: npm ci
       - run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
       - run: npm publish --access public --tag next
         if: contains(github.ref, '-next.')
