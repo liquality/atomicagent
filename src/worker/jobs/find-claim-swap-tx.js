@@ -4,22 +4,28 @@ const Order = require('../../models/Order')
 const config = require('../../config')
 
 async function findClaim (order, lastScannedBlock, currentBlock) {
+  const toClient = order.toClient()
   const newBlocksExist = !lastScannedBlock || (currentBlock > lastScannedBlock)
-  if (newBlocksExist) {
+  const doesBlockScan = toClient.swap.doesBlockScan
+  if (doesBlockScan && !newBlocksExist) return
+
+  const getClaim = async (blockNumber) => toClient.swap.findClaimSwapTransaction(
+    order.toFundHash,
+    order.toAddress,
+    order.toCounterPartyAddress,
+    order.secretHash,
+    order.nodeSwapExpiration,
+    blockNumber
+  )
+
+  if (doesBlockScan) {
     let blockNumber = lastScannedBlock ? lastScannedBlock + 1 : currentBlock
-
     for (;blockNumber <= currentBlock; blockNumber++) {
-      const claimTx = await order.toClient().swap.findClaimSwapTransaction(
-        order.toFundHash,
-        order.toAddress,
-        order.toCounterPartyAddress,
-        order.secretHash,
-        order.nodeSwapExpiration,
-        blockNumber
-      )
-
+      const claimTx = getClaim(blockNumber)
       if (claimTx) return claimTx
     }
+  } else {
+    return getClaim()
   }
 }
 
