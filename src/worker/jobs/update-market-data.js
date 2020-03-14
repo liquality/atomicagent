@@ -1,7 +1,8 @@
+const debug = require('debug')('liquality:agent:worker:update-market-data')
+
 const axios = require('axios')
 const BN = require('bignumber.js')
 const Market = require('../../models/Market')
-const debug = require('debug')('liquality:agent:worker')
 
 module.exports = agenda => async job => {
   debug('Updating market data')

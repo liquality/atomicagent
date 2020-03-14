@@ -1,4 +1,4 @@
-const debug = require('debug')('liquality:agent:worker')
+const debug = require('debug')('liquality:agent:worker:verify-user-init-tx')
 
 const Order = require('../../models/Order')
 const config = require('../../config')

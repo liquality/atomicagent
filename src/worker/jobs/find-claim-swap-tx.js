@@ -1,4 +1,4 @@
-const debug = require('debug')('liquality:agent:worker')
+const debug = require('debug')('liquality:agent:worker:find-claim-swap-tx')
 
 const Order = require('../../models/Order')
 const config = require('../../config')
@@ -9,7 +9,7 @@ async function findClaim (order, lastScannedBlock, currentBlock) {
   const doesBlockScan = toClient.swap.doesBlockScan
   if (doesBlockScan && !newBlocksExist) return
 
-  const getClaim = async (blockNumber) => toClient.swap.findClaimSwapTransaction(
+  const getClaim = blockNumber => toClient.swap.findClaimSwapTransaction(
     order.toFundHash,
     order.toAddress,
     order.toCounterPartyAddress,
@@ -21,7 +21,10 @@ async function findClaim (order, lastScannedBlock, currentBlock) {
   if (doesBlockScan) {
     let blockNumber = lastScannedBlock ? lastScannedBlock + 1 : currentBlock
     for (;blockNumber <= currentBlock; blockNumber++) {
-      const claimTx = getClaim(blockNumber)
+      const claimTx = await getClaim(blockNumber)
+
+      debug(`Block scanning for ${order.orderId}: ${blockNumber}${claimTx ? ' (Found)' : ''}`)
+
       if (claimTx) return claimTx
     }
   } else {
@@ -46,7 +49,6 @@ module.exports = agenda => async job => {
       await agenda.now('agent-refund', { orderId: order.orderId })
     } else {
       const when = 'in ' + config.assets[order.to].blockTime
-      debug(`Reschedule ${order.orderId}: Claim transaction not found (last scanned block: ${currentBlock})`)
 
       job.attrs.data.lastScannedBlock = currentBlock
       job.schedule(when)
