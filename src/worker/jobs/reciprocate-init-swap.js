@@ -18,6 +18,7 @@ module.exports = agenda => async job => {
     return
   }
 
+  const lastScannedBlock = await order.toClient().chain.getBlockHeight()
   const tx = await order.toClient().swap.initiateSwap(order.toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, order.nodeSwapExpiration)
   debug('Initiated funding transaction', order.orderId, tx)
 
@@ -25,5 +26,5 @@ module.exports = agenda => async job => {
   order.status = 'AGENT_FUNDED'
 
   await order.save()
-  await agenda.now('find-claim-swap-tx', { orderId: order.orderId, lastScannedBlock: currentBlock })
+  await agenda.now('find-claim-swap-tx', { orderId: order.orderId, lastScannedBlock })
 }
