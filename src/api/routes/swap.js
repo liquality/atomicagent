@@ -3,7 +3,6 @@ const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
 
-const mongoose = require('mongoose')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 

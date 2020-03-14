@@ -10,6 +10,7 @@ const mongoose = require('mongoose')
 const Agenda = require('agenda')
 
 const config = require('../config')
+const Order = require('../models/Order')
 
 const JOBS_DIR = path.join(__dirname, 'jobs')
 
@@ -33,12 +34,14 @@ module.exports.start = async () => {
 
   if (config.jobReporter) {
     ;['start', 'success', 'fail'].forEach(event => {
-      agenda.on(event, (...args) => {
+      agenda.on(event, async (...args) => {
         const error = JSON.stringify(event.startsWith('fail') ? args[0] : null)
         const job = event.startsWith('fail') ? args[1] : args[0]
         const attrs = JSON.stringify(job.attrs)
+        const order = await Order.findOne({ orderId: _.get(job, 'attrs.data.orderId') }).exec()
+        const orderJson = JSON.stringify(order)
 
-        fork(config.jobReporter, [event, error, attrs])
+        fork(config.jobReporter, [event, error, attrs, orderJson])
       })
     })
   }
