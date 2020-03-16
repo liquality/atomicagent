@@ -3,7 +3,7 @@ const _ = require('lodash')
 
 const fs = require('fs')
 const path = require('path')
-const { fork } = require('child_process')
+const { spawn } = require('child_process')
 const debug = require('debug')('liquality:agent:worker')
 
 const mongoose = require('mongoose')
@@ -41,7 +41,7 @@ module.exports.start = async () => {
         const order = await Order.findOne({ orderId: _.get(job, 'attrs.data.orderId') }).exec()
         const orderJson = JSON.stringify(order)
 
-        fork(config.worker.jobReporter, [event, error, attrs, orderJson])
+        spawn(config.worker.jobReporter, [event, error, attrs, orderJson], { stdio: 'inherit' })
       })
     })
   }
