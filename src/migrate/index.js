@@ -1,9 +1,10 @@
 const Market = require('../models/Market')
 const markets = require('./data/markets.json')
 
-async function main () {
+module.exports.run = async () => {
+  await Market.deleteMany({})
   const newMarkets = await Market.insertMany(markets, { ordered: false })
-  console.log(`${newMarkets.length} markets have been created`)
-}
 
-main()
+  console.log(`${newMarkets.length} markets have been set`)
+  process.exit()
+}

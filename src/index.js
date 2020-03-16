@@ -1,55 +1,41 @@
-const {
-  NODE_ENV,
-  PROCESS_TYPE,
-  SENTRY_DSN,
-  LIQUALITY_ENV
-} = process.env
-
-const fs = require('fs')
-const path = require('path')
 const Sentry = require('@sentry/node')
 
-if (NODE_ENV === 'production') {
-  let COMMIT_HASH = null
-
-  try {
-    COMMIT_HASH = fs.readFileSync(path.join(__dirname, '..', 'COMMIT_HASH'), 'utf8').trim()
-  } catch (e) {}
-
+if (process.env.NODE_ENV === 'production') {
   Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: LIQUALITY_ENV,
-    release: COMMIT_HASH
+    dsn: process.env.SENTRY_DSN
   })
-} else {
-  require('dotenv').config()
 }
-
-console.log(`Booting ${PROCESS_TYPE}`)
 
 const mongoose = require('mongoose')
-const MONGO_REQUIRED_FOR = ['api', 'worker', 'migrate']
+const config = require('./config')
 
-if (MONGO_REQUIRED_FOR.includes(PROCESS_TYPE)) {
-  console.log('Connecting to mongodb')
-  mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useCreateIndex: true })
-
-  // if (NODE_ENV !== 'production') {
-  //   mongoose.set('debug', true)
-  // }
+if (config.database.debug) {
+  mongoose.set('debug', true)
 }
 
-switch (PROCESS_TYPE) {
+const mongooseOnError = err => {
+  console.error(err)
+  process.exit(1)
+}
+
+mongoose
+  .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+  .catch(mongooseOnError)
+
+mongoose
+  .connection.on('error', mongooseOnError)
+
+switch (process.env.PROCESS_TYPE) {
   case 'api':
-    require('./api')
+    require('./api').start()
     break
 
   case 'worker':
-    require('./worker')
+    require('./worker').start()
     break
 
   case 'migrate':
-    require('./migrate')
+    require('./migrate').run()
     break
 
   default:

@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+
+const program = require('commander')
+const pkg = require('../package.json')
+
+program
+  .version(pkg.version)
+
+program
+  .command('api', 'Run agent API')
+
+program
+  .command('worker', 'Run agent worker')
+
+program
+  .command('wallet', 'Communicate with asset wallets')
+
+program
+  .parse(process.argv)

@@ -1,9 +1,14 @@
 const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
+const BigNumber = require('bignumber.js')
 
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
+
+const jobs = require('../../utils/jobs')
+
+const pkg = require('../../../package.json')
 
 // TODO: fix http error response codes in all routes
 
@@ -22,13 +27,28 @@ router.post('/order', asyncHandler(async (req, res, next) => {
   const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
   if (!market) return next(res.createError(401, 'Market not found'))
 
-  const { amount } = body
-  if (!(market.min <= amount &&
-      amount <= market.max)) {
+  const { fromAmount } = body
+  if (!(market.min <= fromAmount &&
+    fromAmount <= market.max)) {
     return next(res.createError(401, 'Invalid amount'))
   }
 
-  const order = Order.fromMarket(market, body.amount)
+  const order = Order.fromMarket(market, body.fromAmount)
+
+  const addresses = await order.toClient().wallet.getUsedAddresses()
+  const balance = await order.toClient().chain.getBalance(addresses)
+
+  if (BigNumber(balance).isLessThan(BigNumber(order.toAmount))) {
+    return next(res.createError(401, 'Insufficient balance'))
+  }
+
+  const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
+
+  if (passphrase) {
+    order.setPassphrase(passphrase)
+  }
+
+  order.setExpiration()
 
   await order.setAgentAddresses()
   await order.save()
@@ -40,28 +60,64 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   const agenda = req.app.get('agenda')
   const { params, body } = req
 
-  const order = await Order.findOne({ _id: params.orderId }).exec()
+  const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
 
-  ;['fromAddress', 'toAddress', 'fromFundHash', 'secretHash', 'swapExpiration'].forEach(key => {
-    if (!body[key]) return next(res.createError(401, `${key} is missing`))
-    order[key] = body[key]
-  })
+  if (order.passphraseHash) {
+    const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
-  order.status = 'QUOTE'
+    if (!passphrase) return next(res.createError(401, 'You are not authorised'))
+    if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
+  }
+
+  if (order.status !== 'QUOTE') return next(res.createError(401, 'Order was already updated'))
+
+  const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
+  if (fromFundHashExists) return next(res.createError(401, 'Duplicate fromFundHash'))
+
+  const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
+
+  for (let i = 0; i < keysToBeCopied.length; i++) {
+    const key = keysToBeCopied[i]
+
+    if (!body[key]) return next(res.createError(401, `${key} is missing`))
+
+    order[key] = body[key]
+  }
+
+  order.status = 'USER_FUNDED_UNVERIFIED'
+
   await order.save()
-  await agenda.now('verify-user-init-tx', { orderId: order.id })
+  await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
   res.json(order.json())
 }))
 
 router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
-  const { params } = req
+  const { params, query } = req
 
-  const order = await Order.findOne({ _id: params.orderId }).exec()
+  const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) return next(res.createError(401, 'Order not found'))
 
-  res.json(order.json())
+  if (order.passphraseHash) {
+    const passphrase = query.passphrase || req.get('X-Liquality-Agent-Passphrase')
+
+    if (!passphrase) return next(res.createError(401, 'You are not authorised'))
+    if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
+  }
+
+  const json = order.json()
+
+  if (query.verbose === 'true') {
+    try {
+      json.agent_version = pkg.version
+      json.job_data = await jobs.find(params.orderId)
+    } catch (e) {
+      json.verbose_error = e.toString()
+    }
+  }
+
+  res.json(json)
 }))
 
 module.exports = router

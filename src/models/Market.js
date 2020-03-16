@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const clients = require('../utils/clients')
+const { getClient } = require('../utils/clients')
 
 const MarketSchema = new mongoose.Schema({
   from: {
@@ -23,6 +23,9 @@ const MarketSchema = new mongoose.Schema({
   rate: {
     type: Number
   },
+  spread: {
+    type: Number
+  },
   orderExpiresIn: {
     type: Number
   },
@@ -32,7 +35,7 @@ const MarketSchema = new mongoose.Schema({
     enum: ['ACTIVE', 'INACTIVE'],
     index: true
   }
-})
+}, { timestamps: true })
 
 MarketSchema.index({ from: 1, to: 1 }, { unique: true })
 
@@ -46,11 +49,11 @@ MarketSchema.methods.json = function () {
 }
 
 MarketSchema.methods.fromClient = function () {
-  return clients[this.from]
+  return getClient(this.from)
 }
 
 MarketSchema.methods.toClient = function () {
-  return clients[this.to]
+  return getClient(this.to)
 }
 
 module.exports = mongoose.model('Market', MarketSchema)

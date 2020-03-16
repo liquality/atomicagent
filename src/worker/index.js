@@ -1,123 +1,82 @@
+const Sentry = require('@sentry/node')
+const _ = require('lodash')
+
+const fs = require('fs')
+const path = require('path')
+const { fork } = require('child_process')
+const debug = require('debug')('liquality:agent:worker')
+
 const mongoose = require('mongoose')
 const Agenda = require('agenda')
 
-const agenda = new Agenda({ mongo: mongoose.connection })
-
-const fx = require('../utils/fx')
+const config = require('../config')
 const Order = require('../models/Order')
 
-agenda.define('verify-user-init-tx', async (job, done) => {
-  const { data } = job.attrs
+const JOBS_DIR = path.join(__dirname, 'jobs')
 
-  const order = await Order.findOne({ _id: data.orderId }).exec()
-  if (!order) return done()
+let agenda
 
-  order.status = 'AGENT_PENDING'
-  await order.save()
+module.exports.start = async () => {
+  agenda = new Agenda({ mongo: mongoose.connection })
 
-  // TODO: remove wait() from CAL
-  await order.fromClient().swap.verifyInitiateSwapTransaction(
-    order.fromFundHash,
-    order.amount,
-    order.fromCounterPartyAddress,
-    order.fromAddress,
-    order.secretHash,
-    order.swapExpiration
-  )
-  console.log('Found & verified funding transaction', order.id)
+  fs.readdirSync(JOBS_DIR)
+    .forEach(jobSlug => {
+      const jobName = path.basename(jobSlug, '.js')
 
-  order.status = 'USER_FUNDED'
-  await order.save()
-  await agenda.now('reciprocate-init-swap', { orderId: order.id })
+      agenda.define(jobName, async (job, done) => {
+        const fn = require(path.join(JOBS_DIR, jobSlug))(agenda)
 
-  done()
-})
+        fn(job)
+          .then(() => done())
+          .catch(e => done(e))
+      })
+    })
 
-agenda.define('reciprocate-init-swap', async (job, done) => {
-  const { data } = job.attrs
+  if (config.worker.jobReporter) {
+    ;['start', 'success', 'fail'].forEach(event => {
+      agenda.on(event, async (...args) => {
+        const error = JSON.stringify(event.startsWith('fail') ? args[0] : null)
+        const job = event.startsWith('fail') ? args[1] : args[0]
+        const attrs = JSON.stringify(job.attrs)
+        const order = await Order.findOne({ orderId: _.get(job, 'attrs.data.orderId') }).exec()
+        const orderJson = JSON.stringify(order)
 
-  const order = await Order.findOne({ _id: data.orderId }).exec()
-  if (!order) return done()
-
-  const toAmount = fx(order.from, order.amount, order.to, order.rate).toNumber()
-  const nodeExp = order.swapExpiration - (60 * 60 * 6)
-
-  const tx = await order.toClient().swap.initiateSwap(toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, nodeExp)
-  console.log('Initiated funding transaction', order.id, tx)
-
-  order.toFundHash = tx
-  order.status = 'AGENT_FUNDED'
-  await order.save()
-  await agenda.now('find-claim-swap-tx', { orderId: order.id })
-
-  done()
-})
-
-agenda.define('find-claim-swap-tx', async (job, done) => {
-  const { data } = job.attrs
-
-  const order = await Order.findOne({ _id: data.orderId }).exec()
-  if (!order) return done()
-
-  const nodeExp = order.swapExpiration - (60 * 60 * 6)
-
-  // TODO: remove wait() from CAL
-  const claimTx = await order.toClient().swap.findClaimSwapTransaction(
-    order.toFundHash,
-    order.toAddress,
-    order.toCounterPartyAddress,
-    order.secretHash,
-    nodeExp
-  )
-  console.log('Found claim transaction', claimTx)
-
-  order.secret = claimTx.secret
-  order.status = 'USER_CLAIMED'
-  await order.save()
-  await agenda.now('agent-claim', { orderId: order.id })
-
-  done()
-})
-
-agenda.define('agent-claim', async (job, done) => {
-  const { data } = job.attrs
-
-  const order = await Order.findOne({ _id: data.orderId }).exec()
-  if (!order) return done()
-
-  try {
-    // TODO: remove wait() from CAL
-    await order.fromClient().swap.claimSwap(
-      order.fromFundHash,
-      order.fromCounterPartyAddress,
-      order.fromAddress,
-      order.secret,
-      order.swapExpiration
-    )
-    console.log('Node has claimed the swap', order.id)
-
-    order.status = 'AGENT_CLAIMED'
-    await order.save()
-
-    done()
-  } catch (e) {
-    console.error(e)
-    job.fail(e)
-    job.schedule('10 seconds from now')
-    await job.save()
+        fork(config.worker.jobReporter, [event, error, attrs, orderJson])
+      })
+    })
   }
-})
 
-async function start () {
+  agenda.on('fail', async (err, job) => {
+    Sentry.withScope(scope => {
+      scope.setTag('jobName', _.get(job, 'attrs.name'))
+      scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
+
+      scope.setExtra('attrs', job.attrs)
+      scope.setExtra('response_body', _.get(err, 'response.body') || _.get(err, 'response.data'))
+
+      Sentry.captureException(err)
+    })
+
+    if (job.attrs.failCount <= config.worker.maxJobRetry) {
+      debug('Retrying', job.attrs)
+
+      job.schedule('in ' + config.worker.jobRetryDelay)
+
+      await job.save()
+    } else {
+      debug('Max attempts reached. Job has failed', job.attrs)
+    }
+  })
+
   await agenda.start()
+  await agenda.every('5 minutes', 'update-market-data')
 }
 
-async function stop () {
-  await agenda.stop()
-  process.exit(0)
+module.exports.stop = () => {
+  if (agenda) {
+    agenda.stop().then(() => process.exit(0))
+  }
 }
 
-process.on('SIGTERM', stop)
-process.on('SIGINT', stop)
-
-start()
+process.on('SIGTERM', module.exports.stop)
+process.on('SIGINT', module.exports.stop)
