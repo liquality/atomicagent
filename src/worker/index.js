@@ -32,7 +32,7 @@ module.exports.start = async () => {
       })
     })
 
-  if (config.jobReporter) {
+  if (config.worker.jobReporter) {
     ;['start', 'success', 'fail'].forEach(event => {
       agenda.on(event, async (...args) => {
         const error = JSON.stringify(event.startsWith('fail') ? args[0] : null)
@@ -41,7 +41,7 @@ module.exports.start = async () => {
         const order = await Order.findOne({ orderId: _.get(job, 'attrs.data.orderId') }).exec()
         const orderJson = JSON.stringify(order)
 
-        fork(config.jobReporter, [event, error, attrs, orderJson])
+        fork(config.worker.jobReporter, [event, error, attrs, orderJson])
       })
     })
   }
