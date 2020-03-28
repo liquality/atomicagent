@@ -47,6 +47,28 @@ module.exports.start = async () => {
   }
 
   agenda.on('fail', async (err, job) => {
+    let delay = config.worker.jobRetryDelay
+    const resBody = _.get(err, 'response.body') || _.get(err, 'response.data')
+
+    if (resBody && resBody.includes('non-final')) {
+      // ignore BTC refund error
+      err.ignore = true
+      delay = config.worker.backendJobRetryDelay
+    } else if (err.name === 'InvalidProviderResponseError' &&
+               err.message === 'Provider returned an invalid block,  should be object') {
+      // ignore empty blocks on ETH
+      err.ignore = true
+    }
+
+    if (err.ignore) {
+      debug('[quiet] Retrying', job.attrs)
+
+      job.schedule('in ' + delay)
+
+      await job.save()
+      return
+    }
+
     Sentry.withScope(scope => {
       scope.setTag('jobName', _.get(job, 'attrs.name'))
       scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
@@ -60,7 +82,7 @@ module.exports.start = async () => {
     if (job.attrs.failCount <= config.worker.maxJobRetry) {
       debug('Retrying', job.attrs)
 
-      job.schedule('in ' + config.worker.jobRetryDelay)
+      job.schedule('in ' + delay)
 
       await job.save()
     } else {
