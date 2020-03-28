@@ -8,8 +8,10 @@ const mongoose = require('mongoose')
 const { sha256 } = require('@liquality/crypto')
 
 const config = require('../src/config')
+const Asset = require('../src/models/Asset')
 const Market = require('../src/models/Market')
 const Order = require('../src/models/Order')
+const assets = require('../src/migrate/data/assets.json')
 const markets = require('../src/migrate/data/markets.json')
 const { getClient } = require('../src/utils/clients')
 
@@ -20,6 +22,8 @@ const sleep = duration => new Promise((resolve, reject) => {
 })
 
 const clear = () => Order.deleteMany({})
+  .then(() => Asset.deleteMany({}))
+  .then(() => Asset.insertMany(assets, { ordered: false }))
   .then(() => Market.deleteMany({}))
   .then(() => Market.insertMany(markets, { ordered: false }))
   .then(() => mongoose.connection.db.collection('agendaJobs').deleteMany({}))

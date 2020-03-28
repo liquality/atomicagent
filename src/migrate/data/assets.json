@@ -1,0 +1,17 @@
+[
+  {
+    "code": "BTC",
+    "actualBalance": 0,
+    "status": "ACTIVE"
+  },
+  {
+    "code": "ETH",
+    "actualBalance": 0,
+    "status": "ACTIVE"
+  },
+  {
+    "code": "DAI",
+    "actualBalance": 0,
+    "status": "ACTIVE"
+  }
+]
