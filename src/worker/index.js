@@ -48,9 +48,8 @@ module.exports.start = async () => {
 
   agenda.on('fail', async (err, job) => {
     let delay = config.worker.jobRetryDelay
-    const resBody = _.get(err, 'response.body') || _.get(err, 'response.data')
 
-    if (resBody && resBody.includes('non-final')) {
+    if (err.message.includes('non-final')) {
       // ignore BTC refund error
       err.ignore = true
       delay = config.worker.backendJobRetryDelay

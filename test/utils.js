@@ -37,7 +37,7 @@ module.exports.sleep = sleep
 
 module.exports.mongoose = mongoose
 
-module.exports.swap = (from, to, fromAmount, refund) => {
+module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
   let quote
   let fromBlock
 
@@ -267,12 +267,12 @@ module.exports.swap = (from, to, fromAmount, refund) => {
     })
   })
 
-  describe(refund ? 'Refund' : 'Claim', () => {
-    if (!refund) {
+  describe(refund ? 'Refund' : (lateClaim ? 'Late claim' : 'Claim'), () => {
+    if (!refund || lateClaim) {
       before(async function () {
-        this.timeout(30 * 1000)
+        this.timeout(120 * 1000)
 
-        await sleep(10000)
+        await sleep(lateClaim ? 60 * 1000 : 10 * 1000)
 
         return toClient.swap.claimSwap(toInitSwapTxHash, toAddress, quote.toCounterPartyAddress, secret, nodeSwapExpiration)
       })
