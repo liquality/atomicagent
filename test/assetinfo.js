@@ -7,7 +7,7 @@ chai.use(chaiHttp)
 const { prepare, mongoose } = require('./utils')
 const { app } = require('../src/api')
 
-describe.only('Asset Info', () => {
+describe('Asset Info', () => {
   before(async function () {
     this.timeout(10000)
 
