@@ -42,15 +42,28 @@ module.exports = agenda => async job => {
   const claimTx = await findClaim(order, data.lastScannedBlock, currentBlock)
 
   if (!claimTx) {
+    job.attrs.data.lastScannedBlock = currentBlock
+    await job.save()
+
     const block = await order.toClient().chain.getBlockByNumber(currentBlock)
 
     if (block.timestamp >= order.nodeSwapExpiration) {
       debug(`Get refund ${order.orderId} (${block.timestamp} >= ${order.nodeSwapExpiration})`)
-      await agenda.now('agent-refund', { orderId: order.orderId })
+
+      await order.toClient().swap.refundSwap(
+        order.toFundHash,
+        order.toAddress,
+        order.toCounterPartyAddress,
+        order.secretHash,
+        order.nodeSwapExpiration
+      )
+
+      debug('Node has refunded the swap', order.orderId)
+
+      order.status = 'AGENT_REFUNDED'
+      await order.save()
     } else {
       const when = 'in ' + config.assets[order.to].blockTime
-
-      job.attrs.data.lastScannedBlock = currentBlock
       job.schedule(when)
       await job.save()
     }
