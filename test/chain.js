@@ -29,6 +29,12 @@ describe('Agent', () => {
       swap('ETH', 'BTC', 250000000000000000)
     })
 
+    describe('Successful swap with user claiming late', () => {
+      before(() => clear())
+
+      swap('ETH', 'BTC', 250000000000000000, false, true)
+    })
+
     describe('Unsuccessful swap', () => {
       before(() => clear())
 
