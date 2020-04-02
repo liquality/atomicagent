@@ -48,8 +48,9 @@ module.exports.start = async () => {
 
   agenda.on('fail', async (err, job) => {
     let delay = config.worker.jobRetryDelay
+    const resBody = _.get(err, 'response.body') || _.get(err, 'response.data')
 
-    if (err.message.includes('non-final')) {
+    if (err.message.includes('non-final') || (resBody && resBody.includes('non-final'))) {
       // ignore BTC refund error
       err.ignore = true
       delay = config.worker.backendJobRetryDelay
@@ -73,7 +74,7 @@ module.exports.start = async () => {
       scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
 
       scope.setExtra('attrs', job.attrs)
-      scope.setExtra('response_body', _.get(err, 'response.body') || _.get(err, 'response.data'))
+      scope.setExtra('response_body', resBody)
 
       Sentry.captureException(err)
     })
