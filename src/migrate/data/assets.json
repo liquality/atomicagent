@@ -2,16 +2,19 @@
   {
     "code": "BTC",
     "actualBalance": 0,
-    "status": "ACTIVE"
+    "min": 100000,
+    "max": 5000000
   },
   {
     "code": "ETH",
     "actualBalance": 0,
-    "status": "ACTIVE"
+    "min": 250000000000000000,
+    "max": 2500000000000000000
   },
   {
     "code": "DAI",
     "actualBalance": 0,
-    "status": "ACTIVE"
+    "min": 1000000000000000000,
+    "max": 100000000000000000000
   }
 ]

@@ -12,10 +12,12 @@ const AssetSchema = new mongoose.Schema({
     type: Number
   },
 
-  status: {
-    type: String,
-    enum: ['ACTIVE', 'INACTIVE'],
-    index: true
+  min: {
+    type: Number
+  },
+
+  max: {
+    type: Number
   }
 }, { timestamps: true })
 

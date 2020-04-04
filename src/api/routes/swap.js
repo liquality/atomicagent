@@ -8,6 +8,7 @@ const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 
 const jobs = require('../../utils/jobs')
+const fx = require('../../utils/fx')
 
 const pkg = require('../../../package.json')
 
@@ -25,10 +26,52 @@ router.get('/assetinfo', asyncHandler(async (req, res) => {
 router.get('/marketinfo', asyncHandler(async (req, res) => {
   const { query } = req
   const q = _.pick(query, ['from', 'to'])
+  const queryAssets = Object.values(q).filter(v => !!v)
+  const marketQuery = {}
 
-  const result = await Market.find(q).exec()
+  if (queryAssets.length > 0) {
+    marketQuery.$or = [
+      { from: { $in: queryAssets } },
+      { to: { $in: queryAssets } }
+    ]
+  }
 
-  res.json(result.map(r => r.json()))
+  let markets = await Market.find(marketQuery).exec()
+  const requestedAssets = [...markets.reduce((acc, market) => {
+    acc.add(market.to)
+    acc.add(market.from)
+
+    return acc
+  }, new Set())]
+  const assets = await Asset.find({ code: { $in: requestedAssets } }).exec()
+
+  markets = markets.map(market => {
+    const { from, to, max } = market
+    const { rate } = markets.find(market => market.to === from && market.from === to) || {
+      rate: BigNumber(1).div(market.rate)
+    }
+
+    const fromAsset = assets.find(asset => asset.code === from)
+    const toAsset = assets.find(asset => asset.code === to)
+
+    market.max = BigNumber.min(
+      fx.calculateToAmount(to, from, toAsset.max, rate),
+      fromAsset.max,
+      max
+    ).toNumber()
+
+    return market
+  })
+
+  if (q.from && q.to) {
+    markets = markets.filter(market => market.to === q.to && market.from === q.from)
+  } else if (q.from) {
+    markets = markets.filter(market => market.from === q.from)
+  } else if (q.to) {
+    markets = markets.filter(market => market.to === q.to)
+  }
+
+  res.json(markets.map(market => market.json()))
 }))
 
 router.post('/order', asyncHandler(async (req, res, next) => {
