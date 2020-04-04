@@ -21,6 +21,13 @@ router.get('/marketinfo', asyncHandler(async (req, res) => {
   res.json(result.map(r => r.json()))
 }))
 
+router.get('/orders', asyncHandler(async (req, res) => {
+
+  const result = await Order.find({},{"secret":0}).exec()
+
+  res.json(result.map(r => r.json()))
+}))
+
 router.post('/order', asyncHandler(async (req, res, next) => {
   const { body } = req
 
