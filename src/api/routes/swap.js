@@ -22,8 +22,7 @@ router.get('/marketinfo', asyncHandler(async (req, res) => {
 }))
 
 router.get('/orders', asyncHandler(async (req, res) => {
-
-  const result = await Order.find({},{"secret":0}).exec()
+  const result = await Order.find({}, { secret: 0 }).exec()
 
   res.json(result.map(r => r.json()))
 }))
