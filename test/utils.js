@@ -211,7 +211,8 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
             return check()
           }
 
-          res.body.status.should.equal('USER_FUNDED')
+          // if agent funds immediately, status will be AGENT_FUNDED instead of USER_FUNDED
+          res.body.status.should.be.oneOf(['USER_FUNDED', 'AGENT_FUNDED'])
         }))
 
       return check()
