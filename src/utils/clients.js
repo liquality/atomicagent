@@ -48,7 +48,7 @@ function createEthClient (asset, wallet) {
   const ethClient = new Client()
   ethClient.addProvider(new EthereumRpcProvider(ethConfig.rpc.url))
   if (ethConfig.wallet && ethConfig.wallet.type === 'js') {
-    ethClient.addProvider(new EthereumJsWalletProvider(EthereumNetworks[ethConfig.network], ethConfig.wallet.mnemonic, ETH_GAS_PRICE_MULTIPLIER))
+    ethClient.addProvider(new EthereumJsWalletProvider(EthereumNetworks[ethConfig.network], ethConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER))
   }
   ethClient.addProvider(new EthereumSwapProvider())
 
@@ -60,7 +60,7 @@ function createERC20Client (asset) {
   const erc20Client = new Client()
   erc20Client.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
   if (assetConfig.wallet && assetConfig.wallet.type === 'js') {
-    erc20Client.addProvider(new EthereumJsWalletProvider(EthereumNetworks[assetConfig.network], assetConfig.wallet.mnemonic, ETH_GAS_PRICE_MULTIPLIER))
+    erc20Client.addProvider(new EthereumJsWalletProvider(EthereumNetworks[assetConfig.network], assetConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER))
   }
   erc20Client.addProvider(new EthereumErc20Provider(assetConfig.contractAddress))
   erc20Client.addProvider(new EthereumErc20SwapProvider())
