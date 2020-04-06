@@ -11,6 +11,18 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 8
+      - uses: actions/cache@v1
+        env:
+          node-version: 8
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - run: cp sample.config.toml test.config.toml
       - run: docker-compose -f ./test/docker/docker-compose.yml up -d --build
       - run: sleep 30
