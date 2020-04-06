@@ -5,7 +5,7 @@ const Asset = require('../../models/Asset')
 module.exports = agenda => async job => {
   debug('Updating agent balance')
 
-  const assets = await Asset.find({ status: 'ACTIVE' }).exec()
+  const assets = await Asset.find({}).exec()
 
   await Promise.all(assets.map(async asset => {
     const client = asset.getClient()
