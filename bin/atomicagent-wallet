@@ -8,34 +8,38 @@ const config = require('../src/config')
 
 addCommonOptions(program)
 
-async function getBalance(asset) {
-	const client = getClient(asset)
-	const addresses = await client.wallet.getUsedAddresses()
-	const balance = await client.chain.getBalance(addresses)
-	const balanceInCurrency = assets[asset.toLowerCase()].unitToCurrency(balance)
-	const code = assets[asset.toLowerCase()].code
-	return {
-		balanceInCurrency,
-		code
-	}
+async function getBalance (asset) {
+  const client = getClient(asset)
+  const addresses = await client.wallet.getUsedAddresses()
+  const balance = await client.chain.getBalance(addresses)
+  const balanceInCurrency = assets[asset.toLowerCase()].unitToCurrency(balance)
+  const code = assets[asset.toLowerCase()].code
+
+  return {
+    balanceInCurrency,
+    code
+  }
 }
 
 program
   .command('balances')
   .action(async (asset) => {
-		var data = []
-		var tickers = Object.keys(config.assets)
-		for ( var i = 0; i < tickers.length; i++) {
-			data.push(await getBalance(tickers[i]))
-		}
-		console.log(data)
+    const data = []
+    const tickers = Object.keys(config.assets)
+
+    for (let i = 0; i < tickers.length; i++) {
+      data.push(await getBalance(tickers[i]))
+    }
+
+    console.log(data)
   })
 
 program
   .command('balance <asset>')
   .action(async (asset) => {
-		var balance = await getBalance(asset)
-		console.log(balance.balanceInCurrency + " " + balance.code)
+    const balance = await getBalance(asset)
+
+    console.log(balance.balanceInCurrency + ' ' + balance.code)
   })
 
 program
@@ -43,6 +47,7 @@ program
   .action(async (asset) => {
     const client = getClient(asset)
     const address = await client.wallet.getUnusedAddress()
+
     console.log(address.toString())
   })
 
@@ -52,6 +57,7 @@ program
     const amountInUnit = assets[asset.toLowerCase()].currencyToUnit(amount)
     const client = getClient(asset)
     const tx = await client.chain.sendTransaction(address, amountInUnit)
+
     console.log(tx)
   })
 
