@@ -26,7 +26,7 @@ describe('Market Info', () => {
 
   it('should find update-market-data job', async function () {
     const job = await mongoose.connection.db.collection('agendaJobs')
-      .findOne({ name: 'update-market-data', repeatInterval: '5 minutes' })
+      .findOne({ name: 'update-market-data', repeatInterval: '30 seconds' })
 
     should.exist(job)
   })
