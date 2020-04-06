@@ -1,4 +1,4 @@
-const debug = require('debug')('liquality:agent:worker:find-claim-swap-tx')
+const debug = require('debug')('liquality:agent:worker:find-claim-tx-or-refund')
 
 const Order = require('../../models/Order')
 const config = require('../../config')

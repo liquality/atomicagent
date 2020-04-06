@@ -26,5 +26,5 @@ module.exports = agenda => async job => {
   order.status = 'AGENT_FUNDED'
 
   await order.save()
-  await agenda.now('find-claim-swap-tx', { orderId: order.orderId, lastScannedBlock })
+  await agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, lastScannedBlock })
 }
