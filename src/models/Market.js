@@ -113,8 +113,7 @@ MarketSchema.static('updateAllMarketData', async function () {
 
     market.max = BN.min(
       fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate),
-      fromAsset.max,
-      BN(fromAsset.actualBalance).div(config.worker.minConcurrentSwaps)
+      fromAsset.max
     ).dp(0, BN.ROUND_DOWN)
 
     debug(`${market.from}_${market.to}`, market.rate, `[${market.min}, ${market.max}]`)
