@@ -2,34 +2,81 @@
   {
     "from": "BTC",
     "to": "ETH",
-    "min": 100000,
-    "max": 5000000,
-    "minConf": 1,
-    "rate": 48.26,
-    "spread": 0.05,
-    "orderExpiresIn": 3600000,
+    "rate": 45.80542331,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
     "status": "ACTIVE"
   },
   {
     "from": "ETH",
     "to": "BTC",
-    "min": 250000000000000000,
-    "max": 2500000000000000000,
-    "minConf": 1,
-    "rate": 0.028,
-    "spread": 0.05,
-    "orderExpiresIn": 3600000,
+    "rate": 0.02183148,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
     "status": "ACTIVE"
   },
   {
     "from": "DAI",
     "to": "BTC",
-    "min": 1000000000000000000,
-    "max": 100000000000000000000,
-    "minConf": 1,
-    "rate": 0.000135,
-    "spread": 0.05,
-    "orderExpiresIn": 3600000,
+    "rate": 0.00014194,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "BTC",
+    "to": "DAI",
+    "rate": 7045.03581889,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "ETH",
+    "to": "DAI",
+    "rate": 153.80353044,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "DAI",
+    "to": "ETH",
+    "rate": 0.0065018,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "USDC",
+    "to": "BTC",
+    "rate": 0.00014045,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "BTC",
+    "to": "USDC",
+    "rate": 7119.995,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "ETH",
+    "to": "USDC",
+    "rate": 155.44,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE"
+  },
+  {
+    "from": "USDC",
+    "to": "ETH",
+    "rate": 0.00643335,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
     "status": "ACTIVE"
   }
 ]

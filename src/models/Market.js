@@ -56,4 +56,13 @@ MarketSchema.methods.toClient = function () {
   return getClient(this.to)
 }
 
+MarketSchema.static('getAssetsFromMarkets', function (markets) {
+  return [...markets.reduce((acc, market) => {
+    acc.add(market.to)
+    acc.add(market.from)
+
+    return acc
+  }, new Set())]
+})
+
 module.exports = mongoose.model('Market', MarketSchema)
