@@ -8,6 +8,7 @@ const BN = require('bignumber.js')
 const Asset = require('./Asset')
 const fx = require('../utils/fx')
 const { getClient } = require('../utils/clients')
+const config = require('../config')
 
 const MarketSchema = new mongoose.Schema({
   from: {
@@ -75,13 +76,23 @@ MarketSchema.static('updateAllMarketData', async function () {
 
   const ASSET_MAP = {}
   const ASSET_USD = {}
-  await Promise.all(assets.map(asset => {
-    return axios(`https://api.coinbase.com/v2/prices/${asset.code}-USD/spot`)
-      .then(res => {
-        ASSET_MAP[asset.code] = asset
-        ASSET_USD[asset.code] = res.data.data.amount
-      })
-  }))
+  await Bluebird.map(assets, async asset => {
+    const client = asset.getClient()
+
+    const [{ data }, addresses] = await Promise.all([
+      axios(`https://api.coinbase.com/v2/prices/${asset.code}-USD/spot`),
+      client.wallet.getUsedAddresses()
+    ])
+
+    ASSET_MAP[asset.code] = asset
+    ASSET_USD[asset.code] = data.data.amount
+
+    asset.actualBalance = await client.chain.getBalance(addresses)
+
+    debug('balance', asset.code, asset.actualBalance)
+
+    return asset.save()
+  }, { concurrency: 3 })
 
   return Bluebird.map(markets, market => {
     const { from, to } = market
@@ -96,8 +107,9 @@ MarketSchema.static('updateAllMarketData', async function () {
     market.min = fromAsset.min
     market.max = BN.min(
       fx.calculateToAmount(to, from, toAsset.max, reverseMarket.rate),
-      fromAsset.max
-    )
+      fromAsset.max,
+      BN(fromAsset.actualBalance).div(config.worker.minConcurrentSwaps)
+    ).dp(8)
 
     debug(`${market.from}_${market.to}`, market.rate, `[${market.min}, ${market.max}]`)
 
