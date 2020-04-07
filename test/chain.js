@@ -10,13 +10,21 @@ describe('Agent', () => {
 
   describe('BTC -> ETH', () => {
     describe('Successful swap', () => {
-      before(() => clear())
+      before(async function () {
+        this.timeout(10000)
+
+        await clear()
+      })
 
       swap('BTC', 'ETH', 5000000)
     })
 
     describe('Unsuccessful swap', () => {
-      before(() => clear())
+      before(async function () {
+        this.timeout(10000)
+
+        await clear()
+      })
 
       swap('BTC', 'ETH', 5000000, true)
     })
@@ -24,19 +32,31 @@ describe('Agent', () => {
 
   describe('ETH -> BTC', () => {
     describe('Successful swap', () => {
-      before(() => clear())
+      before(async function () {
+        this.timeout(10000)
+
+        await clear()
+      })
 
       swap('ETH', 'BTC', 250000000000000000)
     })
 
     describe('Successful swap with user claiming late', () => {
-      before(() => clear())
+      before(async function () {
+        this.timeout(10000)
+
+        await clear()
+      })
 
       swap('ETH', 'BTC', 250000000000000000, false, true)
     })
 
     describe('Unsuccessful swap', () => {
-      before(() => clear())
+      before(async function () {
+        this.timeout(10000)
+
+        await clear()
+      })
 
       swap('ETH', 'BTC', 250000000000000000, true)
     })
