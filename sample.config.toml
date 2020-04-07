@@ -9,6 +9,7 @@ apiPort = 3030
 maxJobRetry = 5
 jobRetryDelay = "5 seconds"
 backendJobRetryDelay = "5 seconds"
+minConcurrentSwaps = 3
 # jobReporter = "/Users/user/slack.js"
 
 [assets]

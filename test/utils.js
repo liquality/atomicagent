@@ -8,8 +8,10 @@ const mongoose = require('mongoose')
 const { sha256 } = require('@liquality/crypto')
 
 const config = require('../src/config')
+const Asset = require('../src/models/Asset')
 const Market = require('../src/models/Market')
 const Order = require('../src/models/Order')
+const assets = require('../src/migrate/data/assets.json')
 const markets = require('../src/migrate/data/markets.json')
 const { getClient } = require('../src/utils/clients')
 
@@ -20,9 +22,14 @@ const sleep = duration => new Promise((resolve, reject) => {
 })
 
 const clear = () => Order.deleteMany({})
+  .then(() => Asset.deleteMany({}))
+  .then(() => Asset.insertMany(assets, { ordered: false }))
   .then(() => Market.deleteMany({}))
-  .then(() => Market.insertMany(markets, { ordered: false }))
+  .then(() => Market.insertMany(markets.filter(
+    market => ['BTC', 'ETH'].includes(market.from) && ['BTC', 'ETH'].includes(market.to)
+  ), { ordered: false }))
   .then(() => mongoose.connection.db.collection('agendaJobs').deleteMany({}))
+  .then(() => Market.updateAllMarketData())
 
 module.exports.prepare = () => mongoose
   .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
@@ -198,7 +205,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
     it('should verify funding of the quote', async function () {
       this.timeout(30 * 1000)
 
-      const check = () => sleep(5000).then(() => chai.request(app())
+      const check = () => sleep(1000).then(() => chai.request(app())
         .get(`/api/swap/order/${quote.orderId}`)
         .then(res => {
           res.should.have.status(200)
@@ -207,7 +214,8 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
             return check()
           }
 
-          res.body.status.should.equal('USER_FUNDED')
+          // if agent funds immediately, status will be AGENT_FUNDED instead of USER_FUNDED
+          res.body.status.should.be.oneOf(['USER_FUNDED', 'AGENT_FUNDED'])
         }))
 
       return check()
@@ -216,7 +224,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
     it('should reciprocate by funding the swap', async function () {
       this.timeout(30 * 1000)
 
-      const check = () => sleep(5000).then(() => chai.request(app())
+      const check = () => sleep(1000).then(() => chai.request(app())
         .get(`/api/swap/order/${quote.orderId}`)
         .then(res => {
           res.should.have.status(200)
@@ -283,7 +291,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
 
       const expectedStatus = refund ? 'AGENT_REFUNDED' : 'AGENT_CLAIMED'
 
-      const check = () => sleep(5000).then(() => chai.request(app())
+      const check = () => sleep(1000).then(() => chai.request(app())
         .get(`/api/swap/order/${quote.orderId}`)
         .then(res => {
           res.should.have.status(200)

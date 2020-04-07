@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
 
+const Asset = require('../../models/Asset')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 
@@ -11,6 +12,15 @@ const jobs = require('../../utils/jobs')
 const pkg = require('../../../package.json')
 
 // TODO: fix http error response codes in all routes
+
+router.get('/assetinfo', asyncHandler(async (req, res) => {
+  const { query } = req
+  const q = _.pick(query, ['code'])
+
+  const result = await Asset.find(q).exec()
+
+  res.json(result.map(r => r.json()))
+}))
 
 router.get('/marketinfo', asyncHandler(async (req, res) => {
   const { query } = req

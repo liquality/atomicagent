@@ -1,0 +1,30 @@
+[
+  {
+    "code": "BTC",
+    "actualBalance": 0,
+    "min": 80000,
+    "max": 45000000,
+    "minConf": 1
+  },
+  {
+    "code": "ETH",
+    "actualBalance": 0,
+    "min": 40000000000000000,
+    "max": 12000000000000000000,
+    "minConf": 1
+  },
+  {
+    "code": "DAI",
+    "actualBalance": 0,
+    "min": 5000000000000000000,
+    "max": 2e+21,
+    "minConf": 1
+  },
+  {
+    "code": "USDC",
+    "actualBalance": 0,
+    "min": 5000000,
+    "max": 600000000,
+    "minConf": 1
+  }
+]
