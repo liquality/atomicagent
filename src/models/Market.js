@@ -1,5 +1,12 @@
+const debug = require('debug')('liquality:agent:model:market')
 const mongoose = require('mongoose')
 
+const Bluebird = require('bluebird')
+const axios = require('axios')
+const BN = require('bignumber.js')
+
+const Asset = require('./Asset')
+const fx = require('../utils/fx')
 const { getClient } = require('../utils/clients')
 
 const MarketSchema = new mongoose.Schema({
@@ -56,13 +63,47 @@ MarketSchema.methods.toClient = function () {
   return getClient(this.to)
 }
 
-MarketSchema.static('getAssetsFromMarkets', function (markets) {
-  return [...markets.reduce((acc, market) => {
+MarketSchema.static('updateAllMarketData', async function () {
+  const markets = await Market.find({ status: 'ACTIVE' }).exec()
+  const assetCodes = [...markets.reduce((acc, market) => {
     acc.add(market.to)
     acc.add(market.from)
 
     return acc
   }, new Set())]
+  const assets = await Asset.find({ code: { $in: assetCodes } }).exec()
+
+  const ASSET_MAP = {}
+  const ASSET_USD = {}
+  await Promise.all(assets.map(asset => {
+    return axios(`https://api.coinbase.com/v2/prices/${asset.code}-USD/spot`)
+      .then(res => {
+        ASSET_MAP[asset.code] = asset
+        ASSET_USD[asset.code] = res.data.data.amount
+      })
+  }))
+
+  return Bluebird.map(markets, market => {
+    const { from, to } = market
+
+    const rate = BN(ASSET_USD[from]).div(ASSET_USD[to]).times(BN(1).minus(market.spread)).dp(8)
+    const reverseMarket = markets.find(market => market.to === from && market.from === to) || { rate: BN(1).div(rate) }
+    const fromAsset = ASSET_MAP[from]
+    const toAsset = ASSET_MAP[to]
+
+    market.rate = rate
+    market.minConf = fromAsset.minConf
+    market.min = fromAsset.min
+    market.max = BN.min(
+      fx.calculateToAmount(to, from, toAsset.max, reverseMarket.rate),
+      fromAsset.max
+    )
+
+    debug(`${market.from}_${market.to}`, market.rate, `[${market.min}, ${market.max}]`)
+
+    return market.save()
+  }, { concurrency: 3 })
 })
 
-module.exports = mongoose.model('Market', MarketSchema)
+const Market = mongoose.model('Market', MarketSchema)
+module.exports = Market

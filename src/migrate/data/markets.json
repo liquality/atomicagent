@@ -2,81 +2,101 @@
   {
     "from": "BTC",
     "to": "ETH",
-    "rate": 45.80542331,
+    "rate": 42.63633734,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 28163916,
+    "min": 80000
   },
   {
     "from": "ETH",
     "to": "BTC",
-    "rate": 0.02183148,
+    "rate": 0.02345417,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 12000000000000000000,
+    "min": 40000000000000000
   },
   {
     "from": "DAI",
     "to": "BTC",
-    "rate": 0.00014194,
+    "rate": 0.00013726,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 5000000000000000000
   },
   {
     "from": "BTC",
     "to": "DAI",
-    "rate": 7045.03581889,
+    "rate": 7285.42544146,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 27452000,
+    "min": 80000
   },
   {
     "from": "ETH",
     "to": "DAI",
-    "rate": 153.80353044,
+    "rate": 170.87362322,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 11704560000000000000,
+    "min": 40000000000000000
   },
   {
     "from": "DAI",
     "to": "ETH",
-    "rate": 0.0065018,
+    "rate": 0.00585228,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 5000000000000000000
   },
   {
     "from": "USDC",
     "to": "BTC",
-    "rate": 0.00014045,
+    "rate": 0.00013571,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 600000000,
+    "min": 5000000
   },
   {
     "from": "BTC",
     "to": "USDC",
-    "rate": 7119.995,
+    "rate": 7368.625,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 8143200,
+    "min": 80000
   },
   {
     "from": "ETH",
     "to": "USDC",
-    "rate": 155.44,
+    "rate": 172.825,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 3471720000000000000,
+    "min": 40000000000000000
   },
   {
     "from": "USDC",
     "to": "ETH",
-    "rate": 0.00643335,
+    "rate": 0.0057862,
     "spread": 0,
     "orderExpiresIn": 7200000,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "max": 600000000,
+    "min": 5000000
   }
 ]
