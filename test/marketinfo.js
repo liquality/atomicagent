@@ -20,7 +20,7 @@ describe('Market Info', () => {
       .then(res => {
         res.should.have.status(200)
         res.body.should.be.a('array')
-        res.body.length.should.be.eql(10)
+        res.body.length.should.be.eql(2) // for tests, we only check for ETH, BTC markets
       })
   })
 

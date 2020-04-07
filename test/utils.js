@@ -25,7 +25,9 @@ const clear = () => Order.deleteMany({})
   .then(() => Asset.deleteMany({}))
   .then(() => Asset.insertMany(assets, { ordered: false }))
   .then(() => Market.deleteMany({}))
-  .then(() => Market.insertMany(markets, { ordered: false }))
+  .then(() => Market.insertMany(markets.filter(
+    market => ['BTC', 'ETH'].includes(market.from) && ['BTC', 'ETH'].includes(market.to)
+  ), { ordered: false }))
   .then(() => mongoose.connection.db.collection('agendaJobs').deleteMany({}))
   .then(() => Market.updateAllMarketData())
 
