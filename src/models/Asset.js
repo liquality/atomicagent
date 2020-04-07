@@ -18,6 +18,10 @@ const AssetSchema = new mongoose.Schema({
 
   max: {
     type: Number
+  },
+
+  minConf: {
+    type: Number
   }
 }, { timestamps: true })
 
