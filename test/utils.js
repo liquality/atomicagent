@@ -27,6 +27,7 @@ const clear = () => Order.deleteMany({})
   .then(() => Market.deleteMany({}))
   .then(() => Market.insertMany(markets, { ordered: false }))
   .then(() => mongoose.connection.db.collection('agendaJobs').deleteMany({}))
+  .then(() => Market.updateAllMarketData())
 
 module.exports.prepare = () => mongoose
   .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })

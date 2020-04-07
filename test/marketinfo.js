@@ -14,13 +14,13 @@ describe('Market Info', () => {
     await prepare()
   })
 
-  it('should get all the assets', async () => {
+  it('should get all the markets', async () => {
     return chai.request(app())
       .get('/api/swap/marketinfo')
       .then(res => {
         res.should.have.status(200)
         res.body.should.be.a('array')
-        res.body.length.should.be.eql(3)
+        res.body.length.should.be.eql(10)
       })
   })
 
