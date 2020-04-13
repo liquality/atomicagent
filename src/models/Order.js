@@ -6,6 +6,7 @@ const crypto = require('../utils/crypto')
 const { calculateToAmount } = require('../utils/fx')
 
 const TEST_ENV = process.env.NODE_ENV === 'test'
+const EXPIRATION_DURATION = 60 * 60 * 3
 
 const OrderSchema = new mongoose.Schema({
   orderId: {
@@ -153,11 +154,11 @@ OrderSchema.methods.setAgentAddresses = async function () {
 }
 
 OrderSchema.methods.setExpiration = async function () {
-  const buffer = TEST_ENV ? 60 : (60 * 60 * 6)
+  const duration = TEST_ENV ? 60 : (EXPIRATION_DURATION)
   const now = Math.ceil(Date.now() / 1000)
 
-  this.swapExpiration = now + (buffer * 2)
-  this.nodeSwapExpiration = now + buffer
+  this.swapExpiration = now + (duration * 2)
+  this.nodeSwapExpiration = now + duration
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {
