@@ -64,6 +64,8 @@ router.post('/order', asyncHandler(async (req, res, next) => {
     order.setPassphrase(passphrase)
   }
 
+  order.userAgent = req.get('X-Liquality-User-Agent')
+
   order.setExpiration()
 
   await order.setAgentAddresses()
