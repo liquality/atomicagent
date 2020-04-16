@@ -11,7 +11,7 @@ info:
   x-logo:
     url: https://avatars1.githubusercontent.com/u/42639968?s=200&v=4
 servers:
-- url: https://localhost:9898/v1
+- url: https://liquality.io/swap-testnet-dev/agent/api
 tags:
 - name: swap
   description: Swap with the agent
@@ -67,7 +67,7 @@ paths:
                 value:
                   from: BTC
                   to: ETH
-                  amount: 0.51
+                  fromAmount: 0.51
       responses:
         200:
           description: order created
@@ -83,7 +83,7 @@ paths:
                 fromCounterPartyAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
                 toCounterPartyAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
                 orderExpiration: 1562380000
-                minConfirmations: 3
+                minConf: 3
   /swap/order/{orderId}:
     parameters:
     - in: path
@@ -107,12 +107,12 @@ paths:
               testing:
                 summary: BTC_ETH
                 value:
-                  amount: 0.01
                   fromAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
                   toAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
-                  fundHash: '39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0'
+                  fromFundHash: '39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0'
                   secretHash: '16d54b643a30110ec13b4122231a0981dae0c3f8e94642222d85d98179e1b5a8'
                   swapExpiration: 1562386069
+                  nodeSwapExpiration: 1562186069
       responses:
         200:
           description: Order created
@@ -159,10 +159,6 @@ components:
           to:
             type: string
             description: to currency
-          estimatedRate:
-            type: number
-            format: float
-            description: The rate of the market
           min:
             type: number
             format: float
@@ -171,12 +167,31 @@ components:
             type: number
             format: float
             description: The maximum amount of currency1 that can be traded
+          minConf:
+            type: number
+            format: integer
+            description: Minimum confirmations this market requires
+          rate:
+            type: number
+            format: float
+            description: The rate of the market
+          orderExpiresIn:
+            type: number
+            format: integer
+            description: Returns milliseconds the order is valid for
+          status:
+            type: string
+            enum: [ACTIVE, INACTIVE]
+            description: Status of the market
         example:
           from: BTC
           to: ETH
-          estimatedRate: 38.37
           min: 0.01
           max: 1.6
+          minConf: 1
+          rate: 44.5216
+          orderExpiresIn: 7200000
+          status: ACTIVE
     OrderRequest:
       type: object
       properties:
@@ -201,6 +216,14 @@ components:
         to:
           type: string
           description: to currency
+        fromAmount:
+          type: number
+          format: float
+          description: from amount
+        toAmount:
+          type: number
+          format: float
+          description: to amount
         rate:
           type: string
           description: from currency
@@ -213,7 +236,7 @@ components:
         orderExpiration:
           type: number
           description: When the agent will drop the swap request
-        minConfirmations:
+        minConf:
           type: integer
           description: Minimum number of confirmations the agent will accept to proceed with the swap
         status:
@@ -221,22 +244,21 @@ components:
           description: Order Status
           enum:
           - QUOTE
-          - PENDING
-          - CONFIRMED
-          - CLAIMED
-          - REFUNDED
-          - CANCELLED
-          - REFUNDED
-        amount:
-          type: number
-          format: float
+          - USER_FUNDED_UNVERIFIED
+          - USER_FUNDED
+          - AGENT_FUNDED
+          - USER_CLAIMED
+          - AGENT_CLAIMED
+          - AGENT_REFUNDED
+          - QUOTE_EXPIRED
+          - SWAP_EXPIRED
         fromAddress:
           type: string
           description: from currency address
         toAddress:
           type: string
           description: to currency address
-        fundHash:
+        fromFundHash:
           type: string
           description: Swap funding transaction
         secretHash:
@@ -245,6 +267,9 @@ components:
         swapExpiration:
           type: number
           description: Swap expiration timestamp in seconds
+        nodeSwapExpiration:
+          type: number
+          description: Swap expiration timestamp in seconds for the agent
       example:
         id: eae4d76c-3ba2-465d-930b-324fcbe17d95
         from: BTC
@@ -253,14 +278,15 @@ components:
         fromCounterPartyAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
         toCounterPartyAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
         orderExpiration: 1562380000
-        minConfirmations: 3
+        minConf: 3
         status: QUOTE
         amount: 0.01
         fromAddress: 'mgxDATSdgJ3eYSj7ukYeN6QNr7gofUa3Tk'
         toAddress: '0x342800907eE13A0c7Bd9d6ebA13A417ba79c5b0b'
-        fundHash: '39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0'
+        fromFundHash: '39eaf9d29d118478187ce164a5baf9429dd805ef5e4c5f4387719207295a90d0'
         secretHash: '16d54b643a30110ec13b4122231a0981dae0c3f8e94642222d85d98179e1b5a8'
         swapExpiration: 1562386069
+        nodeSwapExpiration: 1562086069
     OrderError:
       type: object
       properties:
