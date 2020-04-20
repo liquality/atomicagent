@@ -16,14 +16,25 @@ const JOBS_DIR = path.join(__dirname, 'jobs')
 
 let agenda
 
+const CONCURRENCY_MAP = {
+  'agent-claim': 1,
+  'find-claim-tx-or-refund': 1,
+  'reciprocate-init-swap': 1
+}
+
 module.exports.start = async () => {
   agenda = new Agenda({ mongo: mongoose.connection })
 
   fs.readdirSync(JOBS_DIR)
     .forEach(jobSlug => {
       const jobName = path.basename(jobSlug, '.js')
+      const jobOpts = {}
 
-      agenda.define(jobName, async (job, done) => {
+      if (CONCURRENCY_MAP[jobName]) {
+        jobOpts.concurrency = CONCURRENCY_MAP[jobName]
+      }
+
+      agenda.define(jobName, jobOpts, async (job, done) => {
         const fn = require(path.join(JOBS_DIR, jobSlug))(agenda)
 
         fn(job)

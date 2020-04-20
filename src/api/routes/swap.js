@@ -28,7 +28,13 @@ router.get('/marketinfo', asyncHandler(async (req, res) => {
 
   const result = await Market.find(q).exec()
 
-  res.json(result.map(r => r.json()))
+  res.json(result.map(r => {
+    const json = r.json()
+
+    delete json.spread
+
+    return json
+  }))
 }))
 
 router.get('/orders', asyncHandler(async (req, res) => {
@@ -63,6 +69,8 @@ router.post('/order', asyncHandler(async (req, res, next) => {
   if (passphrase) {
     order.setPassphrase(passphrase)
   }
+
+  order.userAgent = req.get('X-Liquality-User-Agent')
 
   order.setExpiration()
 

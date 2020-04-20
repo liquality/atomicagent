@@ -14,6 +14,10 @@ const OrderSchema = new mongoose.Schema({
     index: true,
     unique: true
   },
+  userAgent: {
+    type: String,
+    index: true
+  },
   from: {
     type: String,
     index: true
