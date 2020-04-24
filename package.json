@@ -1,6 +1,6 @@
 {
   "name": "atomicagent",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "description": "Atomic Swap Agent",
   "main": "src/index.js",
   "bin": {
