@@ -106,15 +106,12 @@ MarketSchema.static('updateAllMarketData', async function () {
     market.minConf = fromAsset.minConf
     market.min = fromAsset.min
 
-    const toAssetMax = BN.min(
-      toAsset.max,
-      BN(toAsset.actualBalance).div(config.worker.minConcurrentSwaps)
-    )
+    const toMaxAmount = BN(toAsset.actualBalance).div(config.worker.minConcurrentSwaps)
+    const toAssetMax = toAsset.max
+      ? BN.min(toAsset.max, toMaxAmount)
+      : toMaxAmount
 
-    market.max = BN.min(
-      fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate),
-      fromAsset.max
-    ).dp(0, BN.ROUND_DOWN)
+    market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate)).dp(0, BN.ROUND_DOWN)
 
     debug(`${market.from}_${market.to}`, market.rate, `[${market.min}, ${market.max}]`)
 
