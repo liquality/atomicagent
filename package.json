@@ -13,7 +13,9 @@
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
-    "test": "NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js"
+    "test": "NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "license": "ISC",
   "dependencies": {
@@ -51,7 +53,8 @@
     "lodash": "^4.17.15",
     "mongoose": "^5.9.2",
     "toml": "^3.0.0",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
@@ -59,5 +62,6 @@
     "mocha": "^6.2.2",
     "nodemon": "^2.0.2",
     "standard": "^13.1.0"
-  }
+  },
+  "snyk": true
 }
