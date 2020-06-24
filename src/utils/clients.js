@@ -34,7 +34,7 @@ function createBtcClient (asset) {
     btcClient.addProvider(new BitcoinNodeWalletProvider(BitcoinNetworks[btcConfig.network], btcConfig.rpc.url, btcConfig.rpc.username, btcConfig.rpc.password, btcConfig.addressType))
   }
 
-  btcClient.addProvider(new BitcoinSwapProvider({ network: BitcoinNetworks[btcConfig.network] }, btcConfig.swapMode))
+  btcClient.addProvider(new BitcoinSwapProvider(BitcoinNetworks[btcConfig.network], btcConfig.swapMode))
 
   if (btcConfig.wallet && btcConfig.wallet.type === 'js') { // Override swap finding with esplora
     btcClient.addProvider(new BitcoinEsploraSwapFindProvider(btcConfig.api.url))
