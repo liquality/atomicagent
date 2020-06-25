@@ -92,7 +92,7 @@ MarketSchema.static('updateAllMarketData', async function () {
     debug('balance', asset.code, asset.actualBalance)
 
     return asset.save()
-  }, { concurrency: 3 })
+  }, { concurrency: 1 })
 
   return Bluebird.map(markets, market => {
     const { from, to } = market
