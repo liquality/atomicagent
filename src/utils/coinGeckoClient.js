@@ -29,6 +29,10 @@ class CoinGecko {
     const vs = new Set(['usd'])
     const all = new Set([])
     markets.forEach((market) => {
+      // Match coingecko casing
+      market.from = market.from.toLowerCase()
+      market.to = market.to.toLowerCase()
+
       all.add(market.from)
       all.add(market.to)
       if (vsCurrencies.includes(market.from)) vs.add(market.from)
@@ -36,14 +40,14 @@ class CoinGecko {
     })
 
     const coindIds = [...all].map(currency => {
-      return coins.find(coin => coin.symbol === currency.toLowerCase()).id
+      return coins.find(coin => coin.symbol === currency).id
     })
 
     const response = await this._axios.get(`/simple/price?ids=${coindIds.join(',')}&vs_currencies=${[...vs].join(',')}`)
 
     const rates = Object.entries(response.data).reduce((curr, [id, toPrices]) => {
       const currencyCode = coins.find(coin => coin.id === id).symbol
-      return Object.assign(curr, { [currencyCode.toUpperCase()]: toPrices })
+      return Object.assign(curr, { [currencyCode]: toPrices })
     }, {})
 
     const marketRates = markets.map((market) => {
@@ -53,7 +57,11 @@ class CoinGecko {
       } else {
         rate = BN(rates[market.from].usd).div(rates[market.to].usd)
       }
-      return { ...market, rate }
+      return {
+        from: market.from.toUpperCase(),
+        to: market.to.toUpperCase(),
+        rate
+      }
     })
 
     return marketRates
