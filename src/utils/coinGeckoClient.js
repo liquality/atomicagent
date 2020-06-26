@@ -10,16 +10,7 @@ const cache = setupCache({
 
 class CoinGecko {
   constructor (url = 'https://api.coingecko.com/api/v3') {
-    this._url = url
-    this._axios = axios.create({ baseURL: this._url, adapter: cache.adapter })
-    this._axios.interceptors.response.use(function (response) {
-      return response
-    }, function (e) {
-      let error = ''
-      if (e.response && e.response.data && e.response.data.error) error = '. ' + e.response.data.error
-      throw new Error(`CoinGecko: ${e.message}${error}`)
-    })
-    this._cache = {} // TODO: axios cache adapeter?
+    this._axios = axios.create({ baseURL: url, adapter: cache.adapter })
   }
 
   async getCoins () {
