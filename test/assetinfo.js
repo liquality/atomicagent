@@ -19,7 +19,7 @@ describe('Asset Info', () => {
       .then(res => {
         res.should.have.status(200)
         res.body.should.be.a('array')
-        res.body.length.should.be.eql(4)
+        res.body.length.should.be.eql(3)
       })
   })
 })
