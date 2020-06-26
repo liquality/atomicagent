@@ -9,6 +9,7 @@ const Asset = require('./Asset')
 const fx = require('../utils/fx')
 const { getClient } = require('../utils/clients')
 const config = require('../config')
+const coingecko = require('../utils/coinGeckoClient')
 
 const MarketSchema = new mongoose.Schema({
   from: {
@@ -73,21 +74,17 @@ MarketSchema.static('updateAllMarketData', async function () {
     return acc
   }, new Set())]
   const assets = await Asset.find({ code: { $in: assetCodes } }).exec()
+  const plainMarkets = markets.map(m => ({ from: m.from, to: m.to }))
+  const marketRates = await coingecko.getRates(plainMarkets)
 
   const ASSET_MAP = {}
-  const ASSET_USD = {}
   await Bluebird.map(assets, async asset => {
     const client = asset.getClient()
 
-    const [{ data }, addresses] = await Promise.all([
-      axios(`https://api.coinbase.com/v2/prices/${asset.code}-USD/spot`),
-      client.wallet.getUsedAddresses()
-    ])
+    const addresses = await client.wallet.getUsedAddresses()
+    asset.actualBalance = await client.chain.getBalance(addresses)
 
     ASSET_MAP[asset.code] = asset
-    ASSET_USD[asset.code] = data.data.amount
-
-    asset.actualBalance = await client.chain.getBalance(addresses)
 
     debug('balance', asset.code, asset.actualBalance)
 
@@ -97,12 +94,13 @@ MarketSchema.static('updateAllMarketData', async function () {
   return Bluebird.map(markets, market => {
     const { from, to } = market
 
-    const rate = BN(ASSET_USD[from]).div(ASSET_USD[to]).times(BN(1).minus(market.spread)).dp(8)
-    const reverseMarket = markets.find(market => market.to === from && market.from === to) || { rate: BN(1).div(rate) }
+    const rate = marketRates.find(market => market.from === from && market.to === to).rate
+    const rateWithSpread = rate.times(BN(1).minus(market.spread)).dp(8)
+    const reverseMarket = markets.find(market => market.to === from && market.from === to) || { rate: BN(1).div(rateWithSpread) }
     const fromAsset = ASSET_MAP[from]
     const toAsset = ASSET_MAP[to]
 
-    market.rate = rate
+    market.rate = rateWithSpread
     market.minConf = fromAsset.minConf
     market.min = fromAsset.min
 
