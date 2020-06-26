@@ -58,45 +58,5 @@
     "status": "ACTIVE",
     "max": 2e+21,
     "min": 5000000000000000000
-  },
-  {
-    "from": "USDC",
-    "to": "BTC",
-    "rate": 0.00013571,
-    "spread": 0,
-    "orderExpiresIn": 7200000,
-    "status": "ACTIVE",
-    "max": 600000000,
-    "min": 5000000
-  },
-  {
-    "from": "BTC",
-    "to": "USDC",
-    "rate": 7368.625,
-    "spread": 0,
-    "orderExpiresIn": 7200000,
-    "status": "ACTIVE",
-    "max": 8143200,
-    "min": 80000
-  },
-  {
-    "from": "ETH",
-    "to": "USDC",
-    "rate": 172.825,
-    "spread": 0,
-    "orderExpiresIn": 7200000,
-    "status": "ACTIVE",
-    "max": 3471720000000000000,
-    "min": 40000000000000000
-  },
-  {
-    "from": "USDC",
-    "to": "ETH",
-    "rate": 0.0057862,
-    "spread": 0,
-    "orderExpiresIn": 7200000,
-    "status": "ACTIVE",
-    "max": 600000000,
-    "min": 5000000
   }
 ]
