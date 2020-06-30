@@ -16,6 +16,10 @@ const JOBS_DIR = path.join(__dirname, 'jobs')
 
 let agenda
 
+const getStatusCode = e => _.get(e, 'statusCode') || _.get(e, 'response.status') || _.get(e, 'response.statusCode', '')
+const getResponse = e => _.get(e, 'response.data') || _.get(e, 'response.body', '')
+const getRequestUrl = e => _.get(e, 'config.url', '')
+
 const CONCURRENCY_MAP = {
   'agent-claim': 1,
   'find-claim-tx-or-refund': 1,
@@ -68,6 +72,14 @@ module.exports.start = async () => {
     } else if (err.name === 'InvalidProviderResponseError' &&
                err.message === 'Provider returned an invalid block,  should be object') {
       // ignore empty blocks on ETH
+      err.ignore = true
+    } else if (getRequestUrl(err).startsWith('https://blockstream.info/') &&
+               (
+                 (getStatusCode(err) === 502 && getResponse(err).includes('502 Bad Gateway')) ||
+                 err.message.startsWith('getaddrinfo ENOTFOUND')
+               )) {
+      // ignore blockstream errors for now
+      // TODO: replace blockstream with hosted-electrs
       err.ignore = true
     }
 
