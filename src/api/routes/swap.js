@@ -148,7 +148,14 @@ router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
   if (query.verbose === 'true') {
     try {
       json.agent_version = pkg.version
-      json.job_data = await jobs.find(params.orderId)
+
+      const [auditLog, jobData] = await Promise.all([
+        AuditLog.find({ orderId: params.orderId }).exec(),
+        jobs.find(params.orderId)
+      ])
+
+      json.job_data = jobData
+      json.audit_log = auditLog
     } catch (e) {
       json.verbose_error = e.toString()
     }
