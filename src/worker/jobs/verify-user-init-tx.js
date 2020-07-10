@@ -9,7 +9,7 @@ module.exports = agenda => async job => {
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
-  if (order !== 'USER_FUNDED_UNVERIFIED') return
+  if (order.status !== 'USER_FUNDED_UNVERIFIED') return
 
   if (Date.now() > order.expiresAt) { // Expected the swap sooner. Quote expired.
     debug(`Order ${order.orderId} expired due to expiresAt`)
