@@ -107,6 +107,8 @@ MarketSchema.static('updateAllMarketData', async function () {
 
     market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate)).dp(0, BN.ROUND_DOWN)
 
+    market.updatedAt = new Date()
+
     return market.save()
   }, { concurrency: 3 })
 })

@@ -1,5 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
 
+const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
 
 module.exports = agenda => async job => {
@@ -7,6 +8,7 @@ module.exports = agenda => async job => {
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
+  if (order.status !== 'USER_FUNDED') return
 
   const currentBlock = await order.fromClient().chain.getBlockHeight()
   const block = await order.fromClient().chain.getBlockByNumber(currentBlock)
@@ -15,6 +17,15 @@ module.exports = agenda => async job => {
     debug(`Order ${order.orderId} expired due to swapExpiration`)
     order.status = 'SWAP_EXPIRED'
     await order.save()
+
+    await AuditLog.create({
+      orderId: order.orderId,
+      orderStatus: order.status,
+      extra: {
+        fromBlock: currentBlock
+      }
+    })
+
     return
   }
 
@@ -26,5 +37,15 @@ module.exports = agenda => async job => {
   order.status = 'AGENT_FUNDED'
 
   await order.save()
+
+  await AuditLog.create({
+    orderId: order.orderId,
+    orderStatus: order.status,
+    extra: {
+      toBlock: lastScannedBlock,
+      toFundHash: tx
+    }
+  })
+
   await agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, lastScannedBlock })
 }
