@@ -7,6 +7,7 @@ module.exports = agenda => async job => {
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
+  if (order.status !== 'USER_FUNDED') return
 
   const currentBlock = await order.fromClient().chain.getBlockHeight()
   const block = await order.fromClient().chain.getBlockByNumber(currentBlock)
