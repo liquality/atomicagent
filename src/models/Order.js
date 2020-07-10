@@ -68,7 +68,15 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  fromClaimHash: {
+    type: String,
+    index: true
+  },
   toFundHash: {
+    type: String,
+    index: true
+  },
+  toRefundHash: {
     type: String,
     index: true
   },
@@ -108,8 +116,6 @@ const OrderSchema = new mongoose.Schema({
     index: true
   }
 }, { timestamps: true })
-
-// OrderSchema.set('toJSON', { virtuals: true })
 
 OrderSchema.methods.fromClient = function () {
   return getClient(this.from)

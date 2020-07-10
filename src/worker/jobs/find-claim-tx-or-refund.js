@@ -1,5 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:find-claim-tx-or-refund')
 
+const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
 const config = require('../../config')
 
@@ -37,6 +38,7 @@ module.exports = agenda => async job => {
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
+  if (order.status !== 'AGENT_FUNDED') return
 
   const currentBlock = await order.toClient().chain.getBlockHeight()
   const claimTx = await findClaim(order, data.lastScannedBlock, currentBlock)
@@ -50,7 +52,7 @@ module.exports = agenda => async job => {
     if (block.timestamp >= order.nodeSwapExpiration) {
       debug(`Get refund ${order.orderId} (${block.timestamp} >= ${order.nodeSwapExpiration})`)
 
-      await order.toClient().swap.refundSwap(
+      const tx = await order.toClient().swap.refundSwap(
         order.toFundHash,
         order.toAddress,
         order.toCounterPartyAddress,
@@ -61,11 +63,32 @@ module.exports = agenda => async job => {
       debug('Node has refunded the swap', order.orderId)
 
       order.status = 'AGENT_REFUNDED'
+      order.toRefundHash = tx
       await order.save()
+
+      await AuditLog.create({
+        orderId: order.orderId,
+        orderStatus: order.status,
+        extra: {
+          toBlock: currentBlock,
+          toRefundHash: tx,
+          toBlockTimestamp: block.timestamp
+        }
+      })
     } else {
       const when = 'in ' + config.assets[order.to].blockTime
       job.schedule(when)
       await job.save()
+
+      await AuditLog.create({
+        orderId: order.orderId,
+        orderStatus: order.status,
+        status: 'AGENT_CLAIM_WAITING',
+        extra: {
+          toBlock: currentBlock,
+          toBlockTimestamp: block.timestamp
+        }
+      })
     }
 
     return
@@ -77,5 +100,14 @@ module.exports = agenda => async job => {
   debug('Node found user\'s claim swap transaction', order.orderId)
 
   await order.save()
+
+  await AuditLog.create({
+    orderId: order.orderId,
+    orderStatus: order.status,
+    extra: {
+      toBlock: currentBlock
+    }
+  })
+
   await agenda.now('agent-claim', { orderId: order.orderId })
 }

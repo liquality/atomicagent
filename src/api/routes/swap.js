@@ -3,6 +3,7 @@ const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
 
+const AuditLog = require('../../models/AuditLog')
 const Asset = require('../../models/Asset')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
@@ -77,6 +78,11 @@ router.post('/order', asyncHandler(async (req, res, next) => {
   await order.setAgentAddresses()
   await order.save()
 
+  await AuditLog.create({
+    orderId: order.orderId,
+    orderStatus: order.status
+  })
+
   res.json(order.json())
 }))
 
@@ -112,6 +118,13 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   order.status = 'USER_FUNDED_UNVERIFIED'
 
   await order.save()
+
+  await AuditLog.create({
+    orderId: order.orderId,
+    orderStatus: order.status,
+    extra: body
+  })
+
   await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
   res.json(order.json())
