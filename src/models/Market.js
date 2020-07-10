@@ -1,8 +1,6 @@
-const debug = require('debug')('liquality:agent:model:market')
 const mongoose = require('mongoose')
 
 const Bluebird = require('bluebird')
-const axios = require('axios')
 const BN = require('bignumber.js')
 
 const Asset = require('./Asset')
@@ -86,8 +84,6 @@ MarketSchema.static('updateAllMarketData', async function () {
 
     ASSET_MAP[asset.code] = asset
 
-    debug('balance', asset.code, asset.actualBalance)
-
     return asset.save()
   }, { concurrency: 1 })
 
@@ -110,8 +106,6 @@ MarketSchema.static('updateAllMarketData', async function () {
       : toMaxAmount
 
     market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate)).dp(0, BN.ROUND_DOWN)
-
-    debug(`${market.from}_${market.to}`, market.rate, `[${market.min}, ${market.max}]`)
 
     return market.save()
   }, { concurrency: 3 })
