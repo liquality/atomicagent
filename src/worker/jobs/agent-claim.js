@@ -1,5 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:agent-claim')
 
+const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
 
 module.exports = agenda => async job => {
@@ -7,8 +8,9 @@ module.exports = agenda => async job => {
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
+  if (order.status !== 'USER_CLAIMED') return
 
-  await order.fromClient().swap.claimSwap(
+  const tx = await order.fromClient().swap.claimSwap(
     order.fromFundHash,
     order.fromCounterPartyAddress,
     order.fromAddress,
@@ -19,5 +21,14 @@ module.exports = agenda => async job => {
   debug('Node has claimed the swap', order.orderId)
 
   order.status = 'AGENT_CLAIMED'
+  order.fromClaimHash = tx
   await order.save()
+
+  await AuditLog.create({
+    orderId: order.orderId,
+    orderStatus: order.status,
+    extra: {
+      fromClaimHash: tx
+    }
+  })
 }
