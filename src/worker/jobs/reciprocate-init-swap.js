@@ -23,7 +23,8 @@ module.exports = agenda => async job => {
       orderStatus: order.status,
       extra: {
         fromBlock: currentBlock
-      }
+      },
+      context: 'RECIPROCATE_INIT_SWAP'
     })
 
     return
@@ -44,7 +45,8 @@ module.exports = agenda => async job => {
     extra: {
       toBlock: lastScannedBlock,
       toFundHash: tx
-    }
+    },
+    context: 'RECIPROCATE_INIT_SWAP'
   })
 
   await agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, lastScannedBlock })

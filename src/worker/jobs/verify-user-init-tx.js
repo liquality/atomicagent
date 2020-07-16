@@ -18,7 +18,8 @@ module.exports = agenda => async job => {
 
     await AuditLog.create({
       orderId: order.orderId,
-      orderStatus: order.status
+      orderStatus: order.status,
+      context: 'VERIFY_USER_INIT_TX'
     })
 
     return
@@ -40,7 +41,8 @@ module.exports = agenda => async job => {
       await AuditLog.create({
         orderId: order.orderId,
         orderStatus: order.status,
-        status: 'USER_FUNDING_NOT_FOUND'
+        status: 'USER_FUNDING_NOT_FOUND',
+        context: 'VERIFY_USER_INIT_TX'
       })
 
       throw new Error('Reschedule')
@@ -57,7 +59,8 @@ module.exports = agenda => async job => {
         extra: {
           minConf: order.minConf,
           initiationTxConf: initiationTx.confirmations
-        }
+        },
+        context: 'VERIFY_USER_INIT_TX'
       })
 
       throw new Error('Reschedule')
@@ -78,7 +81,8 @@ module.exports = agenda => async job => {
 
   await AuditLog.create({
     orderId: order.orderId,
-    orderStatus: order.status
+    orderStatus: order.status,
+    context: 'VERIFY_USER_INIT_TX'
   })
 
   await agenda.now('reciprocate-init-swap', { orderId: order.orderId })

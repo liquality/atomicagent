@@ -80,7 +80,8 @@ router.post('/order', asyncHandler(async (req, res, next) => {
 
   await AuditLog.create({
     orderId: order.orderId,
-    orderStatus: order.status
+    orderStatus: order.status,
+    context: 'NEW_SWAP'
   })
 
   res.json(order.json())
@@ -122,7 +123,8 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   await AuditLog.create({
     orderId: order.orderId,
     orderStatus: order.status,
-    extra: body
+    extra: body,
+    context: 'SWAP_UPDATE'
   })
 
   await agenda.now('verify-user-init-tx', { orderId: order.orderId })

@@ -29,6 +29,7 @@ module.exports = agenda => async job => {
     orderStatus: order.status,
     extra: {
       fromClaimHash: tx
-    }
+    },
+    context: 'AGENT_CLAIM'
   })
 }

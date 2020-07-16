@@ -73,7 +73,8 @@ module.exports = agenda => async job => {
           toBlock: currentBlock,
           toRefundHash: tx,
           toBlockTimestamp: block.timestamp
-        }
+        },
+        context: 'FIND_CLAIM_TX_OR_REFUND'
       })
     } else {
       const when = 'in ' + config.assets[order.to].blockTime
@@ -87,7 +88,8 @@ module.exports = agenda => async job => {
         extra: {
           toBlock: currentBlock,
           toBlockTimestamp: block.timestamp
-        }
+        },
+        context: 'FIND_CLAIM_TX_OR_REFUND'
       })
     }
 
@@ -106,7 +108,8 @@ module.exports = agenda => async job => {
     orderStatus: order.status,
     extra: {
       toBlock: currentBlock
-    }
+    },
+    context: 'FIND_CLAIM_TX_OR_REFUND'
   })
 
   await agenda.now('agent-claim', { orderId: order.orderId })

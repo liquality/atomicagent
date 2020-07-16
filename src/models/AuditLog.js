@@ -16,6 +16,11 @@ const AuditLogSchema = new mongoose.Schema({
     index: true
   },
 
+  context: {
+    type: String,
+    index: true
+  },
+
   extra: {
     type: Object,
     default: {}
