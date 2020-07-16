@@ -2,17 +2,34 @@ const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
+const { fromUnixTime, differenceInDays } = require('date-fns')
 
 const AuditLog = require('../../models/AuditLog')
 const Asset = require('../../models/Asset')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
+const MarketHistory = require('../../models/MarketHistory')
 
 const jobs = require('../../utils/jobs')
 
 const pkg = require('../../../package.json')
 
 // TODO: fix http error response codes in all routes
+
+router.get('/history/markets', asyncHandler(async (req, res, next) => {
+  const { query } = req
+  const { market, min, max } = query
+
+  if (!market) return next(res.createError(401, 'Value not specified: market'))
+  if (!min) return next(res.createError(401, 'Value not specified: min'))
+  if (!max) return next(res.createError(401, 'Value not specified: max'))
+  if (min >= max) return next(res.createError(401, 'Invalid values: min should be <= max'))
+
+  const diff = differenceInDays(fromUnixTime(max), fromUnixTime(min))
+  if (diff > 30) return next(res.createError(401, 'Range cannot exceed 30 days'))
+
+  res.json(await MarketHistory.getRates(market, min, max))
+}))
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req

@@ -50,21 +50,25 @@ class CoinGecko {
       return Object.assign(curr, { [currencyCode]: toPrices })
     }, {})
 
-    const marketRates = markets.map((market) => {
+    return markets.map((market) => {
       let rate
+
       if (market.from in rates && market.to in rates[market.from]) {
         rate = BN(rates[market.from][market.to])
       } else {
         rate = BN(rates[market.from].usd).div(rates[market.to].usd)
       }
+
       return {
         from: market.from.toUpperCase(),
         to: market.to.toUpperCase(),
-        rate
+        rate,
+        usd: {
+          [market.from.toUpperCase()]: rates[market.from].usd,
+          [market.to.toUpperCase()]: rates[market.to].usd
+        }
       }
     })
-
-    return marketRates
   }
 }
 
