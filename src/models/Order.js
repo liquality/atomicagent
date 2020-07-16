@@ -97,11 +97,6 @@ const OrderSchema = new mongoose.Schema({
     index: true
   },
 
-  secretTxHash: {
-    type: String,
-    index: true
-  },
-
   passphraseHash: {
     type: String
   },
