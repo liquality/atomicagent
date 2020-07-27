@@ -61,5 +61,17 @@ MarketHistorySchema.static('getRates', async function (market, min, max) {
   ])
 })
 
+MarketHistorySchema.static('getMostRecentRate', async function (market) {
+  const timestamp = Math.ceil(Date.now() / 1000)
+
+  const { rates } = await MarketHistory.findOne({
+    market,
+    last: { $lte: timestamp },
+    'rates.t': { $lte: timestamp }
+  }).sort('-last').limit(1).exec()
+
+  return rates[rates.length - 1].r
+})
+
 const MarketHistory = mongoose.model('MarketHistory', MarketHistorySchema)
 module.exports = MarketHistory
