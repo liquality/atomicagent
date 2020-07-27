@@ -92,6 +92,7 @@ router.post('/order', asyncHandler(async (req, res, next) => {
 
   order.setExpiration()
 
+  await order.setUsdRates()
   await order.setAgentAddresses()
   await order.save()
 
