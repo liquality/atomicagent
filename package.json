@@ -15,7 +15,12 @@
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
     "test": "NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js"
   },
-  "license": "ISC",
+  "author": "Liquality <info@liquality.io>",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:liquality/agent.git"
+  },
+  "license": "MIT",
   "dependencies": {
     "@liquality/bitcoin-esplora-api-provider": "^0.5.0",
     "@liquality/bitcoin-esplora-swap-find-provider": "^0.5.0",
