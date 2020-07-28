@@ -1,6 +1,10 @@
+const BN = require('bignumber.js')
 const mongoose = require('mongoose')
 const uuidv4 = require('uuid/v4')
 const assets = require('@liquality/cryptoassets').default
+
+const MarketHistory = require('./MarketHistory')
+
 const { getClient } = require('../utils/clients')
 const crypto = require('../utils/crypto')
 const { calculateToAmount } = require('../utils/fx')
@@ -17,6 +21,12 @@ const OrderSchema = new mongoose.Schema({
   userAgent: {
     type: String,
     index: true
+  },
+  fromUsdValue: {
+    type: Number
+  },
+  toUsdValue: {
+    type: Number
   },
   from: {
     type: String,
@@ -68,7 +78,15 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  fromClaimHash: {
+    type: String,
+    index: true
+  },
   toFundHash: {
+    type: String,
+    index: true
+  },
+  toRefundHash: {
     type: String,
     index: true
   },
@@ -89,11 +107,6 @@ const OrderSchema = new mongoose.Schema({
     index: true
   },
 
-  secretTxHash: {
-    type: String,
-    index: true
-  },
-
   passphraseHash: {
     type: String
   },
@@ -108,8 +121,6 @@ const OrderSchema = new mongoose.Schema({
     index: true
   }
 }, { timestamps: true })
-
-// OrderSchema.set('toJSON', { virtuals: true })
 
 OrderSchema.methods.fromClient = function () {
   return getClient(this.from)
@@ -163,6 +174,16 @@ OrderSchema.methods.setExpiration = async function () {
 
   this.swapExpiration = now + (duration * 2)
   this.nodeSwapExpiration = now + duration
+}
+
+OrderSchema.methods.setUsdRates = async function () {
+  const [fromUsd, toUsd] = await Promise.all([
+    MarketHistory.getMostRecentRate(`${this.from}-USD`),
+    MarketHistory.getMostRecentRate(`${this.to}-USD`)
+  ])
+
+  this.fromUsdValue = BN(assets[this.from.toLowerCase()].unitToCurrency(this.fromAmount)).times(fromUsd).dp(2)
+  this.toUsdValue = BN(assets[this.to.toLowerCase()].unitToCurrency(this.toAmount)).times(toUsd).dp(2)
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {

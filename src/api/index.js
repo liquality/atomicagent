@@ -5,9 +5,9 @@ const helmet = require('helmet')
 const compression = require('compression')
 const bodyParser = require('body-parser')
 const Agenda = require('agenda')
+const cors = require('cors')
 
 const config = require('../config')
-const cors = require('../middlewares/cors')
 const httpHelpers = require('../middlewares/httpHelpers')
 const handleError = require('../middlewares/handleError')
 

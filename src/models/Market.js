@@ -1,11 +1,11 @@
-const debug = require('debug')('liquality:agent:model:market')
 const mongoose = require('mongoose')
 
 const Bluebird = require('bluebird')
-const axios = require('axios')
 const BN = require('bignumber.js')
 
 const Asset = require('./Asset')
+const MarketHistory = require('./MarketHistory')
+
 const fx = require('../utils/fx')
 const { getClient } = require('../utils/clients')
 const config = require('../config')
@@ -86,15 +86,22 @@ MarketSchema.static('updateAllMarketData', async function () {
 
     ASSET_MAP[asset.code] = asset
 
-    debug('balance', asset.code, asset.actualBalance)
-
     return asset.save()
   }, { concurrency: 1 })
 
-  return Bluebird.map(markets, market => {
+  await Bluebird.map(assets, async asset => {
+    const market = marketRates.find(market => market.from === asset.code || market.to === asset.code)
+
+    return MarketHistory.logRate(
+      [asset.code, 'USD'].join('-'),
+      market.usd[asset.code]
+    )
+  }, { concurrency: 3 })
+
+  return Bluebird.map(markets, async market => {
     const { from, to } = market
 
-    const rate = marketRates.find(market => market.from === from && market.to === to).rate
+    const { rate } = marketRates.find(market => market.from === from && market.to === to)
     const rateWithSpread = rate.times(BN(1).minus(market.spread)).dp(8)
     const reverseMarket = markets.find(market => market.to === from && market.from === to) || { rate: BN(1).div(rateWithSpread) }
     const fromAsset = ASSET_MAP[from]
@@ -111,7 +118,12 @@ MarketSchema.static('updateAllMarketData', async function () {
 
     market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate)).dp(0, BN.ROUND_DOWN)
 
-    debug(`${market.from}_${market.to}`, market.rate, `[${market.min}, ${market.max}]`)
+    market.updatedAt = new Date()
+
+    await MarketHistory.logRate(
+      [market.from, market.to].join('-'),
+      rateWithSpread
+    )
 
     return market.save()
   }, { concurrency: 3 })

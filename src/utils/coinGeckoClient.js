@@ -1,26 +1,27 @@
 const axios = require('axios')
-const { setupCache } = require('axios-cache-adapter')
 const BN = require('bignumber.js')
-
-// Cache only applies to reqs without query params
-const cache = setupCache({
-  maxAge: 4 * 60 * 60 * 1000, // 4h
-  exclude: { query: true }
-})
 
 class CoinGecko {
   constructor (url = 'https://api.coingecko.com/api/v3') {
-    this._axios = axios.create({ baseURL: url, adapter: cache.adapter })
+    this._axios = axios.create({ baseURL: url })
   }
 
   async getCoins () {
-    const response = await this._axios.get('/coins/list')
-    return response.data
+    if (this._coins) return this._coins
+
+    const { data } = await this._axios.get('/coins/list')
+    this._coins = data
+
+    return data
   }
 
   async getVsCurrencies () {
-    const response = await this._axios.get('/simple/supported_vs_currencies')
-    return response.data
+    if (this._vsCurrencies) return this._vsCurrencies
+
+    const { data } = await this._axios.get('/simple/supported_vs_currencies')
+    this._vsCurrencies = data
+
+    return data
   }
 
   async getRates (markets) {
@@ -50,21 +51,25 @@ class CoinGecko {
       return Object.assign(curr, { [currencyCode]: toPrices })
     }, {})
 
-    const marketRates = markets.map((market) => {
+    return markets.map((market) => {
       let rate
+
       if (market.from in rates && market.to in rates[market.from]) {
         rate = BN(rates[market.from][market.to])
       } else {
         rate = BN(rates[market.from].usd).div(rates[market.to].usd)
       }
+
       return {
         from: market.from.toUpperCase(),
         to: market.to.toUpperCase(),
-        rate
+        rate,
+        usd: {
+          [market.from.toUpperCase()]: rates[market.from].usd,
+          [market.to.toUpperCase()]: rates[market.to].usd
+        }
       }
     })
-
-    return marketRates
   }
 }
 

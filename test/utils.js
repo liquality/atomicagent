@@ -203,7 +203,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
     })
 
     it('should verify funding of the quote', async function () {
-      this.timeout(30 * 1000)
+      this.timeout(60 * 1000)
 
       const check = () => sleep(1000).then(() => chai.request(app())
         .get(`/api/swap/order/${quote.orderId}`)
@@ -222,7 +222,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
     })
 
     it('should reciprocate by funding the swap', async function () {
-      this.timeout(30 * 1000)
+      this.timeout(60 * 1000)
 
       const check = () => sleep(1000).then(() => chai.request(app())
         .get(`/api/swap/order/${quote.orderId}`)
