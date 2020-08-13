@@ -1,5 +1,5 @@
 [database]
-uri = "mongodb+srv://satoshipro:6mVsstEk2fP2TFds@cluster0.rhqsi.mongodb.net/liquality_mainnet?retryWrites=true&w=majority"
+uri = "mongodb+srv://satoshipro:6mVsstEk2fP2TFds@cluster0.rhqsi.mongodb.net/liquality_testdata?retryWrites=true&w=majority"
 debug = false
 
 [application]
