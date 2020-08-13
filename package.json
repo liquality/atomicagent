@@ -13,6 +13,7 @@
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
+    "env:docker": "docker-compose -f test/docker/docker-compose.yml up --force-recreate --renew-anon-volumes",
     "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js"
   },
   "author": "Liquality <info@liquality.io>",
