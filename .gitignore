@@ -1,5 +1,6 @@
 .env
 *config.toml
 !sample.config.toml
+!heroku.config.toml
 node_modules/
 marketdata/
