@@ -46,7 +46,7 @@ module.exports.start = () => {
 
   app.use(handleError())
 
-  listen = app.listen(config.application.apiPort)
+  listen = app.listen(config.application.apiPort || process.env.PORT)
 
   return listen
 }
