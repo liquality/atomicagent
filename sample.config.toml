@@ -3,7 +3,7 @@ uri = "mongodb://localhost/liquality"
 debug = true
 
 [application]
-apiPort = 3030
+apiPort = false
 
 [worker]
 maxJobRetry = 5
