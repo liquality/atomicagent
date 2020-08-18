@@ -35,17 +35,17 @@ async function main () {
   )
 
   console.log(claimTx)
-  return
+  // return
+  //
+  // order.secret = claimTx.secret
+  // await order.save()
 
-  order.secret = claimTx.secret
-  await order.save()
-
-  const tx = await fromClient.swap.claimSwap(
-    order.fromFundHash,
-    order.fromCounterPartyAddress,
-    order.fromAddress,
-    order.secret,
-    order.swapExpiration
+  const tx = await fromClient.swap.refundSwap(
+    order.toFundHash,
+    order.toAddress,
+    order.toCounterPartyAddress,
+    order.secretHash,
+    order.nodeSwapExpiration
   )
 
   console.log(tx)

@@ -21,7 +21,7 @@ const addressVariants = address => {
 }
 
 router.get('/orders', asyncHandler(async (req, res, next) => {
-  const { q, from, to, start, end, status, excludeStatus } = req.query
+  const { q, from, to, start, end, status, excludeStatus, userAgent } = req.query
   let { limit, page, sort } = req.query
 
   try {
@@ -41,6 +41,14 @@ router.get('/orders', asyncHandler(async (req, res, next) => {
   if (!sort) sort = '-createdAt'
 
   const query = {}
+
+  if (userAgent && userAgent.length !== 2) {
+    if (userAgent[0] === 'WALLET') {
+      query.userAgent = 'wallet'
+    } else {
+      query.userAgent = { $exists: false }
+    }
+  }
 
   if (q) {
     const inAddresses = { $in: addressVariants(q) }
@@ -99,10 +107,10 @@ router.get('/orders', asyncHandler(async (req, res, next) => {
   })
 }))
 
-router.get('/usdRate', asyncHandler(async (req, res, next) => {
-  const { asset } = req.query
+router.get('/rate', asyncHandler(async (req, res, next) => {
+  const { market, timestamp } = req.query
 
-  const rate = await MarketHistory.getMostRecentRate(`${asset}-USD`)
+  const rate = await MarketHistory.getRateAt(market, timestamp)
 
   res.json({
     result: rate
@@ -259,6 +267,8 @@ router.get('/stats', asyncHandler(async (req, res, next) => {
       $group: {
         _id: '$date',
         ...$group,
+        'WALLET:USD_VOLUME': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$fromUsdValue', 0] } },
+        'WALLET:COUNT': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, 1, 0] } },
         USD_VOLUME: { $sum: '$fromUsdValue' },
         COUNT: { $sum: 1 }
       }
@@ -279,8 +289,11 @@ router.get('/stats', asyncHandler(async (req, res, next) => {
       date,
       count,
       usd_volume: volume,
+      wallet_count: json['WALLET:COUNT'],
+      wallet_volume: json['WALLET:USD_VOLUME'],
       markets: Object.entries(json).reduce((acc, [key, value]) => {
         const [market, type] = key.split(':')
+        if (market === 'WALLET') return acc
 
         if (!acc[market]) acc[market] = {}
         acc[market][type.toLowerCase()] = value

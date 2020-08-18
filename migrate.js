@@ -1,6 +1,6 @@
-require('mongoose').connect('mongodb://localhost/liquality_mainnet', { useNewUrlParser: true, useCreateIndex: true })
+require('mongoose').connect('mongodb://localhost/liquality_testdata', { useNewUrlParser: true, useCreateIndex: true })
 
-const fs = require('fs').promises
+const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 const Bluebird = require('bluebird')
@@ -42,7 +42,7 @@ const getAssetDate = async (asset, date) => {
 
   const { usd } = data.market_data.current_price
 
-  await fs.writeFile(filePath, usd)
+  fs.writeFileSync(filePath, usd)
   console.log('Logged', asset, date)
 
   return usd
@@ -112,4 +112,5 @@ async function main () {
   console.log('Done')
 }
 
-main()
+// main()
+fetchPrice()

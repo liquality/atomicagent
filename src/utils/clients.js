@@ -1,6 +1,8 @@
 const Client = require('@liquality/client')
 const config = require('../config')
 
+// const Provider = require('@liquality/provider')
+
 const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider')
 const BitcoinSwapProvider = require('@liquality/bitcoin-swap-provider')
 const BitcoinNodeWalletProvider = require('@liquality/bitcoin-node-wallet-provider')
@@ -45,6 +47,18 @@ function createBtcClient (asset) {
   return btcClient
 }
 
+// class CustomETHProvider extends Provider {
+//   async getTransactionCount (address, block = 'latest') {
+//     console.log('x', address, block)
+//
+//     if (block === 'latest') return this.client.getMethod('getTransactionCount', this)(address, block)
+//
+//     console.log('Returning custom nonce', 1910)
+//
+//     return 1910
+//   }
+// }
+
 function createEthClient (asset, wallet) {
   const ethConfig = config.assets.ETH
   const ethClient = new Client()
@@ -60,6 +74,8 @@ function createEthClient (asset, wallet) {
   ethClient.addProvider(new EthereumSwapProvider())
   ethClient.addProvider(new EthereumScraperSwapFindProvider(ethConfig.scraper.url))
 
+  // ethClient.addProvider(new CustomETHProvider())
+
   return ethClient
 }
 
@@ -68,6 +84,8 @@ function createERC20Client (asset) {
   const erc20Client = new Client()
 
   erc20Client.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
+
+  // erc20Client.addProvider(new CustomETHProvider())
 
   if (assetConfig.wallet && assetConfig.wallet.type === 'js') {
     erc20Client.addProvider(new EthereumJsWalletProvider(
@@ -78,6 +96,8 @@ function createERC20Client (asset) {
   erc20Client.addProvider(new EthereumErc20Provider(assetConfig.contractAddress))
   erc20Client.addProvider(new EthereumErc20SwapProvider())
   erc20Client.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
+
+  // erc20Client.addProvider(new CustomETHProvider())
 
   return erc20Client
 }
