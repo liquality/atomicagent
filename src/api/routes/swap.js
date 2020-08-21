@@ -145,7 +145,9 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
     context: 'SWAP_UPDATE'
   })
 
-  await agenda.now('verify-user-init-tx', { orderId: order.orderId })
+  // Prevent duplication of verify job
+  const verifyJobs = await agenda.jobs({'data.orderId': order.orderId, name: 'verify-user-init-tx'})
+  if (!verifyJobs.length) await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
   res.json(order.json())
 }))
