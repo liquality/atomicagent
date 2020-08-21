@@ -119,7 +119,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
     if (!order.verifyPassphrase(passphrase)) return next(res.createError(401, 'You are not authorised'))
   }
 
-  if (order.status !== 'QUOTE') return next(res.createError(401, 'Order was already updated'))
+  if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(order.status)) return next(res.createError(401, 'Order cannot be updated after funding'))
 
   const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
   if (fromFundHashExists) return next(res.createError(401, 'Duplicate fromFundHash'))

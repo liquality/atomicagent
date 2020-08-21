@@ -187,21 +187,6 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
         })
     })
 
-    it('should not allow update to already funded quote', async () => {
-      // try updating the quote with random data
-      return chai.request(app())
-        .post(`/api/swap/order/${quote.orderId}`)
-        .send({
-          fromAddress: '0x572E7610B0FC9a00cb4A441F398c9C7a5517DE32',
-          toAddress: 'bcrt1qjywshhj05s0lan3drpv9cu7t595y7k5x00ttf8',
-          fromFundHash: '98241f985c22fa523028f5fbc7d61305f8ee11fce7c334f015a470f292624948',
-          secretHash: '122f75aa0dbfb90db7984fe82400888443eacca84d388c7a93d976c640864e01'
-        })
-        .then(res => {
-          res.should.have.status(401)
-        })
-    })
-
     it('should verify funding of the quote', async function () {
       this.timeout(60 * 1000)
 
@@ -219,6 +204,21 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
         }))
 
       return check()
+    })
+
+    it('should not allow update to already funded quote', async () => {
+      // try updating the quote with random data
+      return chai.request(app())
+        .post(`/api/swap/order/${quote.orderId}`)
+        .send({
+          fromAddress: '0x572E7610B0FC9a00cb4A441F398c9C7a5517DE32',
+          toAddress: 'bcrt1qjywshhj05s0lan3drpv9cu7t595y7k5x00ttf8',
+          fromFundHash: '98241f985c22fa523028f5fbc7d61305f8ee11fce7c334f015a470f292624948',
+          secretHash: '122f75aa0dbfb90db7984fe82400888443eacca84d388c7a93d976c640864e01'
+        })
+        .then(res => {
+          res.should.have.status(401)
+        })
     })
 
     it('should reciprocate by funding the swap', async function () {
