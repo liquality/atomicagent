@@ -32,9 +32,9 @@ module.exports = agenda => async job => {
 
   const lastScannedBlock = await order.toClient().chain.getBlockHeight()
   const tx = await order.toClient().swap.initiateSwap(order.toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, order.nodeSwapExpiration)
-  debug('Initiated funding transaction', order.orderId, tx)
+  debug('Initiated funding transaction', order.orderId, tx.hash)
 
-  order.toFundHash = tx
+  order.toFundHash = tx.hash
   order.status = 'AGENT_FUNDED'
 
   await order.save()
@@ -44,7 +44,7 @@ module.exports = agenda => async job => {
     orderStatus: order.status,
     extra: {
       toBlock: lastScannedBlock,
-      toFundHash: tx
+      toFundHash: tx.hash
     },
     context: 'RECIPROCATE_INIT_SWAP'
   })

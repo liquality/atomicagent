@@ -154,7 +154,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
       return toClient.chain.getBlockHeight().then(blockNumber => {
         fromBlock = blockNumber
 
-        return fromClient.swap.initiateSwap(...args).then(hash => {
+        return fromClient.swap.initiateSwap(...args).then(({ hash }) => {
           fromFundHash = hash
         })
       })
