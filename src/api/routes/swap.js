@@ -124,7 +124,9 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
   if (fromFundHashExists) return next(res.createError(401, 'Duplicate fromFundHash'))
 
-  const keysToBeCopied = ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
+  const keysToBeCopied = order.status === 'USER_FUNDED_UNVERIFIED'
+    ? ['fromFundHash']
+    : ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
 
   for (let i = 0; i < keysToBeCopied.length; i++) {
     const key = keysToBeCopied[i]
@@ -146,8 +148,8 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
   })
 
   // Prevent duplication of verify job
-  const verifyJobs = await agenda.jobs({'data.orderId': order.orderId, name: 'verify-user-init-tx'})
-  if (!verifyJobs.length) await agenda.now('verify-user-init-tx', { orderId: order.orderId })
+  const verifyJobs = await agenda.jobs({ 'data.orderId': order.orderId, name: 'verify-user-init-tx' })
+  if (verifyJobs.length === 0) await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
   res.json(order.json())
 }))
