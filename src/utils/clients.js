@@ -27,7 +27,7 @@ function createBtcClient (asset) {
 
   const btcClient = new Client()
   if (btcConfig.wallet && btcConfig.wallet.type === 'js') {
-    btcClient.addProvider(new BitcoinEsploraApiProvider(btcConfig.api.url, btcConfig.feeNumberOfBlocks))
+    btcClient.addProvider(new BitcoinEsploraApiProvider(btcConfig.api.url, BitcoinNetworks[btcConfig.network], btcConfig.feeNumberOfBlocks))
     btcClient.addProvider(new BitcoinJsWalletProvider(BitcoinNetworks[btcConfig.network], btcConfig.wallet.mnemonic))
   } else {
     btcClient.addProvider(new BitcoinRpcProvider(btcConfig.rpc.url, btcConfig.rpc.username, btcConfig.rpc.password, btcConfig.feeNumberOfBlocks))
