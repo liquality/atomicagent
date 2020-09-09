@@ -63,7 +63,7 @@ module.exports = agenda => async job => {
       debug('Node has refunded the swap', order.orderId)
 
       order.status = 'AGENT_REFUNDED'
-      order.toRefundHash = tx
+      order.toRefundHash = tx.hash
       await order.save()
 
       await AuditLog.create({
@@ -71,7 +71,7 @@ module.exports = agenda => async job => {
         orderStatus: order.status,
         extra: {
           toBlock: currentBlock,
-          toRefundHash: tx,
+          toRefundHash: tx.hash,
           toBlockTimestamp: block.timestamp
         },
         context: 'FIND_CLAIM_TX_OR_REFUND'

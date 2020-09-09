@@ -21,14 +21,14 @@ module.exports = agenda => async job => {
   debug('Node has claimed the swap', order.orderId)
 
   order.status = 'AGENT_CLAIMED'
-  order.fromClaimHash = tx
+  order.fromClaimHash = tx.hash
   await order.save()
 
   await AuditLog.create({
     orderId: order.orderId,
     orderStatus: order.status,
     extra: {
-      fromClaimHash: tx
+      fromClaimHash: tx.hash
     },
     context: 'AGENT_CLAIM'
   })

@@ -44,3 +44,7 @@ nano config.toml # configure your agent as per your test environment
 ```bash
 npm test
 ```
+
+## License
+
+[MIT](./LICENSE.md)

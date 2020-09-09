@@ -12,6 +12,16 @@ module.exports = () => function (req, res, next) {
     return httpOk(req, res, data)
   }
 
+  res.notOk = function (status, message) {
+    res.status(status)
+
+    if (req.acceptJson) {
+      return res.json({ error: message })
+    } else {
+      return res.send(message)
+    }
+  }
+
   res.createError = createError
 
   next()
