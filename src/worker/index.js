@@ -92,6 +92,14 @@ module.exports.start = async () => {
       return
     }
 
+    debug(
+      _.get(job, 'attrs.name'),
+      _.get(job, 'attrs.data.orderId'),
+      job.attrs,
+      resBody,
+      err
+    )
+
     Sentry.withScope(scope => {
       scope.setTag('jobName', _.get(job, 'attrs.name'))
       scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
