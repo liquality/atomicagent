@@ -182,8 +182,8 @@ OrderSchema.methods.setUsdRates = async function () {
     MarketHistory.getMostRecentRate(`${this.to}-USD`)
   ])
 
-  this.fromUsdValue = BN(assets[this.from.toLowerCase()].unitToCurrency(this.fromAmount)).times(fromUsd).dp(2)
-  this.toUsdValue = BN(assets[this.to.toLowerCase()].unitToCurrency(this.toAmount)).times(toUsd).dp(2)
+  this.fromUsdValue = assets[this.from.toLowerCase()].unitToCurrency(this.fromAmount).times(fromUsd).dp(2)
+  this.toUsdValue = assets[this.to.toLowerCase()].unitToCurrency(this.toAmount).times(toUsd).dp(2)
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {

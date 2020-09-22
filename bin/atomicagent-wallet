@@ -12,7 +12,7 @@ async function getBalance (asset) {
   const client = getClient(asset)
   const addresses = await client.wallet.getUsedAddresses()
   const balance = await client.chain.getBalance(addresses)
-  const balanceInCurrency = assets[asset.toLowerCase()].unitToCurrency(balance)
+  const balanceInCurrency = assets[asset.toLowerCase()].unitToCurrency(balance).toNumber()
   const code = assets[asset.toLowerCase()].code
 
   return {
@@ -54,7 +54,7 @@ program
 program
   .command('sendtoaddress <asset> <address> <amount>')
   .action(async (asset, address, amount) => {
-    const amountInUnit = assets[asset.toLowerCase()].currencyToUnit(amount)
+    const amountInUnit = assets[asset.toLowerCase()].currencyToUnit(amount).toNumber()
     const client = getClient(asset)
     const tx = await client.chain.sendTransaction(address, amountInUnit)
 
