@@ -9,7 +9,7 @@ class CoinGecko {
   async getCoins () {
     if (this._coins) return this._coins
 
-    const { data } = await this._axios.get('/coins/list')
+    const { data } = await this._axios.get('/coins/markets?vs_currency=usd&order=market_cap_desc')
     this._coins = data
 
     return data
