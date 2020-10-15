@@ -55,7 +55,7 @@
     "helmet": "^3.21.2",
     "http-errors": "^1.7.3",
     "lodash": "^4.17.15",
-    "mongoose": "^5.9.2",
+    "mongoose": "^5.10.7",
     "toml": "^3.0.0",
     "uuid": "^3.4.0"
   },
