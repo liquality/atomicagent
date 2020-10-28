@@ -11,8 +11,11 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'USER_FUNDED') return
 
-  const currentBlock = await order.fromClient().chain.getBlockHeight()
-  const block = await order.fromClient().chain.getBlockByNumber(currentBlock)
+  const fromClient = order.fromClient()
+  const toClient = order.toClient()
+
+  const currentBlock = await fromClient.chain.getBlockHeight()
+  const block = await fromClient.chain.getBlockByNumber(currentBlock)
 
   if (block.timestamp >= order.swapExpiration) { // no need to continue
     debug(`Order ${order.orderId} expired due to swapExpiration`)
@@ -31,12 +34,23 @@ module.exports = async job => {
     return
   }
 
-  const lastScannedBlock = await order.toClient().chain.getBlockHeight()
-  const tx = await order.toClient().swap.initiateSwap(order.toAmount, order.toAddress, order.toCounterPartyAddress, order.secretHash, order.nodeSwapExpiration)
+  const toMinBlock = await toClient.chain.getBlockHeight()
+  const tx = await toClient.swap.initiateSwap(
+    order.toAmount,
+    order.toAddress,
+    order.toCounterPartyAddress,
+    order.secretHash,
+    order.nodeSwapExpiration
+  )
   debug('Initiated funding transaction', order.orderId, tx.hash)
 
   order.toFundHash = tx.hash
-  order.status = 'AGENT_FUNDED'
+
+  if (tx.secondaryTx) {
+    order.toSecondaryFundHash = tx.secondaryTx.hash
+  }
+
+  order.status = 'AGENT_FUNDED_UNVERIFIED'
 
   await order.save()
 
@@ -44,11 +58,12 @@ module.exports = async job => {
     orderId: order.orderId,
     orderStatus: order.status,
     extra: {
-      toBlock: lastScannedBlock,
-      toFundHash: tx.hash
+      toMinBlock: toMinBlock,
+      toFundHash: tx.hash,
+      toSecondaryFundHash: tx.secondaryTx.hash
     },
     context: 'RECIPROCATE_INIT_SWAP'
   })
 
-  await agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, lastScannedBlock })
+  await agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, toMinBlock })
 }

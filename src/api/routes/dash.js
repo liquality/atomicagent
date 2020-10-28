@@ -62,8 +62,10 @@ router.get('/orders', asyncHandler(async (req, res, next) => {
       { toAddress: inAddresses },
 
       { fromFundHash: inAddresses },
+      { fromSecondaryFundHash: inAddresses },
       { fromClaimHash: inAddresses },
       { toFundHash: inAddresses },
+      { toSecondaryFundHash: inAddresses },
       { toRefundHash: inAddresses },
 
       { secretHash: inAddresses }

@@ -27,14 +27,47 @@ services:
       dockerfile: proxy.Dockerfile
     environment:
       - NODE_ENV=production
-    ports:
-      - "18443:18443"
-    environment:
       - TARGET_HOST=bitcoin
       - TARGET_PORT=18443
       - SERVER_PORT=18443
+    ports:
+      - "18443:18443"
     depends_on:
       - bitcoin
+  scraper:
+    build:
+      context: .
+      dockerfile: scraper.dockerfile
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb/scraper
+      - WEB3_URI=ws://ethereum:8545/
+      - MAX_BLOCK_BATCH_SIZE=10
+      - MAX_TRANSACTION_BATCH_SIZE=15
+      - PORT=8080
+      - START_BLOCK=0
+      - REORG_GAP=1
+    depends_on:
+      - mongodb
+      - ethereum
+  scraper-api:
+    build:
+      context: .
+      dockerfile: scraper-api.dockerfile
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongodb/scraper
+      - WEB3_URI=ws://ethereum:8545/
+      - MAX_BLOCK_BATCH_SIZE=10
+      - MAX_TRANSACTION_BATCH_SIZE=15
+      - PORT=8080
+      - START_BLOCK=0
+      - REORG_GAP=1
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongodb
+      - ethereum
   miner:
     build:
       context: .

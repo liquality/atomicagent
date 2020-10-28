@@ -78,11 +78,19 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  fromSecondaryFundHash: {
+    type: String,
+    index: true
+  },
   fromClaimHash: {
     type: String,
     index: true
   },
   toFundHash: {
+    type: String,
+    index: true
+  },
+  toSecondaryFundHash: {
     type: String,
     index: true
   },
@@ -109,6 +117,28 @@ const OrderSchema = new mongoose.Schema({
   nodeSwapExpiration: {
     type: Number,
     index: true
+  },
+
+  fromFundTxFee: {
+    type: Number
+  },
+  fromSecondaryFundTxFee: {
+    type: Number
+  },
+  fromClaimTxFee: {
+    type: Number
+  },
+  toFundTxFee: {
+    type: Number
+  },
+  toSecondaryFundTxFee: {
+    type: Number
+  },
+  toClaimTxFee: {
+    type: Number
+  },
+  toRefundTxFee: {
+    type: Number
   },
 
   passphraseHash: {

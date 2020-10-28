@@ -1,14 +1,13 @@
 const Client = require('@liquality/client')
 const config = require('../config')
 
-// const Provider = require('@liquality/provider')
-
 const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider')
 const BitcoinSwapProvider = require('@liquality/bitcoin-swap-provider')
 const BitcoinNodeWalletProvider = require('@liquality/bitcoin-node-wallet-provider')
 const BitcoinJsWalletProvider = require('@liquality/bitcoin-js-wallet-provider')
 const BitcoinEsploraApiProvider = require('@liquality/bitcoin-esplora-api-provider')
 const BitcoinEsploraSwapFindProvider = require('@liquality/bitcoin-esplora-swap-find-provider')
+const BitcoinEarnFeeProvider = require('@liquality/bitcoin-earn-fee-provider')
 const BitcoinNetworks = require('@liquality/bitcoin-networks')
 
 const EthereumRpcProvider = require('@liquality/ethereum-rpc-provider')
@@ -19,8 +18,7 @@ const EthereumErc20SwapProvider = require('@liquality/ethereum-erc20-swap-provid
 const EthereumNetworks = require('@liquality/ethereum-networks')
 const EthereumScraperSwapFindProvider = require('@liquality/ethereum-scraper-swap-find-provider')
 const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
-
-const ETH_GAS_PRICE_MULTIPLIER = 1.5
+const EthereumGasStationFeeProvider = require('@liquality/ethereum-gas-station-fee-provider')
 
 function createBtcClient (asset) {
   const btcConfig = config.assets.BTC
@@ -44,20 +42,10 @@ function createBtcClient (asset) {
     btcClient.addProvider(new BitcoinEsploraSwapFindProvider(btcConfig.api.url))
   }
 
+  btcClient.addProvider(new BitcoinEarnFeeProvider())
+
   return btcClient
 }
-
-// class CustomETHProvider extends Provider {
-//   async getTransactionCount (address, block = 'latest') {
-//     console.log('x', address, block)
-//
-//     if (block === 'latest') return this.client.getMethod('getTransactionCount', this)(address, block)
-//
-//     console.log('Returning custom nonce', 1910)
-//
-//     return 1910
-//   }
-// }
 
 function createEthClient (asset, wallet) {
   const ethConfig = config.assets.ETH
@@ -67,14 +55,13 @@ function createEthClient (asset, wallet) {
 
   if (ethConfig.wallet && ethConfig.wallet.type === 'js') {
     ethClient.addProvider(new EthereumJsWalletProvider(
-      EthereumNetworks[ethConfig.network], ethConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER
+      EthereumNetworks[ethConfig.network], ethConfig.wallet.mnemonic
     ))
   }
 
   ethClient.addProvider(new EthereumSwapProvider())
   ethClient.addProvider(new EthereumScraperSwapFindProvider(ethConfig.scraper.url))
-
-  // ethClient.addProvider(new CustomETHProvider())
+  ethClient.addProvider(new EthereumGasStationFeeProvider())
 
   return ethClient
 }
@@ -85,19 +72,16 @@ function createERC20Client (asset) {
 
   erc20Client.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
 
-  // erc20Client.addProvider(new CustomETHProvider())
-
   if (assetConfig.wallet && assetConfig.wallet.type === 'js') {
     erc20Client.addProvider(new EthereumJsWalletProvider(
-      EthereumNetworks[assetConfig.network], assetConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER
+      EthereumNetworks[assetConfig.network], assetConfig.wallet.mnemonic
     ))
   }
 
   erc20Client.addProvider(new EthereumErc20Provider(assetConfig.contractAddress))
   erc20Client.addProvider(new EthereumErc20SwapProvider())
   erc20Client.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
-
-  // erc20Client.addProvider(new CustomETHProvider())
+  erc20Client.addProvider(new EthereumGasStationFeeProvider())
 
   return erc20Client
 }

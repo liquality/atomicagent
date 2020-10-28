@@ -23,10 +23,6 @@ module.exports = async job => {
 
   if (!claimTx) {
     const currentBlock = await toClient.chain.getBlockHeight()
-
-    job.attrs.data.lastScannedBlock = currentBlock
-    await job.save()
-
     const block = await toClient.chain.getBlockByNumber(currentBlock)
 
     if (block.timestamp >= order.nodeSwapExpiration) {
@@ -50,11 +46,25 @@ module.exports = async job => {
         orderId: order.orderId,
         orderStatus: order.status,
         extra: {
-          toBlock: currentBlock,
           toRefundHash: tx.hash,
           toBlockTimestamp: block.timestamp
         },
         context: 'FIND_CLAIM_TX_OR_REFUND'
+      })
+
+      await agenda.now('verify-tx', {
+        orderId: order.orderId,
+        key: 'toRefundHash',
+        asset: order.to,
+        startBlock: currentBlock,
+        minConf: 1,
+        maxBlocks: 10,
+        next: {
+          action: 'UPDATE_ORDER',
+          payload: {
+            status: 'AGENT_REFUNDED'
+          }
+        }
       })
     } else {
       const when = 'in ' + config.assets[order.to].blockTime
@@ -66,7 +76,6 @@ module.exports = async job => {
         orderStatus: order.status,
         status: 'AGENT_CLAIM_WAITING',
         extra: {
-          toBlock: currentBlock,
           toBlockTimestamp: block.timestamp
         },
         context: 'FIND_CLAIM_TX_OR_REFUND'
@@ -88,7 +97,8 @@ module.exports = async job => {
     orderId: order.orderId,
     orderStatus: order.status,
     extra: {
-      toClaimHash: claimTx.hash
+      toClaimHash: claimTx.hash,
+      secret: claimTx.secret
     },
     context: 'FIND_CLAIM_TX_OR_REFUND'
   })

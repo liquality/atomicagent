@@ -26,7 +26,9 @@ module.exports = async job => {
     return
   }
 
-  const verified = await order.fromClient().swap.verifyInitiateSwapTransaction(
+  const fromClient = order.fromClient()
+
+  const verified = await fromClient.swap.verifyInitiateSwapTransaction(
     order.fromFundHash,
     order.fromAmount,
     order.fromCounterPartyAddress,
@@ -49,7 +51,7 @@ module.exports = async job => {
       throw new Error('Reschedule')
     }
 
-    const initiationTx = await order.fromClient().chain.getTransactionByHash(order.fromFundHash)
+    const initiationTx = await fromClient.chain.getTransactionByHash(order.fromFundHash)
     if (initiationTx.confirmations < order.minConf) {
       debug(`Reschedule ${order.orderId}: Need more confirmations (${initiationTx.confirmations} < ${order.minConf})`)
 
@@ -59,6 +61,7 @@ module.exports = async job => {
         status: 'USER_FUNDING_NEED_MORE_CONF',
         extra: {
           minConf: order.minConf,
+          currentConf: initiationTx.confirmations,
           initiationTxConf: initiationTx.confirmations
         },
         context: 'VERIFY_USER_INIT_TX'

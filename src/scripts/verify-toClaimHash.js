@@ -1,26 +1,35 @@
-require('mongoose').connect('mongodb://localhost/liquality_mainnet', { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true })
+const mongoose = require('mongoose')
+const config = require('../config')
+
+const mongooseOnError = err => {
+  console.error(err)
+  process.exit(1)
+}
+
+mongoose
+  .connect(config.database.uri, {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useUnifiedTopology: true
+  })
+  .catch(mongooseOnError)
 
 const Bluebird = require('bluebird')
-const Order = require('./src/models/Order')
-
-function log (index, order, ...messages) {
-  console.log(`${order.orderId}:${order.from}-${order.to}`, ...messages, `(${index})`)
-}
+const Order = require('../models/Order')
 
 async function main () {
   const orders = await Order.find({
-    // status: 'AGENT_FUNDED',
     status: {
       $ne: 'QUOTE'
-    },
-    updatedAt: {
-      $lt: new Date(Date.now() - (1000 * 60 * 60 * 24))
     }
   }).sort('-createdAt').exec()
 
-  console.log('Orders', orders.length)
+  const total = orders.length
+  console.log('Total Orders', total)
+  let index = 0
 
-  await Bluebird.map(orders, async (order, index) => {
+  await Bluebird.map(orders, async order => {
+    const log = message => console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
     const toClient = order.toClient()
 
     let toClaimHash
@@ -43,29 +52,25 @@ async function main () {
       )
 
       if (!toClaimTx) {
-        log(index, order, 'Not claimed yet!')
+        log('Not claimed yet')
         return
       }
 
       toClaimHash = toClaimTx.hash
     } catch (e) {
-      log(index, order, 'e', 'Not claimed yet!')
+      log('Not claimed yet')
       return
     }
 
-    if (order.toClaimHash) {
-      if (order.toClaimHash === toClaimHash) {
-        log(index, order, 'Good')
-      } else {
-        log(index, order, 'Mismatch', order.toClaimHash, toClaimHash)
-      }
-
+    if (order.toClaimHash === toClaimHash) {
+      log('Verified')
       return
     }
+
+    log(`Mismatch - On Record ${order.toClaimHash} vs On Chain ${toClaimHash}`)
 
     order.toClaimHash = toClaimHash
     await order.save()
-    log(index, order, 'Updated', toClaimHash)
 
     if (Math.random() < 0.5) {
       await new Promise((resolve, reject) => setTimeout(resolve, 1000))
@@ -73,6 +78,7 @@ async function main () {
   }, { concurrency: 10 })
 
   console.log('Done')
+  process.exit(0)
 }
 
 main()

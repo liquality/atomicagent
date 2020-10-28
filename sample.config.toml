@@ -38,3 +38,35 @@ minConcurrentSwaps = 3
   contractAddress = "0xf6316f11abfc4c6bd72bcb893a52d88fbb22a719"
     [assets.DAI.rpc]
     url = "http://localhost:8545"
+
+  [assets.USDT]
+  network = "mainnet"
+  type = "ERC20"
+  blockTime = "20 seconds"
+  contractAddress = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    [assets.USDT.rpc]
+    url = "http://localhost:8545"
+
+  [assets.USDC]
+  network = "mainnet"
+  type = "ERC20"
+  blockTime = "20 seconds"
+  contractAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+    [assets.USDC.rpc]
+    url = "http://localhost:8545"
+
+  [assets.WBTC]
+  network = "mainnet"
+  type = "ERC20"
+  blockTime = "20 seconds"
+  contractAddress = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+    [assets.WBTC.rpc]
+    url = "http://localhost:8545"
+
+  [assets.UNI]
+  network = "mainnet"
+  type = "ERC20"
+  blockTime = "20 seconds"
+  contractAddress = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+    [assets.UNI.rpc]
+    url = "http://localhost:8545"
