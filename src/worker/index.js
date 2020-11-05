@@ -83,6 +83,14 @@ module.exports.start = async () => {
       err.ignore = true
     }
 
+    debug(
+      _.get(job, 'attrs.name'),
+      _.get(job, 'attrs.data.orderId'),
+      job.attrs,
+      resBody,
+      err
+    )
+
     if (err.ignore) {
       debug('[quiet] Retrying', job.attrs)
 
@@ -91,14 +99,6 @@ module.exports.start = async () => {
       await job.save()
       return
     }
-
-    debug(
-      _.get(job, 'attrs.name'),
-      _.get(job, 'attrs.data.orderId'),
-      job.attrs,
-      resBody,
-      err
-    )
 
     Sentry.withScope(scope => {
       scope.setTag('jobName', _.get(job, 'attrs.name'))

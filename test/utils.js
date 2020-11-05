@@ -71,7 +71,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
           fromAmount: 10000
         })
         .then(res => {
-          res.should.have.status(401)
+          res.should.have.status(400)
         })
     })
 
@@ -126,7 +126,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
       return chai.request(app())
         .get('/api/swap/order/abc')
         .then(res => {
-          res.should.have.status(401)
+          res.should.have.status(400)
         })
     })
   })
@@ -217,7 +217,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
           secretHash: '122f75aa0dbfb90db7984fe82400888443eacca84d388c7a93d976c640864e01'
         })
         .then(res => {
-          res.should.have.status(401)
+          res.should.have.status(400)
         })
     })
 
