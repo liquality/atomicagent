@@ -42,11 +42,11 @@ jobs:
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
-          script: ./update_reload
+          script: ./update_reload_next
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.') != true
         with:
-          host: ${{secrets.SSH_HOST}}
+          host: ${{secrets.SSH_NEXT_HOST}}
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
