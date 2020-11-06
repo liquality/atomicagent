@@ -38,10 +38,10 @@ module.exports.start = async () => {
         jobOpts.concurrency = CONCURRENCY_MAP[jobName]
       }
 
-      agenda.define(jobName, jobOpts, async (job, done) => {
-        const fn = require(path.join(JOBS_DIR, jobSlug))(agenda)
+      const processor = require(path.join(JOBS_DIR, jobSlug))(agenda)
 
-        fn(job)
+      agenda.define(jobName, jobOpts, (job, done) => {
+        processor(job)
           .then(() => done())
           .catch(e => done(e))
       })
