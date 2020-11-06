@@ -52,7 +52,7 @@
     "debug": "^4.1.1",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
-    "helmet": "^3.21.2",
+    "helmet": "^3.23.3",
     "http-errors": "^1.7.3",
     "lodash": "^4.17.15",
     "mongoose": "^5.9.2",
