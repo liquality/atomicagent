@@ -4,35 +4,6 @@ const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
 const config = require('../../config')
 
-async function findClaim (order, lastScannedBlock, currentBlock) {
-  const toClient = order.toClient()
-  const newBlocksExist = !lastScannedBlock || (currentBlock > lastScannedBlock)
-  const doesBlockScan = toClient.swap.doesBlockScan
-  if (doesBlockScan && !newBlocksExist) return
-
-  const getClaim = blockNumber => toClient.swap.findClaimSwapTransaction(
-    order.toFundHash,
-    order.toAddress,
-    order.toCounterPartyAddress,
-    order.secretHash,
-    order.nodeSwapExpiration,
-    blockNumber
-  )
-
-  if (doesBlockScan) {
-    let blockNumber = lastScannedBlock ? lastScannedBlock + 1 : currentBlock
-    for (;blockNumber <= currentBlock; blockNumber++) {
-      const claimTx = await getClaim(blockNumber)
-
-      debug(`Block scanning for ${order.orderId}: ${blockNumber}${claimTx ? ' (Found)' : ''}`)
-
-      if (claimTx) return claimTx
-    }
-  } else {
-    return getClaim()
-  }
-}
-
 module.exports = async job => {
   const { agenda } = job
   const { data } = job.attrs
@@ -41,19 +12,27 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'AGENT_FUNDED') return
 
-  const currentBlock = await order.toClient().chain.getBlockHeight()
-  const claimTx = await findClaim(order, data.lastScannedBlock, currentBlock)
+  const toClient = order.toClient()
+  const claimTx = await toClient.swap.findClaimSwapTransaction(
+    order.toFundHash,
+    order.toAddress,
+    order.toCounterPartyAddress,
+    order.secretHash,
+    order.nodeSwapExpiration
+  )
 
   if (!claimTx) {
+    const currentBlock = await toClient.chain.getBlockHeight()
+
     job.attrs.data.lastScannedBlock = currentBlock
     await job.save()
 
-    const block = await order.toClient().chain.getBlockByNumber(currentBlock)
+    const block = await toClient.chain.getBlockByNumber(currentBlock)
 
     if (block.timestamp >= order.nodeSwapExpiration) {
       debug(`Get refund ${order.orderId} (${block.timestamp} >= ${order.nodeSwapExpiration})`)
 
-      const tx = await order.toClient().swap.refundSwap(
+      const tx = await toClient.swap.refundSwap(
         order.toFundHash,
         order.toAddress,
         order.toCounterPartyAddress,
@@ -97,6 +76,7 @@ module.exports = async job => {
     return
   }
 
+  order.toClaimHash = claimTx.hash
   order.secret = claimTx.secret
   order.status = 'USER_CLAIMED'
 
@@ -108,7 +88,7 @@ module.exports = async job => {
     orderId: order.orderId,
     orderStatus: order.status,
     extra: {
-      toBlock: currentBlock
+      toClaimHash: claimTx.hash
     },
     context: 'FIND_CLAIM_TX_OR_REFUND'
   })

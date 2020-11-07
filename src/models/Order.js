@@ -86,6 +86,10 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     index: true
   },
+  toClaimHash: {
+    type: String,
+    index: true
+  },
   toRefundHash: {
     type: String,
     index: true
@@ -110,14 +114,32 @@ const OrderSchema = new mongoose.Schema({
   passphraseHash: {
     type: String
   },
-
   passphraseSalt: {
     type: String
   },
 
+  fromStartBlock: {
+    type: Number
+  },
+  toStartBlock: {
+    type: Number
+  },
+
+  // pending: ['AGENT_FUNDED_UNVERIFIED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED_UNVERIFIED', 'AGENT_CLAIMED', 'AGENT_CLAIMED_UNVERIFIED', 'AGENT_CLAIMED']
+  // success: ['AGENT_CLAIMED', 'AGENT_REFUNDED']
+
   status: {
     type: String,
-    enum: ['QUOTE', 'USER_FUNDED_UNVERIFIED', 'USER_FUNDED', 'AGENT_FUNDED', 'USER_CLAIMED', 'AGENT_CLAIMED', 'AGENT_REFUNDED', 'QUOTE_EXPIRED', 'SWAP_EXPIRED'],
+    enum: [
+      'QUOTE',
+      'USER_FUNDED_UNVERIFIED', 'USER_FUNDED',
+      'AGENT_FUNDED_UNVERIFIED', 'AGENT_FUNDED',
+      'USER_CLAIMED',
+      'AGENT_CLAIMED_UNVERIFIED', 'AGENT_CLAIMED',
+      'AGENT_REFUNDED_UNVERIFIED', 'AGENT_REFUNDED',
+      'QUOTE_EXPIRED',
+      'SWAP_EXPIRED'
+    ],
     index: true
   }
 }, { timestamps: true })

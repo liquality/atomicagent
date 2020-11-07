@@ -31,6 +31,7 @@ module.exports.start = () => {
   app.set('agenda', agenda)
 
   app.use('/api/swap', require('./routes/swap'))
+  app.use('/api/dash', require('./routes/dash'))
 
   // TODO: guard this route
   if (process.env.NODE_ENV !== 'test') {

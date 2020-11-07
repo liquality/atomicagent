@@ -15,6 +15,8 @@ const EthereumSwapProvider = require('@liquality/ethereum-swap-provider')
 const EthereumErc20Provider = require('@liquality/ethereum-erc20-provider')
 const EthereumErc20SwapProvider = require('@liquality/ethereum-erc20-swap-provider')
 const EthereumNetworks = require('@liquality/ethereum-networks')
+const EthereumScraperSwapFindProvider = require('@liquality/ethereum-scraper-swap-find-provider')
+const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
 
 const ETH_GAS_PRICE_MULTIPLIER = 1.5
 
@@ -46,11 +48,17 @@ function createBtcClient (asset) {
 function createEthClient (asset, wallet) {
   const ethConfig = config.assets.ETH
   const ethClient = new Client()
+
   ethClient.addProvider(new EthereumRpcProvider(ethConfig.rpc.url))
+
   if (ethConfig.wallet && ethConfig.wallet.type === 'js') {
-    ethClient.addProvider(new EthereumJsWalletProvider(EthereumNetworks[ethConfig.network], ethConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER))
+    ethClient.addProvider(new EthereumJsWalletProvider(
+      EthereumNetworks[ethConfig.network], ethConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER
+    ))
   }
+
   ethClient.addProvider(new EthereumSwapProvider())
+  ethClient.addProvider(new EthereumScraperSwapFindProvider(ethConfig.scraper.url))
 
   return ethClient
 }
@@ -58,12 +66,19 @@ function createEthClient (asset, wallet) {
 function createERC20Client (asset) {
   const assetConfig = config.assets[asset]
   const erc20Client = new Client()
+
   erc20Client.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
+
   if (assetConfig.wallet && assetConfig.wallet.type === 'js') {
-    erc20Client.addProvider(new EthereumJsWalletProvider(EthereumNetworks[assetConfig.network], assetConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER))
+    erc20Client.addProvider(new EthereumJsWalletProvider(
+      EthereumNetworks[assetConfig.network], assetConfig.wallet.mnemonic, undefined, ETH_GAS_PRICE_MULTIPLIER
+    ))
   }
+
   erc20Client.addProvider(new EthereumErc20Provider(assetConfig.contractAddress))
   erc20Client.addProvider(new EthereumErc20SwapProvider())
+  erc20Client.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
+
   return erc20Client
 }
 

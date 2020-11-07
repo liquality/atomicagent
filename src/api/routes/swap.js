@@ -2,32 +2,13 @@ const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
-const { fromUnixTime, differenceInDays } = require('date-fns')
 
 const AuditLog = require('../../models/AuditLog')
 const Asset = require('../../models/Asset')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
-const MarketHistory = require('../../models/MarketHistory')
-
-const jobs = require('../../utils/jobs')
-
+const Job = require('../../models/Job')
 const pkg = require('../../../package.json')
-
-router.get('/history/markets', asyncHandler(async (req, res) => {
-  const { query } = req
-  const { market, min, max } = query
-
-  if (!market) return res.notOk(400, 'Value not specified: market')
-  if (!min) return res.notOk(400, 'Value not specified: min')
-  if (!max) return res.notOk(400, 'Value not specified: max')
-  if (min >= max) return res.notOk(400, 'Invalid values: min should be <= max')
-
-  const diff = differenceInDays(fromUnixTime(max), fromUnixTime(min))
-  if (diff > 30) return res.notOk(400, 'Range cannot exceed 30 days')
-
-  res.json(await MarketHistory.getRates(market, min, max))
-}))
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
@@ -51,12 +32,6 @@ router.get('/marketinfo', asyncHandler(async (req, res) => {
 
     return json
   }))
-}))
-
-router.get('/orders', asyncHandler(async (req, res) => {
-  const result = await Order.find({}, { secret: 0 }).exec()
-
-  res.json(result.map(r => r.json()))
 }))
 
 router.post('/order', asyncHandler(async (req, res, next) => {
@@ -172,8 +147,8 @@ router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
       json.agent_version = pkg.version
 
       const [auditLog, jobData] = await Promise.all([
-        AuditLog.find({ orderId: params.orderId }).exec(),
-        jobs.find(params.orderId)
+        AuditLog.find({ orderId: params.orderId }).select('-_id -orderId').exec(),
+        Job.findByOrderId(params.orderId)
       ])
 
       json.job_data = jobData

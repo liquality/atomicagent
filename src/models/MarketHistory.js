@@ -51,9 +51,9 @@ MarketHistorySchema.static('logRate', async function (market, rate, time) {
   )
 })
 
-MarketHistorySchema.static('getRates', async function (market, min, max) {
+MarketHistorySchema.static('getRates', async function (market, start, end) {
   return MarketHistory.aggregate([
-    { $match: { market, first: { $gte: Number(min) }, last: { $lte: Number(max) } } },
+    { $match: { market, first: { $gte: Number(start) }, last: { $lte: Number(end) } } },
     { $unwind: '$rates' },
     { $group: { _id: '$day', rates: { $push: '$rates' } } },
     { $unwind: '$rates' },

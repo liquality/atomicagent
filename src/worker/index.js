@@ -20,6 +20,8 @@ const getStatusCode = e => _.get(e, 'statusCode') || _.get(e, 'response.status')
 const getResponse = e => _.get(e, 'response.data') || _.get(e, 'response.body', '')
 const getRequestUrl = e => _.get(e, 'config.url', '')
 
+// implement chain lock
+
 const CONCURRENCY_MAP = {
   'agent-claim': 1,
   'find-claim-tx-or-refund': 1,

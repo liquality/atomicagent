@@ -2,3 +2,4 @@
 *config.toml
 !sample.config.toml
 node_modules/
+marketdata/
