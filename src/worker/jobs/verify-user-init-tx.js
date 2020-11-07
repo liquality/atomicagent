@@ -4,7 +4,8 @@ const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
 const config = require('../../config')
 
-module.exports = agenda => async job => {
+module.exports = async job => {
+  const { agenda } = job
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()

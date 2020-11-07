@@ -3,7 +3,7 @@ const debug = require('debug')('liquality:agent:worker:agent-claim')
 const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
 
-module.exports = agenda => async job => {
+module.exports = async job => {
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()

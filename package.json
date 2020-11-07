@@ -13,7 +13,7 @@
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
-    "test": "NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js"
+    "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit ./test/*.js"
   },
   "author": "Liquality <info@liquality.io>",
   "repository": {

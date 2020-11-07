@@ -38,13 +38,9 @@ module.exports.start = async () => {
         jobOpts.concurrency = CONCURRENCY_MAP[jobName]
       }
 
-      const processor = require(path.join(JOBS_DIR, jobSlug))(agenda)
+      const processor = require(path.join(JOBS_DIR, jobSlug))
 
-      agenda.define(jobName, jobOpts, (job, done) => {
-        processor(job)
-          .then(() => done())
-          .catch(e => done(e))
-      })
+      agenda.define(jobName, jobOpts, processor)
     })
 
   if (config.worker.jobReporter) {
