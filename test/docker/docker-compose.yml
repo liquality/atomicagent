@@ -1,47 +1,103 @@
 version: '3'
+
 services:
   mongodb:
     image: mongo
     ports:
       - "27017:27017"
+    networks:
+      local:
+        ipv4_address: 10.10.0.8
   bitcoin:
-    image: ruimarinho/bitcoin-core:0.18
-    command:
-      -regtest=1
-      -txindex
-      -deprecatedrpc=generate
-      -rpcuser=bitcoin
-      -rpcpassword=local321
-      -rpcallowip=0.0.0.0/0
-      -rpcbind=0.0.0.0
-      -server
-  ethereum:
-    image: trufflesuite/ganache-cli
+    image: vulpemventures/bitcoin:latest
     ports:
-      - "8545:8545"
+      - 18443:19001
+    volumes:
+      - ./config/:/config
+    restart: unless-stopped
+    networks:
+      local:
+        ipv4_address: 10.10.0.10
+  electrs:
+    image: vulpemventures/electrs:latest
+    entrypoint:
+      - /build/electrs
     command:
-      -m="piece effort bind that embrace enrich remind powder sudden patient legend group"
-  bitcoin-cors-proxy:
-    build:
-      context: .
-      dockerfile: proxy.Dockerfile
-    environment:
-      - NODE_ENV=production
-      - TARGET_HOST=bitcoin
-      - TARGET_PORT=18443
-      - SERVER_PORT=18443
-    ports:
-      - "18443:18443"
+      - --network
+      - regtest
+      - --daemon-dir
+      - /config
+      - --daemon-rpc-addr
+      - 10.10.0.10:19001
+      - --cookie
+      - admin1:123
+      - --http-addr
+      - 0.0.0.0:3002
+      - --electrum-rpc-addr
+      - 0.0.0.0:60401
+      - --cors
+      - "*"
+      - --utxos-limit
+      - "2000"
+      - --electrum-txs-limit
+      - "2000"
     depends_on:
       - bitcoin
+    ports:
+      - 60401:60401
+      - 3002:3002
+    volumes:
+      - ./config/:/config
+    restart: unless-stopped
+    networks:
+      local:
+        ipv4_address: 10.10.0.12
+  electrs-batch-server:
+    build:
+      context: .
+      dockerfile: electrs-batch-server.dockerfile
+    environment:
+      - PORT=9090
+      - ELECTRS_URL=http://10.10.0.12:3002/
+      - CONCURRENCY=10
+    depends_on:
+      - electrs
+    ports:
+      - "9090:9090"
+    networks:
+      local:
+        ipv4_address: 10.10.0.14
+  ethereum:
+    image: ethereum/client-go:v1.9.23
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+    command:
+      - --dev
+      - --http
+      - --http.api=db,personal,admin,eth,net,web3
+      - --http.addr=0.0.0.0
+      - --http.port=8545
+      - --http.corsdomain="*"
+      - --allow-insecure-unlock
+      - --ws
+      - --ws.api=db,personal,admin,eth,net,web3
+      - --ws.addr=0.0.0.0
+      - --ws.port=8546
+      - --ws.origins="*"
+    networks:
+      local:
+        ipv4_address: 10.10.0.16
   scraper:
     build:
       context: .
       dockerfile: scraper.dockerfile
     environment:
+      - ETH_HOST=10.10.0.16
+      - ETH_PORT=8545
       - NODE_ENV=production
-      - MONGO_URI=mongodb://mongodb/scraper
-      - WEB3_URI=ws://ethereum:8545/
+      - MONGO_URI=mongodb://10.10.0.8/scraper
+      - WEB3_URI=ws://10.10.0.16:8546/
       - MAX_BLOCK_BATCH_SIZE=10
       - MAX_TRANSACTION_BATCH_SIZE=15
       - PORT=8080
@@ -50,14 +106,17 @@ services:
     depends_on:
       - mongodb
       - ethereum
+    networks:
+      local:
+        ipv4_address: 10.10.0.18
   scraper-api:
     build:
       context: .
       dockerfile: scraper-api.dockerfile
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://mongodb/scraper
-      - WEB3_URI=ws://ethereum:8545/
+      - MONGO_URI=mongodb://10.10.0.8/scraper
+      - WEB3_URI=http://10.10.0.16:8545/
       - MAX_BLOCK_BATCH_SIZE=10
       - MAX_TRANSACTION_BATCH_SIZE=15
       - PORT=8080
@@ -68,15 +127,33 @@ services:
     depends_on:
       - mongodb
       - ethereum
+    networks:
+      local:
+        ipv4_address: 10.10.0.20
   miner:
     build:
       context: .
-      dockerfile: miner.Dockerfile
+      dockerfile: miner.dockerfile
     environment:
-      - BTC_HOST=bitcoin
-      - BTC_PORT=18443
-      - ETH_HOST=ethereum
+      - BTC_USER=admin1
+      - BTC_PASS=123
+      - BTC_HOST=10.10.0.10
+      - BTC_PORT=19001
+      - BTC_AGENT_ADDRESS=bcrt1qtn57pmumc03wlhth56l4jlaljk4hzwfau2wrgy
+      - BTC_WALLET_ADDRESS=bcrt1q5r8gn6uza59v7xlsqs8zteckvlwwysl7f5pw6t
+      - ETH_HOST=10.10.0.16
       - ETH_PORT=8545
+      - ETH_AGENT_ADDRESS=0x625ACaEdeF812d2842eFd2Fb0294682A868455bd
+      - ETH_WALLET_ADDRESS=0x3dc584c132f6189dca45152ea889b9aac70db0c3
     depends_on:
-      - bitcoin
       - ethereum
+    networks:
+      local:
+        ipv4_address: 10.10.0.22
+
+networks:
+  local:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24

@@ -2,8 +2,8 @@ FROM alpine
 
 WORKDIR /home
 
-RUN apk add curl curl-dev
+RUN apk add curl curl-dev jq
 
-COPY mine.sh /home/mine.sh
+COPY miner.sh /home/miner.sh
 
-CMD /bin/sh mine.sh
+CMD /bin/sh miner.sh

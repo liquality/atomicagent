@@ -4,4 +4,6 @@ WORKDIR /home/node/app
 
 RUN npm install -g ethereum-scraper
 
-CMD sleep 10 && ethereum-scraper
+COPY scraper.sh /home/scraper.sh
+
+CMD /bin/sh /home/scraper.sh
