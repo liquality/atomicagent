@@ -2,7 +2,8 @@ const debug = require('debug')('liquality:agent:worker:verify-user-init-tx')
 
 const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
-const config = require('../../config')
+const { calculateFeeObject } = require('../../utils/fx')
+const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async job => {
   const { agenda } = job
@@ -15,79 +16,104 @@ module.exports = async job => {
   if (Date.now() > order.expiresAt) { // Expected the swap sooner. Quote expired.
     debug(`Order ${order.orderId} expired due to expiresAt`)
     order.status = 'QUOTE_EXPIRED'
-    await order.save()
 
-    await AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      context: 'VERIFY_USER_INIT_TX'
-    })
-
-    return
+    return Promise.all([
+      order.save(),
+      AuditLog.create({
+        orderId: order.orderId,
+        orderStatus: order.status,
+        context: 'VERIFY_USER_INIT_TX'
+      })
+    ])
   }
 
   const fromClient = order.fromClient()
 
-  const verified = await fromClient.swap.verifyInitiateSwapTransaction(
-    order.fromFundHash,
-    order.fromAmount,
-    order.fromCounterPartyAddress,
-    order.fromAddress,
-    order.secretHash,
-    order.swapExpiration
-  )
-
   try {
+    const verified = await fromClient.swap.verifyInitiateSwapTransaction(
+      order.fromFundHash,
+      order.fromAmount,
+      order.fromCounterPartyAddress,
+      order.fromAddress,
+      order.secretHash,
+      order.swapExpiration
+    )
+
     if (!verified) {
-      debug(`Reschedule ${order.orderId}: Transaction not found`)
-
-      await AuditLog.create({
-        orderId: order.orderId,
-        orderStatus: order.status,
-        status: 'USER_FUNDING_NOT_FOUND',
-        context: 'VERIFY_USER_INIT_TX'
-      })
-
-      throw new Error('Reschedule')
-    }
-
-    const initiationTx = await fromClient.chain.getTransactionByHash(order.fromFundHash)
-    if (initiationTx.confirmations < order.minConf) {
-      debug(`Reschedule ${order.orderId}: Need more confirmations (${initiationTx.confirmations} < ${order.minConf})`)
-
-      await AuditLog.create({
-        orderId: order.orderId,
-        orderStatus: order.status,
-        status: 'USER_FUNDING_NEED_MORE_CONF',
-        extra: {
-          minConf: order.minConf,
-          currentConf: initiationTx.confirmations,
-          initiationTxConf: initiationTx.confirmations
-        },
-        context: 'VERIFY_USER_INIT_TX'
-      })
-
-      throw new Error('Reschedule')
+      throw new RescheduleError(`Reschedule ${order.orderId}: Transaction not found`, order.from)
     }
   } catch (e) {
-    const when = 'in ' + config.assets[order.from].blockTime
-    debug(`Reschedule ${order.orderId} ${when}`)
+    await AuditLog.create({
+      orderId: order.orderId,
+      orderStatus: order.status,
+      status: 'USER_FUNDING_NOT_FOUND',
+      context: 'VERIFY_USER_INIT_TX'
+    })
 
-    job.schedule(when)
-    await job.save()
-    return
+    if (['PendingTxError', 'RescheduleError'].includes(e.name)) {
+      throw new RescheduleError(e.message, order.from)
+    }
+
+    throw e
   }
 
-  debug('Found & verified funding transaction', order.orderId)
+  const initiationTx = await fromClient.chain.getTransactionByHash(order.fromFundHash)
+  if (initiationTx.confirmations < order.minConf) {
+    debug(`Reschedule ${order.orderId}: Need more confirmations (${initiationTx.confirmations} < ${order.minConf})`)
 
+    await AuditLog.create({
+      orderId: order.orderId,
+      orderStatus: order.status,
+      status: 'USER_FUNDING_NEED_MORE_CONF',
+      extra: {
+        minConf: order.minConf,
+        currentConf: initiationTx.confirmations,
+        initiationTxConf: initiationTx.confirmations
+      },
+      context: 'VERIFY_USER_INIT_TX'
+    })
+
+    throw new RescheduleError(
+      `Reschedule ${order.orderId}: Need more confirmations (${initiationTx.confirmations} < ${order.minConf})`,
+      order.from
+    )
+  }
+
+  debug('Found & verified funding transaction', order.orderId, order.fromFundHash)
+
+  try {
+    const fromSecondaryFundTx = await fromClient.swap.findFundSwapTransaction(
+      order.fromFundHash,
+      order.fromAmount,
+      order.fromCounterPartyAddress,
+      order.fromAddress,
+      order.secretHash,
+      order.swapExpiration
+    )
+
+    if (fromSecondaryFundTx) {
+      order.fromSecondaryFundHash = fromSecondaryFundTx.hash
+      order.set(`fees.${fromSecondaryFundTx.hash}`, calculateFeeObject(order.from, fromSecondaryFundTx.fee, order.fromRateUsd))
+    }
+  } catch (e) {
+    if (['TxNotFoundError', 'PendingTxError'].includes(e.name)) {
+      throw new RescheduleError(e.message, order.from)
+    }
+
+    throw e
+  }
+
+  order.set(`fees.${initiationTx.hash}`, calculateFeeObject(order.from, initiationTx.fee, order.fromRateUsd))
   order.status = 'USER_FUNDED'
-  await order.save()
 
-  await AuditLog.create({
-    orderId: order.orderId,
-    orderStatus: order.status,
-    context: 'VERIFY_USER_INIT_TX'
-  })
+  await Promise.all([
+    order.save(),
+    AuditLog.create({
+      orderId: order.orderId,
+      orderStatus: order.status,
+      context: 'VERIFY_USER_INIT_TX'
+    })
+  ])
 
-  await agenda.now('reciprocate-init-swap', { orderId: order.orderId })
+  return agenda.now('reciprocate-init-swap', { orderId: order.orderId })
 }
