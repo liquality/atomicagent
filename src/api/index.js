@@ -15,7 +15,7 @@ let listen
 
 module.exports.start = () => {
   const app = express()
-  const agenda = new Agenda().database(config.database.uri, null, { useNewUrlParser: true, useUnifiedTopology: true })
+  const agenda = new Agenda().database(config.database.uri, null, { useNewUrlParser: true })
 
   if (process.env.NODE_ENV === 'production') {
     app.use(Sentry.Handlers.requestHandler())

@@ -7,4 +7,19 @@ function calculateToAmount (from, to, fromAmount, rate) {
   return toAmount
 }
 
-module.exports = { calculateToAmount }
+function calculateUsdAmount (asset, amount, usdRate) {
+  return cryptoassets[asset].unitToCurrency(amount).times(usdRate).dp(2)
+}
+
+function calculateFeeObject (asset, amount, usdRate) {
+  return {
+    amount,
+    usd: calculateUsdAmount(asset, amount, usdRate).toNumber()
+  }
+}
+
+module.exports = {
+  calculateToAmount,
+  calculateUsdAmount,
+  calculateFeeObject
+}

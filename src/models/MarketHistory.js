@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const { formatISO, getUnixTime } = require('date-fns')
 
+const TIME_BUFFER = 3600
+
 const MarketHistorySchema = new mongoose.Schema({
   market: {
     type: String,
@@ -61,26 +63,31 @@ MarketHistorySchema.static('getRates', async function (market, start, end) {
   ])
 })
 
-MarketHistorySchema.static('getRateAt', async function (market, timestamp) {
-  const unixTimestamp = Math.ceil(timestamp / 1000)
+MarketHistorySchema.static('getRateNear', async function (market, timestamp) {
+  const unixTimestamp = Math.floor(timestamp / 1000)
 
   let rates = await MarketHistory.find({
     market,
-    first: { $gte: unixTimestamp - 3600 }
+    first: { $gte: unixTimestamp - TIME_BUFFER }
   }).sort('first').limit(3).exec()
 
   rates = rates.filter(rates => !!rates)
 
   if (rates.length === 0) return null
 
-  return rates.reduce((acc, rate) => {
+  rates = rates.reduce((acc, rate) => {
     acc = [...acc, ...rate.rates]
     return acc
-  }, []).find(({ r, t }) => t >= unixTimestamp).r
+  }, [])
+
+  const item = rates.find(({ r, t }) => t >= unixTimestamp)
+  if (item) return item.r
+
+  return rates.pop().r
 })
 
 MarketHistorySchema.static('getMostRecentRate', async function (market) {
-  return MarketHistory.getRateAt(market, Date.now())
+  return MarketHistory.getRateNear(market, Date.now())
 })
 
 const MarketHistory = mongoose.model('MarketHistory', MarketHistorySchema)

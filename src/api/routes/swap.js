@@ -34,7 +34,7 @@ router.get('/marketinfo', asyncHandler(async (req, res) => {
   }))
 }))
 
-router.post('/order', asyncHandler(async (req, res, next) => {
+router.post('/order', asyncHandler(async (req, res) => {
   const { body } = req
 
   const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
@@ -65,20 +65,24 @@ router.post('/order', asyncHandler(async (req, res, next) => {
 
   order.setExpiration()
 
-  await order.setUsdRates()
-  await order.setAgentAddresses()
-  await order.save()
+  await Promise.all([
+    order.setUsdRates(),
+    order.setAgentAddresses()
+  ])
 
-  await AuditLog.create({
-    orderId: order.orderId,
-    orderStatus: order.status,
-    context: 'NEW_SWAP'
-  })
+  await Promise.all([
+    order.save(),
+    AuditLog.create({
+      orderId: order.orderId,
+      orderStatus: order.status,
+      context: 'NEW_SWAP'
+    })
+  ])
 
   res.json(order.json())
 }))
 
-router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
+router.post('/order/:orderId', asyncHandler(async (req, res) => {
   const agenda = req.app.get('agenda')
   const { params, body } = req
 
@@ -111,23 +115,24 @@ router.post('/order/:orderId', asyncHandler(async (req, res, next) => {
 
   order.status = 'USER_FUNDED_UNVERIFIED'
 
-  await order.save()
+  const [verifyJobs] = await Promise.all([
+    // Prevent duplication of verify job
+    agenda.jobs({ 'data.orderId': order.orderId, name: 'verify-user-init-tx' }),
+    order.save(),
+    AuditLog.create({
+      orderId: order.orderId,
+      orderStatus: order.status,
+      extra: body,
+      context: 'SWAP_UPDATE'
+    })
+  ])
 
-  await AuditLog.create({
-    orderId: order.orderId,
-    orderStatus: order.status,
-    extra: body,
-    context: 'SWAP_UPDATE'
-  })
-
-  // Prevent duplication of verify job
-  const verifyJobs = await agenda.jobs({ 'data.orderId': order.orderId, name: 'verify-user-init-tx' })
   if (verifyJobs.length === 0) await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
   res.json(order.json())
 }))
 
-router.get('/order/:orderId', asyncHandler(async (req, res, next) => {
+router.get('/order/:orderId', asyncHandler(async (req, res) => {
   const { params, query } = req
 
   const order = await Order.findOne({ orderId: params.orderId }).exec()

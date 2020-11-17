@@ -20,7 +20,7 @@ const addressVariants = address => {
   return [...new Set(arr)]
 }
 
-router.get('/orders', asyncHandler(async (req, res, next) => {
+router.get('/orders', asyncHandler(async (req, res) => {
   const { q, from, to, start, end, status, excludeStatus, userAgent } = req.query
   let { limit, page, sort } = req.query
 
@@ -109,17 +109,17 @@ router.get('/orders', asyncHandler(async (req, res, next) => {
   })
 }))
 
-router.get('/rate', asyncHandler(async (req, res, next) => {
+router.get('/rate', asyncHandler(async (req, res) => {
   const { market, timestamp } = req.query
 
-  const rate = await MarketHistory.getRateAt(market, timestamp)
+  const rate = await MarketHistory.getRateNear(market, timestamp)
 
   res.json({
     result: rate
   })
 }))
 
-router.get('/statsByAddress', asyncHandler(async (req, res, next) => {
+router.get('/statsByAddress', asyncHandler(async (req, res) => {
   const { address } = req.query
 
   const inAddresses = { $in: addressVariants(address) }
@@ -139,7 +139,7 @@ router.get('/statsByAddress', asyncHandler(async (req, res, next) => {
     {
       $group: {
         _id: null,
-        USD_VOLUME: { $sum: '$fromUsdValue' },
+        USD_VOLUME: { $sum: '$fromAmountUsd' },
         COUNT: { $sum: 1 }
       }
     }
@@ -156,7 +156,7 @@ router.get('/statsByAddress', asyncHandler(async (req, res, next) => {
   })
 }))
 
-router.get('/topAddresses', asyncHandler(async (req, res, next) => {
+router.get('/topAddresses', asyncHandler(async (req, res) => {
   let { sort, page, limit } = req.query
 
   try {
@@ -193,7 +193,7 @@ router.get('/topAddresses', asyncHandler(async (req, res, next) => {
     {
       $group: {
         _id: '$fromAddress',
-        USD_VOLUME: { $sum: '$fromUsdValue' },
+        USD_VOLUME: { $sum: '$fromAmountUsd' },
         MARKETS: { $addToSet: '$market' },
         COUNT: { $sum: 1 }
       }
@@ -222,7 +222,7 @@ router.get('/topAddresses', asyncHandler(async (req, res, next) => {
   })
 }))
 
-router.get('/stats', asyncHandler(async (req, res, next) => {
+router.get('/stats', asyncHandler(async (req, res) => {
   let { start, end, address } = req.query
   start = new Date(Number(start))
   end = new Date(Number(end))
@@ -230,7 +230,7 @@ router.get('/stats', asyncHandler(async (req, res, next) => {
   const markets = (await Market.find({}, 'from to').exec()).map(market => `${market.from}-${market.to}`)
 
   const $group = markets.reduce((acc, market) => {
-    acc[`${market}:USD_VOLUME`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$fromUsdValue', 0] } }
+    acc[`${market}:USD_VOLUME`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] } }
     acc[`${market}:COUNT`] = { $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] } }
 
     return acc
@@ -269,9 +269,9 @@ router.get('/stats', asyncHandler(async (req, res, next) => {
       $group: {
         _id: '$date',
         ...$group,
-        'WALLET:USD_VOLUME': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$fromUsdValue', 0] } },
+        'WALLET:USD_VOLUME': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$fromAmountUsd', 0] } },
         'WALLET:COUNT': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, 1, 0] } },
-        USD_VOLUME: { $sum: '$fromUsdValue' },
+        USD_VOLUME: { $sum: '$fromAmountUsd' },
         COUNT: { $sum: 1 }
       }
     }
@@ -338,16 +338,16 @@ router.get('/stats', asyncHandler(async (req, res, next) => {
   })
 }))
 
-router.get('/rates', asyncHandler(async (req, res, next) => {
+router.get('/rates', asyncHandler(async (req, res) => {
   const { market, start, end } = req.query
 
-  if (!market) return next(res.createError(401, 'Value not specified: market'))
-  if (!start) return next(res.createError(401, 'Value not specified: start'))
-  if (!end) return next(res.createError(401, 'Value not specified: end'))
-  if (start >= end) return next(res.createError(401, 'Invalid values: start should be <= end'))
+  if (!market) return res.notOk(400, 'Value not specified: market')
+  if (!start) return res.notOk(400, 'Value not specified: start')
+  if (!end) return res.notOk(400, 'Value not specified: end')
+  if (start >= end) return res.notOk(400, 'Invalid values: start should be <= end')
 
   const diff = differenceInDays(fromUnixTime(end), fromUnixTime(start))
-  if (diff > 30) return next(res.createError(401, 'Range cannot exceed 30 days'))
+  if (diff > 30) return res.notOk(400, 'Range cannot exceed 30 days')
 
   const result = await MarketHistory.getRates(market, start, end)
 
@@ -357,7 +357,7 @@ router.get('/rates', asyncHandler(async (req, res, next) => {
   })
 }))
 
-router.get('/accumulate', asyncHandler(async (req, res, next) => {
+router.get('/accumulate', asyncHandler(async (req, res) => {
   const [result] = await Order.aggregate([
     {
       $match: {
@@ -367,7 +367,7 @@ router.get('/accumulate', asyncHandler(async (req, res, next) => {
     {
       $group: {
         _id: null,
-        USD_VOLUME: { $sum: '$fromUsdValue' },
+        USD_VOLUME: { $sum: '$fromAmountUsd' },
         COUNT: { $sum: 1 }
       }
     }
