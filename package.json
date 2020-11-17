@@ -13,7 +13,7 @@
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
-    "docker": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
+    "env:docker": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
     "lint": "standard",
     "test": "npm run lint && DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js"
   },
