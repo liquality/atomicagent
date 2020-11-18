@@ -32,6 +32,7 @@ jobs:
         if: ${{ failure() }}
         run: tar cvzf ./docker-logs.tgz ./docker-logs
       - name: Upload logs to GitHub
+        if: ${{ failure() }}
         uses: actions/upload-artifact@master
         with:
           name: docker-logs.tgz
