@@ -4,5 +4,4 @@
 !heroku.config.toml
 node_modules/
 marketdata/
-test/docker/config/*
-!test/docker/config/bitcoin.conf
+test/docker/config/regtest/*
