@@ -22,7 +22,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
       - run: cp sample.config.toml test.config.toml
       - run: npm run env:docker
-      - run: sleep 30
+      - run: sleep 60
       - run: npm ci
       - run: npm test
       - run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
