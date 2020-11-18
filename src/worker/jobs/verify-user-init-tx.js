@@ -50,7 +50,7 @@ module.exports = async job => {
       context: 'VERIFY_USER_INIT_TX'
     })
 
-    if (['PendingTxError', 'RescheduleError'].includes(e.name)) {
+    if (['TxNotFoundError', 'PendingTxError', 'RescheduleError'].includes(e.name)) {
       throw new RescheduleError(e.message, order.from)
     }
 

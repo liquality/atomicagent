@@ -23,3 +23,16 @@ jobs:
       - run: sleep 60
       - run: npm ci
       - run: npm test
+      - name: Collect docker logs on failure
+        if: ${{ failure() }}
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './docker-logs'
+      - name: Tar logs
+        if: ${{ failure() }}
+        run: tar cvzf ./docker-logs.tgz ./docker-logs
+      - name: Upload logs to GitHub
+        uses: actions/upload-artifact@master
+        with:
+          name: docker-logs.tgz
+          path: ./docker-logs.tgz
