@@ -19,6 +19,7 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
       - run: cp sample.config.toml test.config.toml
+      - run: chmod -R 777 test/docker
       - run: npm run env:docker
       - run: sleep 60
       - run: npm ci
