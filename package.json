@@ -38,7 +38,7 @@
     "@liquality/ethereum-networks": "^0.6.9",
     "@liquality/ethereum-rpc-provider": "^0.6.9",
     "@liquality/ethereum-swap-provider": "^0.6.9",
-    "@sentry/node": "^5.12.5",
+    "@sentry/node": "^5.27.2",
     "agenda": "^3.0.0",
     "agendash": "^1.0.0",
     "axios": "^0.19.2",
