@@ -164,8 +164,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = assets[this.from.toLowerCase()].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = assets[this.to.toLowerCase()].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = assets[this.from].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = assets[this.to].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -182,8 +182,8 @@ OrderSchema.methods.setUsdRates = async function () {
     MarketHistory.getMostRecentRate(`${this.to}-USD`)
   ])
 
-  this.fromUsdValue = assets[this.from.toLowerCase()].unitToCurrency(this.fromAmount).times(fromUsd).dp(2)
-  this.toUsdValue = assets[this.to.toLowerCase()].unitToCurrency(this.toAmount).times(toUsd).dp(2)
+  this.fromUsdValue = assets[this.from].unitToCurrency(this.fromAmount).times(fromUsd).dp(2)
+  this.toUsdValue = assets[this.to].unitToCurrency(this.toAmount).times(toUsd).dp(2)
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {
