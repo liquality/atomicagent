@@ -38,7 +38,9 @@ router.post('/order', asyncHandler(async (req, res) => {
   const { body } = req
 
   const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
-  if (!market) return res.notOk(400, `Market not found: ${body.from}-${body.to}`)
+  if (!market) {
+    return res.notOk(400, `Market not found: ${body.from}-${body.to}`)
+  }
 
   const { fromAmount } = body
   if (!(market.min <= fromAmount &&
@@ -87,19 +89,26 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
   const { params, body } = req
 
   const order = await Order.findOne({ orderId: params.orderId }).exec()
-  if (!order) return res.notOk(400, `Order not found: ${params.orderId}`)
+  if (!order) {
+    return res.notOk(400, `Order not found: ${params.orderId}`)
+  }
 
   if (order.passphraseHash) {
     const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
-    if (!passphrase) return res.notOk(401, 'You are not authorised')
-    if (!order.verifyPassphrase(passphrase)) return res.notOk(401, 'You are not authorised')
+    if (!passphrase || !order.verifyPassphrase(passphrase)) {
+      return res.notOk(401, 'You are not authorised')
+    }
   }
 
-  if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(order.status)) return res.notOk(400, 'Order cannot be updated after funding')
+  if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(order.status)) {
+    return res.notOk(400, 'Order cannot be updated after funding')
+  }
 
   const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
-  if (fromFundHashExists) return res.notOk(400, `Duplicate fromFundHash: ${body.fromFundHash}`)
+  if (fromFundHashExists) {
+    return res.notOk(400, `Duplicate fromFundHash: ${body.fromFundHash}`)
+  }
 
   const keysToBeCopied = order.status === 'USER_FUNDED_UNVERIFIED'
     ? ['fromFundHash']
@@ -108,15 +117,17 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
   for (let i = 0; i < keysToBeCopied.length; i++) {
     const key = keysToBeCopied[i]
 
-    if (!body[key]) return res.notOk(400, `Missing key from request body: ${key}`)
+    if (!body[key]) {
+      return res.notOk(400, `Missing key from request body: ${key}`)
+    }
 
     order[key] = body[key]
   }
 
+  order.addTx('fromFundHash', { hash: body.fromFundHash })
   order.status = 'USER_FUNDED_UNVERIFIED'
 
   const [verifyJobs] = await Promise.all([
-    // Prevent duplication of verify job
     agenda.jobs({ 'data.orderId': order.orderId, name: 'verify-user-init-tx' }),
     order.save(),
     AuditLog.create({
@@ -136,13 +147,16 @@ router.get('/order/:orderId', asyncHandler(async (req, res) => {
   const { params, query } = req
 
   const order = await Order.findOne({ orderId: params.orderId }).exec()
-  if (!order) return res.notOk(400, 'Order not found')
+  if (!order) {
+    return res.notOk(400, 'Order not found')
+  }
 
   if (order.passphraseHash) {
     const passphrase = query.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
-    if (!passphrase) return res.notOk(401, 'You are not authorised')
-    if (!order.verifyPassphrase(passphrase)) return res.notOk(401, 'You are not authorised')
+    if (!passphrase || !order.verifyPassphrase(passphrase)) {
+      return res.notOk(401, 'You are not authorised')
+    }
   }
 
   const json = order.json()
