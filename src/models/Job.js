@@ -9,5 +9,7 @@ JobSchema.static('findByOrderId', function (orderId) {
   return Job.find({ 'data.orderId': orderId }).select('-_id').exec()
 })
 
+JobSchema.index({ 'data.orderId': 1 })
+
 const Job = mongoose.model('Job', JobSchema)
 module.exports = Job
