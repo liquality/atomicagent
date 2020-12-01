@@ -297,8 +297,6 @@ module.exports.verifyAllTxs = async (context, request) => {
     .then(res => {
       res.should.have.status(200)
 
-      console.log('hasUnconfirmedTx', res.body.txMap, res.body.hasUnconfirmedTx)
-
       if (res.body.hasUnconfirmedTx) return check()
 
       expect(res.body.hasUnconfirmedTx).to.equal(false)
