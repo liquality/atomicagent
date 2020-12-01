@@ -11,7 +11,7 @@ let agenda
 module.exports.start = async () => {
   agenda = new Agenda({ mongo: mongoose.connection, defaultLockLifetime: config.worker.defaultLockLifetimeInMs })
 
-  configureJobs(agenda)
+  await configureJobs(agenda)
 
   if (config.worker.jobReporter) {
     jobReporter(agenda)

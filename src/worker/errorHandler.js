@@ -10,9 +10,19 @@ const getResponseBody = e => _.get(e, 'response.data') || _.get(e, 'response.bod
 const getRequestUrl = e => _.get(e, 'config.url', '')
 
 module.exports = async (err, job) => {
+  debug(err.name, err.message)
+
+  if (err.code === 'ECONNREFUSED') {
+    job.schedule('in ' + config.worker.httpConnectionErrorDelay)
+    return job.save()
+  }
+
   if (err.name === 'RescheduleError') {
-    debug('RescheduleError', err.message)
-    job.schedule('in ' + config.assets[err.chain].blockTime)
+    const scheduleIn = typeof err.chain === 'string'
+      ? 'in ' + config.assets[err.chain].blockTime
+      : 'in ' + err.chain + ' seconds'
+
+    job.schedule(scheduleIn)
     return job.save()
   }
 
@@ -23,11 +33,12 @@ module.exports = async (err, job) => {
   }
 
   debug(
+    err.name,
+    err.message,
     _.get(job, 'attrs.name'),
     _.get(job, 'attrs.data.orderId'),
     job.attrs,
-    httpData,
-    err
+    httpData
   )
 
   Sentry.withScope(scope => {

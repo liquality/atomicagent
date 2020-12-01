@@ -44,7 +44,7 @@ describe.only('Swap', () => {
       describe(market, () => {
         before(() => {
           config.application.swapExpirationDurationInSeconds = 50
-          config.application.nodeSwapExpirationDurationInSeconds = 25
+          config.application.nodeSwapExpirationDurationInSeconds = 30
         })
 
         swap([SWAPS[market][0]])
@@ -57,7 +57,7 @@ describe.only('Swap', () => {
       describe(market, () => {
         before(() => {
           config.application.swapExpirationDurationInSeconds = 50
-          config.application.nodeSwapExpirationDurationInSeconds = 25
+          config.application.nodeSwapExpirationDurationInSeconds = 30
         })
 
         swap([SWAPS[market][0]], true)
@@ -67,8 +67,8 @@ describe.only('Swap', () => {
 
   describe('Successful concurrent swaps', () => {
     before(() => {
-      config.application.swapExpirationDurationInSeconds = 400
-      config.application.nodeSwapExpirationDurationInSeconds = 200
+      config.application.swapExpirationDurationInSeconds = 260
+      config.application.nodeSwapExpirationDurationInSeconds = 240
     })
 
     swap(SWAPS_ARR)
@@ -76,8 +76,8 @@ describe.only('Swap', () => {
 
   describe('Unsuccessful concurrent swaps', () => {
     before(() => {
-      config.application.swapExpirationDurationInSeconds = 400
-      config.application.nodeSwapExpirationDurationInSeconds = 200
+      config.application.swapExpirationDurationInSeconds = 260
+      config.application.nodeSwapExpirationDurationInSeconds = 240
     })
 
     swap(SWAPS_ARR, true)

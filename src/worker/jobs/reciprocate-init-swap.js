@@ -1,10 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
 
-const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
-const config = require('../../config')
-const { withLock } = require('../../utils/chainLock')
-const { calculateFeeObject } = require('../../utils/fx')
 
 module.exports = async job => {
   const { agenda } = job
@@ -17,71 +13,51 @@ module.exports = async job => {
   const fromClient = order.fromClient()
   const toClient = order.toClient()
 
-  const currentBlock = await fromClient.chain.getBlockHeight()
-  const block = await fromClient.chain.getBlockByNumber(currentBlock)
+  const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
+  const fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
 
-  if (block.timestamp >= order.swapExpiration) { // no need to continue
+  if (order.isSwapExpired(fromCurrentBlock)) {
     debug(`Order ${order.orderId} expired due to swapExpiration`)
 
+    order.addTx('fromRefundHash', { hash: Date.now(), placeholder: true })
     order.status = 'SWAP_EXPIRED'
+    await order.save()
 
-    return Promise.all([
-      order.save(),
-      AuditLog.create({
-        orderId: order.orderId,
-        orderStatus: order.status,
-        extra: {
-          fromBlock: currentBlock
-        },
-        context: 'RECIPROCATE_INIT_SWAP'
-      })
-    ])
+    await order.log('RECIPROCATE_INIT_SWAP', null, {
+      fromBlock: fromCurrentBlockNumber
+    })
+
+    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
 
   const toLastScannedBlock = await toClient.chain.getBlockHeight()
 
-  const { defaultFee } = config.assets[order.to]
+  const toFundTx = await order.initiateSwap()
 
-  const tx = await withLock(order.to, async () => {
-    const fees = await toClient.chain.getFees()
+  debug('Initiated funding transaction', order.orderId, toFundTx.hash)
 
-    return toClient.swap.initiateSwap(
-      order.toAmount,
-      order.toAddress,
-      order.toCounterPartyAddress,
-      order.secretHash,
-      order.nodeSwapExpiration,
-      fees[defaultFee].fee
-    )
-  })
-
-  debug('Initiated funding transaction', order.orderId, tx.hash)
-
-  order.toFundHash = tx.hash
-  order.set(`fees.${tx.hash}`, calculateFeeObject(order.to, tx.fee, order.toRateUsd))
-
-  const toSecondaryFundTx = tx.secondaryTx
-
-  if (toSecondaryFundTx) {
-    order.toSecondaryFundHash = toSecondaryFundTx.hash
-    order.set(`fees.${toSecondaryFundTx.hash}`, calculateFeeObject(order.to, toSecondaryFundTx.fee, order.toRateUsd))
-  }
-
+  order.addTx('toFundHash', toFundTx)
   order.status = 'AGENT_FUNDED'
 
-  await Promise.all([
-    order.save(),
-    AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      extra: {
-        toLastScannedBlock: toLastScannedBlock,
-        toFundHash: tx.hash,
-        toSecondaryFundHash: order.toSecondaryFundHash
-      },
-      context: 'RECIPROCATE_INIT_SWAP'
-    })
-  ])
+  const toSecondaryFundTx = toFundTx.secondaryTx
+
+  if (toSecondaryFundTx) {
+    order.addTx('toSecondaryFundHash', toSecondaryFundTx)
+  }
+
+  await order.save()
+
+  await agenda.now('verify-tx', { orderId: order.orderId, type: 'toFundHash' })
+
+  if (toSecondaryFundTx) {
+    await agenda.now('verify-tx', { orderId: order.orderId, type: 'toSecondaryFundHash' })
+  }
+
+  await order.log('RECIPROCATE_INIT_SWAP', null, {
+    toLastScannedBlock: toLastScannedBlock,
+    toFundHash: toFundTx.hash,
+    toSecondaryFundHash: order.toSecondaryFundHash
+  })
 
   return agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, toLastScannedBlock })
 }

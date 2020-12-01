@@ -5,6 +5,8 @@ const chaiHttp = require('chai-http')
 chai.should()
 chai.use(chaiHttp)
 
+const { expect } = chai
+
 const { v4: uuidv4 } = require('uuid')
 const mongoose = require('mongoose')
 const ClientFactory = require('@liquality/client-factory')
@@ -226,7 +228,7 @@ module.exports.findAgentFundingTx = async context => {
   }
 
   const tx = await findInitSwapTx(context.toBlock)
-  context.toInitSwapTxHash = tx.hash
+  context.toFundHash = tx.hash
 }
 
 module.exports.claim = async context => {
@@ -238,7 +240,7 @@ module.exports.claim = async context => {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.claimSwap(
-      context.toInitSwapTxHash,
+      context.toFundHash,
       context.toAddress,
       context.toCounterPartyAddress,
       context.secret,
@@ -246,6 +248,63 @@ module.exports.claim = async context => {
       fees[defaultFee].fee
     )
   })
+}
+
+module.exports.refundSwap = async context => {
+  const fromClient = getClient(context.from)
+
+  const { defaultFee } = config.assets[context.from]
+
+  return withLock(context.from, async () => {
+    const fees = await fromClient.chain.getFees()
+
+    const { hash } = await fromClient.swap.refundSwap(
+      context.fromFundHash,
+      context.fromCounterPartyAddress,
+      context.fromAddress,
+      context.secretHash,
+      context.swapExpiration,
+      fees[defaultFee].fee
+    )
+
+    context.fromRefundHash = hash
+  }).catch(e => {
+    if (e.name === 'PossibleTimelockError') {
+      return wait(5000).then(() => module.exports.refundSwap(context))
+    }
+
+    throw e
+  })
+}
+
+module.exports.verifyUserRefund = async (context, request) => {
+  const check = () => waitForRandom(1000, 1500).then(() => request
+    .get(`/api/swap/order/${context.orderId}`)
+    .then(res => {
+      res.should.have.status(200)
+
+      if (!res.body.fromRefundHash) return check()
+
+      expect(res.body.fromRefundHash).to.equal(context.fromRefundHash)
+    }))
+
+  return check()
+}
+
+module.exports.verifyAllTxs = async (context, request) => {
+  const check = () => waitForRandom(1000, 1500).then(() => request
+    .get(`/api/swap/order/${context.orderId}`)
+    .then(res => {
+      res.should.have.status(200)
+
+      console.log('hasUnconfirmedTx', res.body.txMap, res.body.hasUnconfirmedTx)
+
+      if (res.body.hasUnconfirmedTx) return check()
+
+      expect(res.body.hasUnconfirmedTx).to.equal(false)
+    }))
+
+  return check()
 }
 
 module.exports.verifyClaimOrRefund = async (context, request, expectedStatus) => {

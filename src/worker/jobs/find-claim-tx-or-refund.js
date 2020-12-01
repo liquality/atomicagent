@@ -1,11 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:find-claim-tx-or-refund')
 
-const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
-const config = require('../../config')
-const blockScanOrFind = require('../../utils/blockScanOrFind')
-const { withLock } = require('../../utils/chainLock')
-const { calculateFeeObject } = require('../../utils/fx')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async job => {
@@ -17,116 +12,56 @@ module.exports = async job => {
   if (order.status !== 'AGENT_FUNDED') return
 
   const toClient = order.toClient()
-  const toCurrentBlock = await order.toClient().chain.getBlockHeight()
-  const claimTx = await blockScanOrFind(toClient, async blockNumber => {
-    try {
-      const tx = await toClient.swap.findClaimSwapTransaction(
-        order.toFundHash,
-        order.toAddress,
-        order.toCounterPartyAddress,
-        order.secretHash,
-        order.nodeSwapExpiration,
-        blockNumber
-      )
+  const toCurrentBlockNumber = await order.toClient().chain.getBlockHeight()
+  const toClaimTx = await order.findClaimSwapTransaction(data.toLastScannedBlock, toCurrentBlockNumber)
 
-      if (toClient.swap.doesBlockScan) {
-        debug(`Block scanning for ${order.orderId}: ${blockNumber}${tx ? ' (Found)' : ''}`)
-      }
-
-      return tx
-    } catch (e) {
-      if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-        throw new RescheduleError(e.message, order.to)
-      }
-
-      throw e
-    }
-  }, data.toLastScannedBlock, toCurrentBlock)
-
-  if (!claimTx) {
-    job.attrs.data.toLastScannedBlock = toCurrentBlock
+  if (!toClaimTx) {
+    job.attrs.data.toLastScannedBlock = toCurrentBlockNumber
     await job.save()
 
-    const block = await toClient.chain.getBlockByNumber(toCurrentBlock)
+    const toCurrentBlock = await toClient.chain.getBlockByNumber(toCurrentBlockNumber)
 
-    if (block.timestamp >= order.nodeSwapExpiration) {
-      debug(`Get refund ${order.orderId} (${block.timestamp} >= ${order.nodeSwapExpiration})`)
+    if (order.isNodeSwapExpired(toCurrentBlock)) {
+      debug(`Get refund ${order.orderId} (${toCurrentBlock.timestamp} >= ${order.nodeSwapExpiration})`)
 
-      const { defaultFee } = config.assets[order.to]
+      const toRefundTx = await order.refundSwap()
 
-      const tx = await withLock(order.to, async () => {
-        const fees = await toClient.chain.getFees()
+      debug('Node has refunded the swap', order.orderId, toRefundTx.hash)
 
-        try {
-          return toClient.swap.refundSwap(
-            order.toFundHash,
-            order.toAddress,
-            order.toCounterPartyAddress,
-            order.secretHash,
-            order.nodeSwapExpiration,
-            fees[defaultFee].fee
-          )
-        } catch (e) {
-          if (['PendingTxError'].includes(e.name)) {
-            throw new RescheduleError(e.message, order.to)
-          }
+      order.addTx('toRefundHash', toRefundTx)
+      order.status = 'AGENT_REFUNDED'
+      await order.save()
 
-          throw e
-        }
+      await order.log('FIND_CLAIM_TX_OR_REFUND', null, {
+        toRefundHash: toRefundTx.hash,
+        toBlockTimestamp: toCurrentBlock.timestamp
       })
 
-      debug('Node has refunded the swap', order.orderId, tx.hash)
+      await agenda.now('verify-tx', { orderId: order.orderId, type: 'toRefundHash' })
 
-      order.status = 'AGENT_REFUNDED'
-      order.toRefundHash = tx.hash
-      order.set(`fees.${tx.hash}`, calculateFeeObject(order.to, tx.fee, order.toRateUsd))
-
-      return Promise.all([
-        order.save(),
-        AuditLog.create({
-          orderId: order.orderId,
-          orderStatus: order.status,
-          extra: {
-            toRefundHash: tx.hash,
-            toBlockTimestamp: block.timestamp
-          },
-          context: 'FIND_CLAIM_TX_OR_REFUND'
-        })
-      ])
+      return agenda.now('find-refund-tx', { orderId: order.orderId })
     }
 
-    await AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      status: 'AGENT_CLAIM_WAITING',
-      extra: {
-        toBlockTimestamp: block.timestamp
-      },
-      context: 'FIND_CLAIM_TX_OR_REFUND'
+    await order.log('FIND_CLAIM_TX_OR_REFUND', 'AGENT_CLAIM_WAITING', {
+      toBlockTimestamp: toCurrentBlock.timestamp
     })
 
     throw new RescheduleError(`Waiting for user to claim ${order.orderId} ${order.toFundHash}`, order.to)
   }
 
-  order.toClaimHash = claimTx.hash
-  order.set(`fees.${claimTx.hash}`, calculateFeeObject(order.to, claimTx.fee, order.toRateUsd))
-  order.secret = claimTx.secret
+  debug('Node found user\'s claim swap transaction', order.orderId, toClaimTx.hash)
+
+  order.secret = toClaimTx.secret
+  order.addTx('toClaimHash', toClaimTx)
   order.status = 'USER_CLAIMED'
+  await order.save()
 
-  debug('Node found user\'s claim swap transaction', order.orderId, claimTx.hash)
+  await order.log('FIND_CLAIM_TX_OR_REFUND', null, {
+    toClaimHash: toClaimTx.hash,
+    secret: toClaimTx.secret
+  })
 
-  await Promise.all([
-    order.save(),
-    AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      extra: {
-        toClaimHash: claimTx.hash,
-        secret: claimTx.secret
-      },
-      context: 'FIND_CLAIM_TX_OR_REFUND'
-    })
-  ])
+  await agenda.now('verify-tx', { orderId: order.orderId, type: 'toClaimHash' })
 
   return agenda.now('agent-claim', { orderId: order.orderId })
 }
