@@ -21,7 +21,7 @@ const addressVariants = address => {
 }
 
 router.get('/orders', asyncHandler(async (req, res) => {
-  const { q, from, to, start, end, status, excludeStatus, userAgent } = req.query
+  const { q, from, to, start, end, status, excludeStatus, userAgent, hasUnconfirmedTx } = req.query
   let { limit, page, sort } = req.query
 
   try {
@@ -94,6 +94,10 @@ router.get('/orders', asyncHandler(async (req, res) => {
     if (!query.createdAt) query.createdAt = {}
 
     query.createdAt.$lte = new Date(Number(end))
+  }
+
+  if (hasUnconfirmedTx !== undefined) {
+    query.hasUnconfirmedTx = hasUnconfirmedTx
   }
 
   const result = await Order.find(query, null, {
