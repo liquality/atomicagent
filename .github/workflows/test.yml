@@ -20,9 +20,10 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
       - run: cp sample.config.toml test.config.toml
       - run: chmod -R 777 test/docker/config
-      - run: npm run env:docker
+      - run: npm run docker:start
       - run: sleep 30
       - run: npm ci
+      - run: npm run lint
       - run: npm test
       - name: Collect docker logs on failure
         if: ${{ failure() }}
