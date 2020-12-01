@@ -9,4 +9,8 @@ class RescheduleError extends BaseError {
 
 RescheduleError.prototype.name = 'RescheduleError'
 
+class PossibleTimelockError extends RescheduleError {}
+PossibleTimelockError.prototype.name = 'PossibleTimelockError'
+
 module.exports.RescheduleError = RescheduleError
+module.exports.PossibleTimelockError = PossibleTimelockError

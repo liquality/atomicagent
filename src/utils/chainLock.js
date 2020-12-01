@@ -4,6 +4,8 @@ const EventEmitter = require('events')
 const _ = require('lodash')
 const cryptoassets = require('@liquality/cryptoassets').default
 
+const { RescheduleError, PossibleTimelockError } = require('./errors')
+
 let counter = 0
 const PENDING = {}
 const CHAIN_LOCK_TIMESTAMP = {}
@@ -94,6 +96,19 @@ const withLock = async (asset, func) => {
   try {
     const result = await func()
     return result
+  } catch (e) {
+    if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
+      throw new RescheduleError(e.message, chain)
+    }
+
+    if (
+      e.message.includes('non-final (code 64)') ||
+      e.message.includes('invalid opcode: opcode 0xfe not defined')
+    ) {
+      throw new PossibleTimelockError(e.message, chain)
+    }
+
+    throw e
   } finally {
     unlockAsset(chain)
     debug(`Unlocked ${chain} [#${id}] - (Pending: ${[...PENDING[chain]]})`)
