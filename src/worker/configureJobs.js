@@ -1,4 +1,4 @@
-const fs = require('fs').promises
+const fs = require('fs')
 const path = require('path')
 
 const JOBS_DIR = path.join(__dirname, 'jobs')
@@ -11,7 +11,7 @@ const CONCURRENCY_MAP = {
 }
 
 module.exports = async agenda => {
-  const jobs = await fs.readdir(JOBS_DIR)
+  const jobs = fs.readdirSync(JOBS_DIR)
 
   jobs.forEach(jobSlug => {
     const jobName = path.basename(jobSlug, '.js')
