@@ -72,14 +72,8 @@ router.post('/order', asyncHandler(async (req, res) => {
     order.setAgentAddresses()
   ])
 
-  await Promise.all([
-    order.save(),
-    AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      context: 'NEW_SWAP'
-    })
-  ])
+  await order.save()
+  await order.log('NEW_SWAP')
 
   res.json(order.json())
 }))
@@ -129,14 +123,10 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
 
   const [verifyJobs] = await Promise.all([
     agenda.jobs({ 'data.orderId': order.orderId, name: 'verify-user-init-tx' }),
-    order.save(),
-    AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      extra: body,
-      context: 'SWAP_UPDATE'
-    })
+    order.save()
   ])
+
+  await order.log('SWAP_UPDATE', null, body)
 
   if (verifyJobs.length === 0) await agenda.now('verify-user-init-tx', { orderId: order.orderId })
 
