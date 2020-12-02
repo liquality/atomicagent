@@ -47,7 +47,7 @@ module.exports = async job => {
 
   debug('Found & verified funding transaction', order.orderId, order.fromFundHash)
 
-  const fromSecondaryFundTx = await order.findFundSwapTransaction()
+  const fromSecondaryFundTx = await order.findFromFundSwapTransaction()
 
   if (fromSecondaryFundTx) {
     order.addTx('fromSecondaryFundHash', fromSecondaryFundTx)

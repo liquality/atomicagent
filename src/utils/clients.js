@@ -1,4 +1,5 @@
 const Client = require('@liquality/client')
+const cryptoassets = require('@liquality/cryptoassets').default
 const config = require('../config')
 
 const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider')
@@ -32,11 +33,7 @@ function createBtcClient () {
 
   const btcClient = new Client()
   if (btcConfig.wallet && btcConfig.wallet.type === 'js') {
-    const bitcoinRpcProvider = new BitcoinRpcProvider(btcConfig.rpc.url, btcConfig.rpc.user, btcConfig.rpc.password)
-    const bitcoinEsploraProvider = new BitcoinEsploraBatchApiProvider(btcConfig.batchApi.url, btcConfig.api.url, network, btcConfig.feeNumberOfBlocks)
-    bitcoinEsploraProvider.getBlockByHash = blockHash => bitcoinRpcProvider.getBlockByHash(blockHash)
-
-    btcClient.addProvider(bitcoinEsploraProvider)
+    btcClient.addProvider(new BitcoinEsploraBatchApiProvider(btcConfig.batchApi.url, btcConfig.api.url, network, btcConfig.feeNumberOfBlocks))
     btcClient.addProvider(new BitcoinJsWalletProvider(network, btcConfig.wallet.mnemonic))
   } else {
     btcClient.addProvider(new BitcoinRpcProvider(btcConfig.rpc.url, btcConfig.rpc.username, btcConfig.rpc.password, btcConfig.feeNumberOfBlocks))
@@ -137,8 +134,10 @@ const clients = {}
 
 function getClient (asset) {
   if (asset in clients) return clients[asset]
-  const assetConfig = config.assets[asset]
-  const creator = clientCreators[asset] || clientCreators[assetConfig.type]
+  const type = cryptoassets[asset].type === 'erc20'
+    ? 'ERC20'
+    : asset
+  const creator = clientCreators[type]
   const client = creator(asset)
   clients[asset] = client
   return client

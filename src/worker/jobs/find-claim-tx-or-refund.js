@@ -13,7 +13,7 @@ module.exports = async job => {
 
   const toClient = order.toClient()
   const toCurrentBlockNumber = await order.toClient().chain.getBlockHeight()
-  const toClaimTx = await order.findClaimSwapTransaction(data.toLastScannedBlock, toCurrentBlockNumber)
+  const toClaimTx = await order.findToClaimSwapTransaction(data.toLastScannedBlock, toCurrentBlockNumber)
 
   if (!toClaimTx) {
     job.attrs.data.toLastScannedBlock = toCurrentBlockNumber

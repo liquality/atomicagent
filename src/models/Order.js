@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 const { v4: uuidv4 } = require('uuid')
-const assets = require('@liquality/cryptoassets').default
+const cryptoassets = require('@liquality/cryptoassets').default
 
 const config = require('../config')
 const AuditLog = require('./AuditLog')
@@ -10,10 +10,14 @@ const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
 const { RescheduleError } = require('../utils/errors')
-const { calculateToAmount, calculateUsdAmount } = require('../utils/fx')
+const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
 
 const OrderSchema = new mongoose.Schema({
+  migrationVersion: {
+    type: Number,
+    index: true
+  },
   orderId: {
     type: String,
     index: true,
@@ -43,6 +47,18 @@ const OrderSchema = new mongoose.Schema({
     type: Number
   },
   toRateUsd: {
+    type: Number
+  },
+  fromSecondaryRateUsd: {
+    type: Number
+  },
+  toSecondaryRateUsd: {
+    type: Number
+  },
+  toUsdValue: { // deprecated
+    type: Number
+  },
+  fromUsdValue: { // deprecated
     type: Number
   },
   fromAmountUsd: {
@@ -225,8 +241,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = assets[this.from].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = assets[this.to].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = cryptoassets[this.from].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = cryptoassets[this.to].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -244,6 +260,22 @@ OrderSchema.methods.setUsdRates = async function () {
 
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
+
+  const fromType = cryptoassets[this.from].type
+  const toType = cryptoassets[this.to].type
+  let ethUsd
+
+  if (fromType === 'erc20' || toType === 'erc20') {
+    ethUsd = await MarketHistory.getMostRecentRate('ETH-USD')
+  }
+
+  if (fromType === 'erc20') {
+    this.fromSecondaryRateUsd = ethUsd
+  }
+
+  if (toType === 'erc20') {
+    this.toSecondaryRateUsd = ethUsd
+  }
 
   this.fromAmountUsd = calculateUsdAmount(this.from, this.fromAmount, fromRateUsd)
   this.toAmountUsd = calculateUsdAmount(this.to, this.toAmount, toRateUsd)
@@ -294,7 +326,11 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (tx.fee || tx.feePrice) {
     value.feeAmount = tx.fee
     value.feePrice = tx.feePrice
-    value.feeAmountUsd = calculateUsdAmount(asset, tx.fee, this[`${side}RateUsd`]).toNumber()
+
+    const { type } = cryptoassets[asset]
+    const key = type === 'erc20' ? 'Secondary' : ''
+    const chain = type === 'erc20' ? 'ETH' : asset
+    value.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]).toNumber()
   }
 
   if (tx.blockHash) {
@@ -398,7 +434,7 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
   }
 }
 
-OrderSchema.methods.findFundSwapTransaction = async function () {
+OrderSchema.methods.findFromFundSwapTransaction = async function () {
   const fromClient = this.fromClient()
 
   try {
@@ -415,6 +451,29 @@ OrderSchema.methods.findFundSwapTransaction = async function () {
   } catch (e) {
     if (['TxNotFoundError', 'PendingTxError'].includes(e.name)) {
       throw new RescheduleError(e.message, this.from)
+    }
+
+    throw e
+  }
+}
+
+OrderSchema.methods.findToFundSwapTransaction = async function () {
+  const toClient = this.toClient()
+
+  try {
+    const toSecondaryFundTx = await toClient.swap.findFundSwapTransaction(
+      this.toFundHash,
+      this.toAmount,
+      this.toAddress,
+      this.toCounterPartyAddress,
+      this.secretHash,
+      this.swapExpiration
+    )
+
+    return toSecondaryFundTx
+  } catch (e) {
+    if (['TxNotFoundError', 'PendingTxError'].includes(e.name)) {
+      throw new RescheduleError(e.message, this.to)
     }
 
     throw e
@@ -450,7 +509,7 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
   }, fromLastScannedBlock, fromCurrentBlockNumber)
 }
 
-OrderSchema.methods.findClaimSwapTransaction = async function (toLastScannedBlock, toCurrentBlockNumber) {
+OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBlock, toCurrentBlockNumber) {
   const toClient = this.toClient()
 
   if (!toCurrentBlockNumber) {
