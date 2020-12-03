@@ -17,7 +17,7 @@ module.exports = async (err, job) => {
     return job.save()
   }
 
-  if (err.name === 'RescheduleError') {
+  if (err.name === 'RescheduleError' || err.name === 'PossibleTimelockError') {
     const scheduleIn = typeof err.chain === 'string'
       ? 'in ' + config.assets[err.chain].blockTime
       : 'in ' + err.chain + ' seconds'
