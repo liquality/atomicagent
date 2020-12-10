@@ -261,7 +261,7 @@ module.exports.swap = (from, to, fromAmount, refund, lateClaim) => {
 
           return findInitSwapTx(startBlock + 1, endBlock)
         } catch (e) {
-          if (e.message.includes('Block height out of range')) {
+          if (['BlockNotFoundError', 'TxNotFoundError'].includes(e.name)) {
             return sleep(5000).then(() => findInitSwapTx(startBlock, endBlock))
           }
 

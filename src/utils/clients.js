@@ -43,8 +43,8 @@ function createBtcClient (asset) {
   return btcClient
 }
 
-function createEthClient (asset, wallet) {
-  const ethConfig = config.assets.ETH
+function createEthClient (asset) {
+  const ethConfig = config.assets[asset]
   const ethClient = new Client()
   ethClient.addProvider(new EthereumRpcProvider(ethConfig.rpc.url))
   if (ethConfig.wallet && ethConfig.wallet.type === 'js') {
@@ -70,6 +70,7 @@ function createERC20Client (asset) {
 const clientCreators = {
   BTC: createBtcClient,
   ETH: createEthClient,
+  RBTC: createEthClient,
   ERC20: createERC20Client
 }
 
