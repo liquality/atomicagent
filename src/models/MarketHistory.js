@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const { formatISO, getUnixTime } = require('date-fns')
 
+const TIME_BUFFER = 3600
+
 const MarketHistorySchema = new mongoose.Schema({
   market: {
     type: String,
@@ -51,9 +53,9 @@ MarketHistorySchema.static('logRate', async function (market, rate, time) {
   )
 })
 
-MarketHistorySchema.static('getRates', async function (market, min, max) {
+MarketHistorySchema.static('getRates', async function (market, start, end) {
   return MarketHistory.aggregate([
-    { $match: { market, first: { $gte: Number(min) }, last: { $lte: Number(max) } } },
+    { $match: { market, first: { $gte: Number(start) }, last: { $lte: Number(end) } } },
     { $unwind: '$rates' },
     { $group: { _id: '$day', rates: { $push: '$rates' } } },
     { $unwind: '$rates' },
@@ -61,16 +63,31 @@ MarketHistorySchema.static('getRates', async function (market, min, max) {
   ])
 })
 
-MarketHistorySchema.static('getMostRecentRate', async function (market) {
-  const timestamp = Math.ceil(Date.now() / 1000)
+MarketHistorySchema.static('getRateNear', async function (market, timestamp) {
+  const unixTimestamp = Math.floor(timestamp / 1000)
 
-  const { rates } = await MarketHistory.findOne({
+  let rates = await MarketHistory.find({
     market,
-    last: { $lte: timestamp },
-    'rates.t': { $lte: timestamp }
-  }).sort('-last').limit(1).exec()
+    first: { $gte: unixTimestamp - TIME_BUFFER }
+  }).sort('first').limit(3).exec()
 
-  return rates[rates.length - 1].r
+  rates = rates.filter(rates => !!rates)
+
+  if (rates.length === 0) return null
+
+  rates = rates.reduce((acc, rate) => {
+    acc = [...acc, ...rate.rates]
+    return acc
+  }, [])
+
+  const item = rates.find(({ r, t }) => t >= unixTimestamp)
+  if (item) return item.r
+
+  return rates.pop().r
+})
+
+MarketHistorySchema.static('getMostRecentRate', async function (market) {
+  return MarketHistory.getRateNear(market, Date.now())
 })
 
 const MarketHistory = mongoose.model('MarketHistory', MarketHistorySchema)

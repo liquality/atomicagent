@@ -21,10 +21,12 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
       - run: cp sample.config.toml test.config.toml
-      - run: docker-compose -f ./test/docker/docker-compose.yml up -d --build
+      - run: chmod -R 777 test/docker/config
+      - run: npm run docker:start
       - run: sleep 30
       - run: npm ci
-      - run: DEBUG=liquality:agent* npm test
+      - run: npm run lint
+      - run: npm test
       - run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
       - run: npm publish --access public --tag next
         if: contains(github.ref, '-next.')

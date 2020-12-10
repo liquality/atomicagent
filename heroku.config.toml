@@ -1,0 +1,40 @@
+[database]
+uri = "mongodb+srv://satoshipro:6mVsstEk2fP2TFds@cluster0.rhqsi.mongodb.net/liquality_mainnet?retryWrites=true&w=majority"
+debug = false
+
+[application]
+apiPort = false
+
+[worker]
+maxJobRetry = 5
+jobRetryDelay = "5 seconds"
+backendJobRetryDelay = "5 seconds"
+minConcurrentSwaps = 3
+# jobReporter = "/Users/user/slack.js"
+
+[assets]
+  [assets.BTC]
+  network = "bitcoin_regtest"
+  addressType = "bech32"
+  swapMode = "p2wsh"
+  feeNumberOfBlocks = 2
+  blockTime = "5 seconds"
+    [assets.BTC.rpc]
+    url = "http://localhost:18443"
+    username = "bitcoin"
+    password = "local321"
+
+  [assets.ETH]
+  blockTime = "5 seconds"
+    [assets.ETH.scraper]
+    url = "http://localhost:8545"
+
+    [assets.ETH.rpc]
+    url = "http://localhost:8545"
+
+  [assets.DAI]
+  type = "ERC20"
+  blockTime = "5 seconds"
+  contractAddress = "0xf6316f11abfc4c6bd72bcb893a52d88fbb22a719"
+    [assets.DAI.rpc]
+    url = "http://localhost:8545"

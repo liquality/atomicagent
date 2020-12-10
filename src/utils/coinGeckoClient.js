@@ -35,6 +35,7 @@ class CoinGecko {
     markets.forEach((market) => {
       all.add(market.from)
       all.add(market.to)
+
       if (vsCurrencies.includes(market.from)) vs.add(market.from)
       if (vsCurrencies.includes(market.to)) vs.add(market.to)
     })

@@ -31,6 +31,7 @@ module.exports.start = () => {
   app.set('agenda', agenda)
 
   app.use('/api/swap', require('./routes/swap'))
+  app.use('/api/dash', require('./routes/dash'))
 
   // TODO: guard this route
   if (process.env.NODE_ENV !== 'test') {
@@ -45,7 +46,7 @@ module.exports.start = () => {
 
   app.use(handleError())
 
-  listen = app.listen(config.application.apiPort)
+  listen = app.listen(config.application.apiPort || process.env.PORT)
 
   return listen
 }

@@ -1,4 +1,3 @@
-const BN = require('bignumber.js')
 const cryptoassets = require('@liquality/cryptoassets').default
 
 function calculateToAmount (from, to, fromAmount, rate) {
@@ -8,4 +7,16 @@ function calculateToAmount (from, to, fromAmount, rate) {
   return toAmount
 }
 
-module.exports = { calculateToAmount }
+function calculateUsdAmount (asset, amount, usdRate) {
+  return cryptoassets[asset].unitToCurrency(amount).times(usdRate).dp(2)
+}
+
+function calculateFeeUsdAmount (asset, fee, usdRate) {
+  return cryptoassets[asset].unitToCurrency(fee).times(usdRate).dp(2)
+}
+
+module.exports = {
+  calculateToAmount,
+  calculateUsdAmount,
+  calculateFeeUsdAmount
+}
