@@ -127,6 +127,7 @@ function createERC20Client (asset) {
 const clientCreators = {
   BTC: createBtcClient,
   ETH: createEthClient,
+  RBTC: createEthClient,
   ERC20: createERC20Client
 }
 
