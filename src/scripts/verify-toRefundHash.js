@@ -29,10 +29,10 @@ async function main () {
     const log = message => console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
     const toClient = order.toClient()
 
-    let toRefundHash
+    let toRefundTx
 
     try {
-      const toRefundTx = await toClient.swap.findRefundSwapTransaction(
+      toRefundTx = await toClient.swap.findRefundSwapTransaction(
         order.toFundHash,
         order.toAddress,
         order.toCounterPartyAddress,
@@ -44,21 +44,19 @@ async function main () {
         log('Not refunded yet')
         return
       }
-
-      toRefundHash = toRefundTx.hash
     } catch (e) {
       log('Not refunded yet')
       return
     }
 
-    if (order.toRefundHash === toRefundHash) {
+    if (order.toRefundHash === toRefundTx.hash) {
       log('Verified')
       return
     }
 
-    log(`Mismatch - On Record ${order.toRefundHash} vs On Chain ${toRefundHash}`)
+    log(`Mismatch - On Record ${order.toRefundHash} vs On Chain ${toRefundTx.hash}`)
 
-    order.toRefundHash = toRefundHash
+    order.addTx('toRefundHash', toRefundTx)
     await order.save()
 
     if (Math.random() < 0.5) {

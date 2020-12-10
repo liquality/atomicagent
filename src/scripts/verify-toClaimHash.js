@@ -31,7 +31,7 @@ async function main () {
     const log = message => console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
     const toClient = order.toClient()
 
-    let toClaimHash
+    let toClaimTx
 
     if (!(
       order.toFundHash &&
@@ -54,21 +54,19 @@ async function main () {
         log('Not claimed yet')
         return
       }
-
-      toClaimHash = toClaimTx.hash
     } catch (e) {
       log('Not claimed yet')
       return
     }
 
-    if (order.toClaimHash === toClaimHash) {
+    if (order.toClaimHash === toClaimTx.hash) {
       log('Verified')
       return
     }
 
-    log(`Mismatch - On Record ${order.toClaimHash} vs On Chain ${toClaimHash}`)
+    log(`Mismatch - On Record ${order.toClaimHash} vs On Chain ${toClaimTx.hash}`)
 
-    order.toClaimHash = toClaimHash
+    order.toClaimHash = toClaimTx.hash
     await order.save()
 
     if (Math.random() < 0.5) {

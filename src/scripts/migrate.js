@@ -38,13 +38,13 @@ async function main () {
 
   await Bluebird.map(orders, async order => {
     const idx = ++index
-    const log = message => console.log(`[${idx}/${total}]\t[${order.from}-${order.to}]\t${order.orderId}\t${message}`)
+    const log = (...message) => console.log(`[${idx}/${total}]\t[${order.from}-${order.to}]\t${order.orderId}\t`, ...message)
 
     const fromClient = order.fromClient()
     const toClient = order.toClient()
 
-    order.fromRateUsd = BN(order.fromUsdValue).div(cryptoassets[order.from].unitToCurrency(order.fromAmount)).dp(2)
-    order.toRateUsd = BN(order.toUsdValue).div(cryptoassets[order.to].unitToCurrency(order.toAmount)).dp(2)
+    order.fromRateUsd = BN(order.fromUsdValue).div(cryptoassets[order.from].unitToCurrency(order.fromAmount)).dp(2).toNumber()
+    order.toRateUsd = BN(order.toUsdValue).div(cryptoassets[order.to].unitToCurrency(order.toAmount)).dp(2).toNumber()
     order.fromAmountUsd = order.fromUsdValue
     order.toAmountUsd = order.toUsdValue
 

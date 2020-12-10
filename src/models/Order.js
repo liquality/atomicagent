@@ -151,18 +151,26 @@ const OrderSchema = new mongoose.Schema({
     default: {}
   },
 
+  totalAgentFeeUsd: {
+    type: Number
+  },
+  totalUserFeeUsd: {
+    type: Number
+  },
+  totalFeeUsd: {
+    type: Number
+  },
+
   hasAgentUnconfirmedTx: {
     type: Boolean,
     default: true,
     index: true
   },
-
   hasUserUnconfirmedTx: {
     type: Boolean,
     default: true,
     index: true
   },
-
   hasUnconfirmedTx: {
     type: Boolean,
     default: true,
@@ -296,8 +304,33 @@ OrderSchema.pre('save', function (next) {
   this.hasAgentUnconfirmedTx = !agentTxs.every(({ blockHash }) => blockHash)
   this.hasUnconfirmedTx = this.hasUserUnconfirmedTx || this.hasAgentUnconfirmedTx
 
+  this.totalAgentFeeUsd = 0
+  this.totalAgentFeeUsd += this.getFeeForTxType('toFundHash')
+  this.totalAgentFeeUsd += this.getFeeForTxType('toSecondaryFundHash')
+  this.totalAgentFeeUsd += this.getFeeForTxType('fromClaimHash')
+  this.totalAgentFeeUsd += this.getFeeForTxType('toRefundHash')
+
+  this.totalUserFeeUsd = 0
+  this.totalUserFeeUsd += this.getFeeForTxType('fromFundHash')
+  this.totalUserFeeUsd += this.getFeeForTxType('fromSecondaryFundHash')
+  this.totalUserFeeUsd += this.getFeeForTxType('toClaimHash')
+  this.totalUserFeeUsd += this.getFeeForTxType('fromRefundHash')
+
+  this.totalFeeUsd = this.totalUserFeeUsd + this.totalAgentFeeUsd
+
   next()
 })
+
+OrderSchema.methods.getFeeForTxType = function (type) {
+  const tx = this[type]
+
+  if (tx && this.txMap) {
+    const obj = this.txMap[tx]
+    if (obj && obj.feeAmountUsd) return obj.feeAmountUsd
+  }
+
+  return 0
+}
 
 OrderSchema.methods.isQuoteExpired = function () {
   return Date.now() > this.expiresAt

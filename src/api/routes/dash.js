@@ -1,20 +1,20 @@
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
-const { fromUnixTime, differenceInDays, parseISO, compareAsc, format, eachDayOfInterval } = require('date-fns')
+const { fromUnixTime, differenceInDays, parseISO, compareAsc, eachDayOfInterval, format } = require('date-fns')
 
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 const MarketHistory = require('../../models/MarketHistory')
 
-const addressVariants = address => {
+const addressHashVariants = address => {
   const addressLowerCase = address.toLowerCase()
 
   const arr = [address, addressLowerCase]
 
   if (/0x/i.test(address)) {
-    arr.push(address.replace(/^0x/, ''), addressLowerCase.replace(/^0x/, ''))
+    arr.push(...arr.map(item => item.replace(/^0x/, '')))
   } else {
-    arr.push(`0x${address}`, `0x${addressLowerCase}`)
+    arr.push(...arr.map(item => `0x${item}`))
   }
 
   return [...new Set(arr)]
@@ -51,7 +51,7 @@ router.get('/orders', asyncHandler(async (req, res) => {
   }
 
   if (q) {
-    const inAddresses = { $in: addressVariants(q) }
+    const inAddresses = { $in: addressHashVariants(q) }
 
     query.$or = [
       { orderId: inAddresses },
@@ -126,7 +126,7 @@ router.get('/rate', asyncHandler(async (req, res) => {
 router.get('/statsByAddress', asyncHandler(async (req, res) => {
   const { address } = req.query
 
-  const inAddresses = { $in: addressVariants(address) }
+  const inAddresses = { $in: addressHashVariants(address) }
 
   const _result = await Order.aggregate([
     {
@@ -143,20 +143,18 @@ router.get('/statsByAddress', asyncHandler(async (req, res) => {
     {
       $group: {
         _id: null,
-        USD_VOLUME: { $sum: '$fromAmountUsd' },
-        COUNT: { $sum: 1 }
+        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+        count: { $sum: 1 }
       }
     }
   ]).exec()
 
-  const [result] = _result
+  const result = _result[0] || {}
 
   res.json({
     address,
-    result: {
-      usd_volume: ((result || {}).USD_VOLUME) || 0,
-      count: ((result || {}).COUNT) || 0
-    }
+    result
   })
 }))
 
@@ -180,8 +178,8 @@ router.get('/topAddresses', asyncHandler(async (req, res) => {
   if (!sort) sort = 'volume'
 
   const sortKey = sort.endsWith('volume')
-    ? 'USD_VOLUME'
-    : 'COUNT'
+    ? 'sum:fromAmountUsd'
+    : 'count'
 
   const _result = await Order.aggregate([
     {
@@ -197,9 +195,10 @@ router.get('/topAddresses', asyncHandler(async (req, res) => {
     {
       $group: {
         _id: '$fromAddress',
-        USD_VOLUME: { $sum: '$fromAmountUsd' },
-        MARKETS: { $addToSet: '$market' },
-        COUNT: { $sum: 1 }
+        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+        markets: { $addToSet: '$market' },
+        count: { $sum: 1 }
       }
     },
     {
@@ -213,12 +212,12 @@ router.get('/topAddresses', asyncHandler(async (req, res) => {
     }
   ]).exec()
 
-  const result = _result.map(r => ({
-    address: r._id,
-    usd_volume: r.USD_VOLUME,
-    count: r.COUNT,
-    markets: r.MARKETS
-  }))
+  const result = _result.map(r => {
+    r.address = r._id
+    delete r._id
+
+    return r
+  })
 
   res.json({
     count: result.length,
@@ -234,8 +233,9 @@ router.get('/stats', asyncHandler(async (req, res) => {
   const markets = (await Market.find({}, 'from to').exec()).map(market => `${market.from}-${market.to}`)
 
   const $group = markets.reduce((acc, market) => {
-    acc[`${market}:USD_VOLUME`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] } }
-    acc[`${market}:COUNT`] = { $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] } }
+    acc[`market:${market}:sum:fromAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] } }
+    acc[`market:${market}:sum:toAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] } }
+    acc[`market:${market}:count`] = { $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] } }
 
     return acc
   }, {})
@@ -249,7 +249,7 @@ router.get('/stats', asyncHandler(async (req, res) => {
   }
 
   if (address) {
-    const inAddresses = { $in: addressVariants(address) }
+    const inAddresses = { $in: addressHashVariants(address) }
 
     $match.$or = [
       { fromCounterPartyAddress: inAddresses },
@@ -273,41 +273,50 @@ router.get('/stats', asyncHandler(async (req, res) => {
       $group: {
         _id: '$date',
         ...$group,
-        'WALLET:USD_VOLUME': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$fromAmountUsd', 0] } },
-        'WALLET:COUNT': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, 1, 0] } },
-        USD_VOLUME: { $sum: '$fromAmountUsd' },
-        COUNT: { $sum: 1 }
+        'wallet:sum:fromAmountUsd': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$fromAmountUsd', 0] } },
+        'wallet:sum:toAmountUsd': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$toAmountUsd', 0] } },
+        'wallet:count': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, 1, 0] } },
+        'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
+        'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
+        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+        count: { $sum: 1 }
       }
     }
   ]).exec()
 
   const stats = result.map(json => {
-    const date = json._id
+    json.date = json._id
     delete json._id
 
-    const volume = json.USD_VOLUME
-    delete json.USD_VOLUME
+    json.markets = Object.entries(json)
+      .filter(([key]) => key.startsWith('market:'))
+      .reduce((acc, [key, value]) => {
+        const arr = key.split(':')
+        arr.shift() // discard 'market'
 
-    const count = json.COUNT
-    delete json.COUNT
-
-    return {
-      date,
-      count,
-      usd_volume: volume,
-      wallet_count: json['WALLET:COUNT'],
-      wallet_volume: json['WALLET:USD_VOLUME'],
-      markets: Object.entries(json).reduce((acc, [key, value]) => {
-        const [market, type] = key.split(':')
-        if (market === 'WALLET') return acc
+        const market = arr.shift()
+        const type = arr.join(':')
 
         if (!acc[market]) acc[market] = {}
-        acc[market][type.toLowerCase()] = value
+        acc[market][type] = value
 
         return acc
       }, {})
-    }
+
+    return json
   })
+
+  const emptyDataPoint = {
+    'wallet:sum:fromAmountUsd': 0,
+    'wallet:sum:toAmountUsd': 0,
+    'wallet:count': 0,
+    'sum:totalAgentFeeUsd': 0,
+    'sum:totalUserFeeUsd': 0,
+    'sum:fromAmountUsd': 0,
+    'sum:toAmountUsd': 0,
+    count: 0
+  }
 
   eachDayOfInterval({
     start: start,
@@ -318,16 +327,7 @@ router.get('/stats', asyncHandler(async (req, res) => {
 
     stats.push({
       date,
-      count: 0,
-      usd_volume: 0,
-      markets: markets.reduce((acc, market) => {
-        acc[market] = {
-          count: 0,
-          usd_volume: 0
-        }
-
-        return acc
-      }, {})
+      ...emptyDataPoint
     })
   })
 
@@ -371,17 +371,15 @@ router.get('/accumulate', asyncHandler(async (req, res) => {
     {
       $group: {
         _id: null,
-        USD_VOLUME: { $sum: '$fromAmountUsd' },
-        COUNT: { $sum: 1 }
+        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+        count: { $sum: 1 }
       }
     }
   ]).exec()
 
   res.json({
-    result: {
-      usd_volume: result.USD_VOLUME,
-      count: result.COUNT
-    }
+    result
   })
 }))
 

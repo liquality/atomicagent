@@ -51,7 +51,8 @@ async function main () {
 
     log(`Mismatch - On Record ${order.fromClaimHash} vs On Chain ${fromClaimHash}`)
 
-    order.fromClaimHash = fromClaimHash
+    order.addTx('fromClaimHash', fromClaimTx)
+
     await order.save()
 
     if (Math.random() < 0.5) {
