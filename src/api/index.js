@@ -22,7 +22,9 @@ module.exports.start = () => {
   }
 
   app.use(httpHelpers())
-  app.use(helmet())
+  app.use(helmet({
+    contentSecurityPolicy: false
+  }))
   app.use(cors())
   app.use(compression())
   app.use(bodyParser.json({ limit: '5mb' }))
