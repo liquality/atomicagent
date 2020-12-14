@@ -60,7 +60,7 @@ function createEthClient () {
   const ethClient = new Client()
 
   let network = EthereumNetworks[ethConfig.network]
-  if (network.isTestnet) {
+  if (network.name === 'local') {
     network = {
       ...network,
       name: 'mainnet',
