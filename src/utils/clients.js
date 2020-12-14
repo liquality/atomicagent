@@ -94,7 +94,7 @@ function createERC20Client (asset) {
   const erc20Client = new Client()
 
   let network = EthereumNetworks[assetConfig.network]
-  if (network.isTestnet) {
+  if (network.name === 'local') {
     network = {
       ...network,
       name: 'mainnet',
