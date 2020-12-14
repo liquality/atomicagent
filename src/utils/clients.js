@@ -55,8 +55,8 @@ function createBtcClient () {
   return btcClient
 }
 
-function createEthClient () {
-  const ethConfig = config.assets.ETH
+function createEthClient (asset) {
+  const ethConfig = config.assets[asset]
   const ethClient = new Client()
 
   let network = EthereumNetworks[ethConfig.network]
