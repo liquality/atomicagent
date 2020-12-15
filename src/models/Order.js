@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
 const cryptoassets = require('@liquality/cryptoassets').default
 
@@ -377,12 +378,7 @@ OrderSchema.methods.addTx = function (type, tx) {
     this.set(type, tx.hash)
   }
 
-  Object.values(this.txMap).forEach(t => {
-    if (t.type === type && t.placeholder) {
-      this.set(`txMap.${t.hash}`, undefined)
-    }
-  })
-
+  this.txMap = omitBy(this.txMap, value => value.type === type && value.placeholder)
   this.set(key, value)
 }
 
