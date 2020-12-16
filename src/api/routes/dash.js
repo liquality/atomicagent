@@ -21,7 +21,7 @@ const addressHashVariants = address => {
 }
 
 router.get('/orders', asyncHandler(async (req, res) => {
-  const { q, from, to, start, end, status, excludeStatus, userAgent, hasUnconfirmedTx } = req.query
+  const { q, from, to, start, end, status, excludeStatus, userAgent, pending } = req.query
   let { limit, page, sort } = req.query
 
   try {
@@ -96,8 +96,14 @@ router.get('/orders', asyncHandler(async (req, res) => {
     query.createdAt.$lte = new Date(Number(end))
   }
 
-  if (hasUnconfirmedTx !== undefined) {
-    query.hasUnconfirmedTx = hasUnconfirmedTx
+  if (pending) {
+    if (pending.length === 2) {
+      query.hasUnconfirmedTx = true
+    } else if (pending[0] === 'USER') {
+      query.hasUserUnconfirmedTx = true
+    } else {
+      query.hasAgentUnconfirmedTx = true
+    }
   }
 
   const result = await Order.find(query, null, {
