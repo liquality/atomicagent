@@ -63,7 +63,7 @@ MarketHistorySchema.static('getRates', async function (market, start, end) {
   ])
 })
 
-MarketHistorySchema.static('getRateNear', async function (market, timestamp) {
+MarketHistorySchema.static('getRateNearUnsafe', async function (market, timestamp) {
   const unixTimestamp = Math.floor(timestamp / 1000)
 
   let rates = await MarketHistory.find({
@@ -84,6 +84,10 @@ MarketHistorySchema.static('getRateNear', async function (market, timestamp) {
   if (item) return item.r
 
   return rates.pop().r
+})
+
+MarketHistorySchema.static('getRateNear', async function (market, timestamp) {
+  return MarketHistory.getRateNearUnsafe(market, timestamp) || 0
 })
 
 MarketHistorySchema.static('getMostRecentRate', async function (market) {
