@@ -9,7 +9,11 @@ const config = require('../config')
 let agenda
 
 module.exports.start = async () => {
-  agenda = new Agenda({ mongo: mongoose.connection, defaultLockLifetime: config.worker.defaultLockLifetimeInMs })
+  agenda = new Agenda({
+    mongo: mongoose.connection,
+    defaultConcurrency: 1,
+    defaultLockLifetime: config.worker.defaultLockLifetimeInMs
+  })
 
   await configureJobs(agenda)
 
