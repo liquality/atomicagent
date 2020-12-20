@@ -95,7 +95,9 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     }
   }
 
-  if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(order.status)) {
+  const oldStatus = order.status
+
+  if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(oldStatus)) {
     return res.notOk(400, 'Order cannot be updated after funding')
   }
 
@@ -104,7 +106,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     return res.notOk(400, `Duplicate fromFundHash: ${body.fromFundHash}`)
   }
 
-  const keysToBeCopied = order.status === 'USER_FUNDED_UNVERIFIED'
+  const keysToBeCopied = oldStatus === 'USER_FUNDED_UNVERIFIED'
     ? ['fromFundHash']
     : ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
 
@@ -121,14 +123,12 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
   order.addTx('fromFundHash', { hash: body.fromFundHash })
   order.status = 'USER_FUNDED_UNVERIFIED'
 
-  const [verifyJobs] = await Promise.all([
-    agenda.jobs({ 'data.orderId': order.orderId, name: 'verify-user-init-tx' }),
-    order.save()
-  ])
-
+  await order.save()
   await order.log('SWAP_UPDATE', null, body)
 
-  if (verifyJobs.length === 0) await agenda.now('verify-user-init-tx', { orderId: order.orderId })
+  if (oldStatus === 'QUOTE') {
+    await agenda.now('verify-user-init-tx', { orderId: order.orderId })
+  }
 
   res.json(order.json())
 }))
