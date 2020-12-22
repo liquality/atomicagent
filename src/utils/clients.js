@@ -115,7 +115,7 @@ function createERC20Client (asset) {
   erc20Client.addProvider(new EthereumErc20SwapProvider())
   erc20Client.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
 
-  if (network.isTestnet) {
+  if (network.isTestnet || asset === 'RBTC') {
     erc20Client.addProvider(new EthereumRpcFeeProvider())
   } else {
     erc20Client.addProvider(new EthereumGasStationFeeProvider())
