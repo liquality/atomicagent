@@ -274,7 +274,7 @@ OrderSchema.methods.setUsdRates = async function () {
   const toType = cryptoassets[this.to].type
   let ethUsd
 
-  if (fromType === 'erc20' || toType === 'erc20') {
+  if ([fromType, toType].includes('erc20')) {
     ethUsd = await MarketHistory.getMostRecentRate('ETH-USD')
   }
 
@@ -286,8 +286,8 @@ OrderSchema.methods.setUsdRates = async function () {
     this.toSecondaryRateUsd = ethUsd
   }
 
-  this.fromAmountUsd = calculateUsdAmount(this.from, this.fromAmount, fromRateUsd)
-  this.toAmountUsd = calculateUsdAmount(this.to, this.toAmount, toRateUsd)
+  this.fromAmountUsd = calculateUsdAmount(this.from, this.fromAmount, fromRateUsd) || 0
+  this.toAmountUsd = calculateUsdAmount(this.to, this.toAmount, toRateUsd) || 0
 }
 
 OrderSchema.pre('save', function (next) {
@@ -364,7 +364,7 @@ OrderSchema.methods.addTx = function (type, tx) {
     const { type } = cryptoassets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
     const chain = type === 'erc20' ? 'ETH' : asset
-    value.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]).toNumber()
+    value.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
   if (tx.blockHash) {

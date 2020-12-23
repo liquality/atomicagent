@@ -12,14 +12,25 @@ module.exports = async job => {
   if (order.status !== 'AGENT_FUNDED') return
 
   const toClient = order.toClient()
-  const toCurrentBlockNumber = await order.toClient().chain.getBlockHeight()
+  const toCurrentBlockNumber = await toClient.chain.getBlockHeight()
+
   const toClaimTx = await order.findToClaimSwapTransaction(data.toLastScannedBlock, toCurrentBlockNumber)
 
   if (!toClaimTx) {
     job.attrs.data.toLastScannedBlock = toCurrentBlockNumber
     await job.save()
 
-    const toCurrentBlock = await toClient.chain.getBlockByNumber(toCurrentBlockNumber)
+    let toCurrentBlock
+
+    try {
+      toCurrentBlock = await toClient.chain.getBlockByNumber(toCurrentBlockNumber)
+    } catch (e) {
+      if (['BlockNotFoundError'].includes(e.name)) {
+        throw new RescheduleError(e.message, order.to)
+      }
+
+      throw e
+    }
 
     if (order.isNodeSwapExpired(toCurrentBlock)) {
       debug(`Get refund ${order.orderId} (${toCurrentBlock.timestamp} >= ${order.nodeSwapExpiration})`)

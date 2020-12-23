@@ -26,7 +26,13 @@ module.exports = async job => {
     const chain = assetType === 'erc20' ? 'ETH' : asset
 
     if (chain === 'ETH') {
-      const { gasUsed } = await client.getMethod('getTransactionReceipt')(hash)
+      const receipt = await client.getMethod('getTransactionReceipt')(hash)
+
+      if (!receipt) {
+        throw new RescheduleError(`Reschedule verify-tx for ${order.orderId}:${type}`, asset)
+      }
+
+      const { gasUsed } = receipt
       const gas = BN(gasUsed, 16)
       const gasPrice = BN(tx._raw.gasPrice, 16)
       tx.fee = gas.times(gasPrice).toNumber()

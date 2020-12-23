@@ -8,11 +8,11 @@ function calculateToAmount (from, to, fromAmount, rate) {
 }
 
 function calculateUsdAmount (asset, amount, usdRate) {
-  return cryptoassets[asset].unitToCurrency(amount).times(usdRate).dp(2)
+  return cryptoassets[asset].unitToCurrency(amount).times(usdRate).dp(2).toNumber()
 }
 
 function calculateFeeUsdAmount (asset, fee, usdRate) {
-  return cryptoassets[asset].unitToCurrency(fee).times(usdRate).dp(2)
+  return cryptoassets[asset].unitToCurrency(fee).times(usdRate).dp(2).toNumber()
 }
 
 module.exports = {
