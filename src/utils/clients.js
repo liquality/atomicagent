@@ -80,7 +80,7 @@ function createEthClient (asset) {
   ethClient.addProvider(new EthereumSwapProvider())
   ethClient.addProvider(new EthereumScraperSwapFindProvider(ethConfig.scraper.url))
 
-  if (network.isTestnet) {
+  if (network.isTestnet || asset === 'RBTC') {
     ethClient.addProvider(new EthereumRpcFeeProvider())
   } else {
     ethClient.addProvider(new EthereumGasStationFeeProvider())
