@@ -26,7 +26,7 @@ const sessionConfig = {
   cookie: {
     path: '/',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     maxAge: config.auth.cookieMaxAgeMs
   }
 }
@@ -36,7 +36,9 @@ module.exports.start = () => {
   const agenda = new Agenda().database(config.database.uri, null, { useNewUrlParser: true })
 
   if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1)
     app.use(Sentry.Handlers.requestHandler())
+    sessionConfig.cookie.secure = true
   }
 
   app.use(session(sessionConfig))
