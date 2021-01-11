@@ -33,18 +33,18 @@ module.exports = async job => {
   }
 
   const check = await Check.getCheckForOrder(data.orderId)
-  const reject = check.get('flags.reciprocate-init-swap.reject')
-  if (reject) {
-    debug(`Rejected ${data.orderId}`, reject.message)
+  const flag = check.get('flags.reciprocate-init-swap') || {}
+
+  if (flag.reject) {
+    debug(`Rejected ${data.orderId}`, flag.message)
     return
   }
 
-  const approve = check.get('flags.reciprocate-init-swap.approve')
-  if (!approve) {
+  if (!flag.approve) {
     throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
   }
 
-  debug(`Approved ${data.orderId}`, approve.message)
+  debug(`Approved ${data.orderId}`, flag.message)
 
   const toLastScannedBlock = await toClient.chain.getBlockHeight()
 
