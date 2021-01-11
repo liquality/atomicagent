@@ -1,6 +1,8 @@
 const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
 
+const Check = require('../../models/Check')
 const Order = require('../../models/Order')
+const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async job => {
   const { agenda } = job
@@ -9,6 +11,18 @@ module.exports = async job => {
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
   if (order.status !== 'USER_FUNDED') return
+
+  const check = await Check.findOne({ orderId: data.orderId }).exec()
+  const reject = check.get('flags.reciprocate-init-swap.reject')
+  if (reject) {
+    debug(`Rejected ${data.orderId}`, reject.message)
+    return
+  }
+
+  const approve = check.get('flags.reciprocate-init-swap.approve')
+  if (!approve) {
+    throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
+  }
 
   const fromClient = order.fromClient()
   const toClient = order.toClient()

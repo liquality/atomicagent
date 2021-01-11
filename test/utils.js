@@ -21,6 +21,7 @@ const Market = require('../src/models/Market')
 const MarketHistory = require('../src/models/MarketHistory')
 const Job = require('../src/models/Job')
 const Order = require('../src/models/Order')
+const Check = require('../src/models/Check')
 
 const assets = require('../src/migrate/data/assets.json')
 const markets = require('../src/migrate/data/markets.json')
@@ -55,6 +56,8 @@ const clear = () => Job.deleteMany({})
   .then(() => debug('Cleared Job collection'))
   .then(() => Order.deleteMany({}))
   .then(() => debug('Cleared Order collection'))
+  .then(() => Check.deleteMany({}))
+  .then(() => debug('Cleared Check collection'))
   .then(() => Asset.deleteMany({}))
   .then(() => Asset.insertMany(assets, { ordered: false }))
   .then(() => debug('Reinstalled Asset collection'))
@@ -122,6 +125,19 @@ module.exports.testQuote = async (context, request) => {
 
       res.body.status.should.equal('QUOTE')
     })
+}
+
+module.exports.approveOrder = async (context) => {
+  const check = await Check.getCheckForOrder(context.orderId)
+
+  const now = new Date()
+
+  check.set('flags.reciprocate-init-swap', {
+    approve: now,
+    message: 'test'
+  })
+
+  return check.save()
 }
 
 module.exports.initiate = async (context, request) => {

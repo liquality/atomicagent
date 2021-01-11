@@ -21,10 +21,11 @@ const {
   refundSwap,
   verifyClaimOrRefund,
   verifyUserRefund,
-  verifyAllTxs
+  verifyAllTxs,
+  approveOrder
 } = require('./utils')
 
-module.exports = (contexts, refund) => {
+module.exports = (contexts, { refund, reject }) => {
   describe('Quote', () => {
     it('should refuse quote with invalid amount', async function () {
       this.timeout(10 * 1000)
@@ -110,20 +111,24 @@ module.exports = (contexts, refund) => {
         .then(() => request.close())
     })
 
-    it('should reciprocate by funding the swap', async function () {
-      this.timeout(120 * 1000)
+    if (!reject) {
+      it('should reciprocate by funding the swap', async function () {
+        this.timeout(120 * 1000)
 
-      const request = chai.request(app()).keepOpen()
+        await Bluebird.map(contexts, context => approveOrder(context))
 
-      return Bluebird.map(contexts, context => verifyAgentFunding(context, request))
-        .then(() => request.close())
-    })
+        const request = chai.request(app()).keepOpen()
 
-    it('should find the agent\'s funding tx', async function () {
-      this.timeout(120 * 1000)
+        return Bluebird.map(contexts, context => verifyAgentFunding(context, request))
+          .then(() => request.close())
+      })
 
-      return Bluebird.map(contexts, context => findAgentFundingTx(context))
-    })
+      it('should find the agent\'s funding tx', async function () {
+        this.timeout(120 * 1000)
+
+        return Bluebird.map(contexts, context => findAgentFundingTx(context))
+      })
+    }
   })
 
   describe(refund ? 'Refund' : 'Claim', () => {
@@ -145,7 +150,7 @@ module.exports = (contexts, refund) => {
     })
   })
 
-  if (refund) {
+  if (refund || reject) {
     describe('Verify user refund', () => {
       before(async function () {
         this.timeout(200 * 1000)
