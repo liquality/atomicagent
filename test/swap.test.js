@@ -57,6 +57,7 @@ describe.only('Swap', () => {
       describe(market, () => {
         before(() => {
           config.application.swapExpirationDurationInSeconds = 30
+          config.application.nodeSwapExpirationDurationInSeconds = 20
         })
 
         swap([SWAPS[market][0]], { refund: false, reject: true })

@@ -12,7 +12,7 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'USER_FUNDED') return
 
-  const check = await Check.findOne({ orderId: data.orderId }).exec()
+  const check = await Check.getCheckForOrder(data.orderId)
   const reject = check.get('flags.reciprocate-init-swap.reject')
   if (reject) {
     debug(`Rejected ${data.orderId}`, reject.message)

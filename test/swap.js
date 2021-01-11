@@ -163,7 +163,7 @@ module.exports = (contexts, { refund, reject }) => {
     })
   }
 
-  if (refund || reject) {
+  if (refund && !reject) {
     describe('Verify user refund', () => {
       before(async function () {
         this.timeout(200 * 1000)
