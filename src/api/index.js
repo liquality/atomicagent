@@ -1,17 +1,35 @@
 const Sentry = require('@sentry/node')
 
+const mongoose = require('mongoose')
 const express = require('express')
 const helmet = require('helmet')
 const compression = require('compression')
 const bodyParser = require('body-parser')
 const Agenda = require('agenda')
 const cors = require('cors')
+const session = require('express-session')
+const MongoStore = require('connect-mongo')(session)
 
 const config = require('../config')
 const httpHelpers = require('../middlewares/httpHelpers')
 const handleError = require('../middlewares/handleError')
 
 let listen
+
+const sessionConfig = {
+  name: 'liquality',
+  secret: config.auth.cookieSecret,
+  store: new MongoStore({ mongooseConnection: mongoose.connection }),
+  resave: false,
+  saveUninitialized: false,
+  unset: 'destroy',
+  cookie: {
+    path: '/',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: config.auth.cookieMaxAgeMs
+  }
+}
 
 module.exports.start = () => {
   const app = express()
@@ -21,6 +39,7 @@ module.exports.start = () => {
     app.use(Sentry.Handlers.requestHandler())
   }
 
+  app.use(session(sessionConfig))
   app.use(httpHelpers())
   app.use(helmet({
     contentSecurityPolicy: false
@@ -32,6 +51,7 @@ module.exports.start = () => {
   app.set('etag', false)
   app.set('agenda', agenda)
 
+  app.use('/api/user', require('./routes/user'))
   app.use('/api/swap', require('./routes/swap'))
   app.use('/api/dash', require('./routes/dash'))
 
