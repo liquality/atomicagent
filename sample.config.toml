@@ -12,6 +12,9 @@ cookieSecret = '58da74ef560e5578cb46219b7818d7c2'
 cookieMaxAgeMs = 86400000
 simplePassword = '25ec02267950f537347b4a7c02b00ced'
 
+[threshold]
+manualAboveFromAmountUsd = 5000
+
 [worker]
 maxJobRetry = 5
 jobRetryDelay = "5 seconds"
