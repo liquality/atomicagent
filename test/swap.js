@@ -113,9 +113,9 @@ module.exports = (contexts, { refund, reject }) => {
 
     if (!reject) {
       it('should reciprocate by funding the swap', async function () {
-        this.timeout(120 * 1000)
+        this.timeout(240 * 1000)
 
-        await Bluebird.map(contexts, context => approveOrder(context))
+        await Bluebird.map(contexts, context => approveOrder(context), { concurrency: 2 })
 
         const request = chai.request(app()).keepOpen()
 
@@ -131,24 +131,37 @@ module.exports = (contexts, { refund, reject }) => {
     }
   })
 
-  describe(refund ? 'Refund' : 'Claim', () => {
-    if (!refund) {
-      before(async function () {
-        this.timeout(120 * 1000)
+  if (reject) {
+    describe('NOOP', () => {
+      it('should ignore the swap', async function () {
+        this.timeout(500 * 1000)
 
-        return Bluebird.map(contexts, context => claim(context))
+        const expectedStatus = 'USER_FUNDED'
+        const request = chai.request(app()).keepOpen()
+
+        return Bluebird.map(contexts, context => verifyClaimOrRefund(context, request, expectedStatus))
       })
-    }
-
-    it(`should ${refund ? 'refund' : 'claim'} the swap`, async function () {
-      this.timeout(500 * 1000)
-
-      const expectedStatus = refund ? 'AGENT_REFUNDED' : 'AGENT_CLAIMED'
-      const request = chai.request(app()).keepOpen()
-
-      return Bluebird.map(contexts, context => verifyClaimOrRefund(context, request, expectedStatus))
     })
-  })
+  } else {
+    describe(refund ? 'Refund' : 'Claim', () => {
+      if (!refund) {
+        before(async function () {
+          this.timeout(120 * 1000)
+
+          return Bluebird.map(contexts, context => claim(context))
+        })
+      }
+
+      it(`should ${refund ? 'refund' : 'claim'} the swap`, async function () {
+        this.timeout(500 * 1000)
+
+        const expectedStatus = refund ? 'AGENT_REFUNDED' : 'AGENT_CLAIMED'
+        const request = chai.request(app()).keepOpen()
+
+        return Bluebird.map(contexts, context => verifyClaimOrRefund(context, request, expectedStatus))
+      })
+    })
+  }
 
   if (refund || reject) {
     describe('Verify user refund', () => {

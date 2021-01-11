@@ -52,6 +52,18 @@ describe.only('Swap', () => {
     })
   })
 
+  describe('Unsuccessful single swap with no approval', () => {
+    Object.keys(SWAPS).forEach(market => {
+      describe(market, () => {
+        before(() => {
+          config.application.swapExpirationDurationInSeconds = 30
+        })
+
+        swap([SWAPS[market][0]], { refund: false, reject: true })
+      })
+    })
+  })
+
   describe('Unsuccessful single swap', () => {
     Object.keys(SWAPS).forEach(market => {
       describe(market, () => {
