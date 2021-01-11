@@ -12,18 +12,6 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'USER_FUNDED') return
 
-  const check = await Check.getCheckForOrder(data.orderId)
-  const reject = check.get('flags.reciprocate-init-swap.reject')
-  if (reject) {
-    debug(`Rejected ${data.orderId}`, reject.message)
-    return
-  }
-
-  const approve = check.get('flags.reciprocate-init-swap.approve')
-  if (!approve) {
-    throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
-  }
-
   const fromClient = order.fromClient()
   const toClient = order.toClient()
 
@@ -43,6 +31,20 @@ module.exports = async job => {
 
     return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
+
+  const check = await Check.getCheckForOrder(data.orderId)
+  const reject = check.get('flags.reciprocate-init-swap.reject')
+  if (reject) {
+    debug(`Rejected ${data.orderId}`, reject.message)
+    return
+  }
+
+  const approve = check.get('flags.reciprocate-init-swap.approve')
+  if (!approve) {
+    throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
+  }
+
+  debug(`Approved ${data.orderId}`, approve.message)
 
   const toLastScannedBlock = await toClient.chain.getBlockHeight()
 
