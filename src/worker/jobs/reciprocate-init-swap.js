@@ -19,7 +19,7 @@ module.exports = async job => {
   const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
   const fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
 
-  const stop = order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock)
+  const stop = order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock) || order.isNodeSwapExpired(fromCurrentBlock)
   if (stop) {
     if (order.isQuoteExpired()) {
       debug(`Order ${order.orderId} expired due to expiresAt`)
@@ -28,6 +28,11 @@ module.exports = async job => {
 
     if (order.isSwapExpired(fromCurrentBlock)) {
       debug(`Order ${order.orderId} expired due to swapExpiration`)
+      order.status = 'SWAP_EXPIRED'
+    }
+
+    if (order.isNodeSwapExpired(fromCurrentBlock)) {
+      debug(`Order ${order.orderId} expired due to nodeSwapExpiration`)
       order.status = 'SWAP_EXPIRED'
     }
 
