@@ -33,19 +33,34 @@ module.exports = async job => {
     return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
 
+  const check = await Check.getCheckForOrder(data.orderId)
+  const flag = check.get('flags.reciprocate-init-swap') || {}
+
+  if (flag.reject) {
+    debug(`Rejected ${data.orderId}`, flag.message)
+    return
+  }
+
   if (
     order.fromAmountUsd > 0 &&
     order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd) {
-    debug(`Auto-approving order ${data.orderId} worth $${order.fromAmountUsd}`)
-  } else {
-    const check = await Check.getCheckForOrder(data.orderId)
-    const flag = check.get('flags.reciprocate-init-swap') || {}
+    if (!flag.approve) {
+      const type = 'reciprocate-init-swap'
+      const action = 'approve'
+      const message = `${order.fromAmountUsd} < ${config.threshold.manualAboveFromAmountUsd}`
 
-    if (flag.reject) {
-      debug(`Rejected ${data.orderId}`, flag.message)
-      return
+      check.set(`flags.${type}`, {
+        [action]: new Date(),
+        message
+      })
+
+      await check.save()
+
+      await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
+
+      debug(`Auto-approved order ${data.orderId} worth $${order.fromAmountUsd}`)
     }
-
+  } else {
     if (!flag.approve) {
       throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
     }

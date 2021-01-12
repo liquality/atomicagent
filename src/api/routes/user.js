@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
+const { spawn } = require('child_process')
 
 const config = require('../../config')
 const Check = require('../../models/Check')
@@ -39,6 +40,11 @@ router.post('/logout', asyncHandler(async (req, res) => {
     }
   })
 
+  res.ok()
+}))
+
+router.post('/killswitch', ensureAuth(401), asyncHandler(async (req, res) => {
+  spawn(config.worker.killswitch, [], { stdio: 'inherit' }) // TODO: find a better way
   res.ok()
 }))
 
@@ -95,10 +101,8 @@ router.post('/order', ensureAuth(401), asyncHandler(async (req, res) => {
     return res.notOk(400, `Check ${orderId}:${type} has already been approved: ${entry.message}`)
   }
 
-  const now = new Date()
-
   check.set(`flags.${type}`, {
-    [action]: now,
+    [action]: new Date(),
     message
   })
 
