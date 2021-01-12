@@ -10,6 +10,8 @@ const Order = require('../../models/Order')
 const Job = require('../../models/Job')
 const pkg = require('../../../package.json')
 
+const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentCompatible')
+
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
   const q = _.pick(query, ['code'])
@@ -19,7 +21,7 @@ router.get('/assetinfo', asyncHandler(async (req, res) => {
   res.json(result.map(r => r.json()))
 }))
 
-router.get('/marketinfo', asyncHandler(async (req, res) => {
+router.get('/marketinfo', ensureUserAgentCompatible([]), asyncHandler(async (req, res) => {
   const { query } = req
   const q = _.pick(query, ['from', 'to'])
 
