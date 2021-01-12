@@ -19,11 +19,19 @@ module.exports = async job => {
   const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
   const fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
 
-  if (order.isSwapExpired(fromCurrentBlock)) {
-    debug(`Order ${order.orderId} expired due to swapExpiration`)
+  const stop = order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock)
+  if (stop) {
+    if (order.isQuoteExpired()) {
+      debug(`Order ${order.orderId} expired due to expiresAt`)
+      order.status = 'QUOTE_EXPIRED'
+    }
+
+    if (order.isSwapExpired(fromCurrentBlock)) {
+      debug(`Order ${order.orderId} expired due to swapExpiration`)
+      order.status = 'SWAP_EXPIRED'
+    }
 
     order.addTx('fromRefundHash', { hash: Date.now(), placeholder: true })
-    order.status = 'SWAP_EXPIRED'
     await order.save()
 
     await order.log('RECIPROCATE_INIT_SWAP', null, {
