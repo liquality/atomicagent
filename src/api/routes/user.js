@@ -1,6 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const { spawn } = require('child_process')
+const { parseArgsStringToArgv } = require('string-argv')
 
 const config = require('../../config')
 const Check = require('../../models/Check')
@@ -44,7 +45,8 @@ router.post('/logout', asyncHandler(async (req, res) => {
 }))
 
 router.post('/killswitch', ensureAuth(401), asyncHandler(async (req, res) => {
-  spawn(config.worker.killswitch, [], { stdio: 'inherit' }) // TODO: find a better way
+  const arr = parseArgsStringToArgv(config.worker.killswitch)
+  spawn(arr.shift(), arr, { stdio: 'inherit' }) // TODO: find a better way
   res.ok()
 }))
 
