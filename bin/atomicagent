@@ -16,4 +16,12 @@ program
   .command('wallet', 'Communicate with asset wallets')
 
 program
+  .command('run <script>')
+  .description('Run scripts')
+  .action(async script => {
+    console.log(`Running src/scripts/${script}`)
+    require(`../src/scripts/${script}`)
+  })
+
+program
   .parse(process.argv)

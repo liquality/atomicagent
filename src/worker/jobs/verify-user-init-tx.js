@@ -1,89 +1,63 @@
 const debug = require('debug')('liquality:agent:worker:verify-user-init-tx')
 
-const AuditLog = require('../../models/AuditLog')
 const Order = require('../../models/Order')
-const config = require('../../config')
+const { RescheduleError } = require('../../utils/errors')
 
-module.exports = agenda => async job => {
+module.exports = async job => {
+  const { agenda } = job
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
   if (order.status !== 'USER_FUNDED_UNVERIFIED') return
 
-  if (Date.now() > order.expiresAt) { // Expected the swap sooner. Quote expired.
+  const fromClient = order.fromClient()
+
+  if (order.isQuoteExpired()) {
     debug(`Order ${order.orderId} expired due to expiresAt`)
+
+    order.addTx('fromRefundHash', { hash: Date.now(), placeholder: true })
     order.status = 'QUOTE_EXPIRED'
     await order.save()
 
-    await AuditLog.create({
-      orderId: order.orderId,
-      orderStatus: order.status,
-      context: 'VERIFY_USER_INIT_TX'
+    await order.log('VERIFY_USER_INIT_TX')
+
+    const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
+    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
+  }
+
+  await order.verifyInitiateSwapTransaction()
+
+  const fromFundTx = await fromClient.chain.getTransactionByHash(order.fromFundHash)
+
+  if (fromFundTx.confirmations < order.minConf) {
+    debug(`Reschedule ${order.orderId}: Need more confirmations (${fromFundTx.confirmations} < ${order.minConf})`)
+
+    await order.log('VERIFY_USER_INIT_TX', 'USER_FUNDING_NEED_MORE_CONF', {
+      minConf: order.minConf,
+      currentConf: fromFundTx.confirmations,
+      initiationTxConf: fromFundTx.confirmations
     })
 
-    return
+    throw new RescheduleError(
+      `Reschedule ${order.orderId}: Need more confirmations (${fromFundTx.confirmations} < ${order.minConf})`,
+      order.from
+    )
   }
 
-  const verified = await order.fromClient().swap.verifyInitiateSwapTransaction(
-    order.fromFundHash,
-    order.fromAmount,
-    order.fromCounterPartyAddress,
-    order.fromAddress,
-    order.secretHash,
-    order.swapExpiration
-  )
+  debug('Found & verified funding transaction', order.orderId, order.fromFundHash)
 
-  try {
-    if (!verified) {
-      debug(`Reschedule ${order.orderId}: Transaction not found`)
+  const fromSecondaryFundTx = await order.findFromFundSwapTransaction()
 
-      await AuditLog.create({
-        orderId: order.orderId,
-        orderStatus: order.status,
-        status: 'USER_FUNDING_NOT_FOUND',
-        context: 'VERIFY_USER_INIT_TX'
-      })
-
-      throw new Error('Reschedule')
-    }
-
-    const initiationTx = await order.fromClient().chain.getTransactionByHash(order.fromFundHash)
-    if (initiationTx.confirmations < order.minConf) {
-      debug(`Reschedule ${order.orderId}: Need more confirmations (${initiationTx.confirmations} < ${order.minConf})`)
-
-      await AuditLog.create({
-        orderId: order.orderId,
-        orderStatus: order.status,
-        status: 'USER_FUNDING_NEED_MORE_CONF',
-        extra: {
-          minConf: order.minConf,
-          initiationTxConf: initiationTx.confirmations
-        },
-        context: 'VERIFY_USER_INIT_TX'
-      })
-
-      throw new Error('Reschedule')
-    }
-  } catch (e) {
-    const when = 'in ' + config.assets[order.from].blockTime
-    debug(`Reschedule ${order.orderId} ${when}`)
-
-    job.schedule(when)
-    await job.save()
-    return
+  if (fromSecondaryFundTx) {
+    order.addTx('fromSecondaryFundHash', fromSecondaryFundTx)
   }
 
-  debug('Found & verified funding transaction', order.orderId)
-
+  order.addTx('fromFundHash', fromFundTx)
   order.status = 'USER_FUNDED'
+
   await order.save()
+  await order.log('VERIFY_USER_INIT_TX')
 
-  await AuditLog.create({
-    orderId: order.orderId,
-    orderStatus: order.status,
-    context: 'VERIFY_USER_INIT_TX'
-  })
-
-  await agenda.now('reciprocate-init-swap', { orderId: order.orderId })
+  return agenda.now('reciprocate-init-swap', { orderId: order.orderId })
 }
