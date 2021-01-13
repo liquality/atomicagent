@@ -21,6 +21,7 @@ jobRetryDelay = "5 seconds"
 backendJobRetryDelay = "5 seconds"
 minConcurrentSwaps = 3
 defaultLockLifetimeInMs = 120000 # 2 min
+killswitch = 'pm2 stop "Worker"'
 
 [assets]
   [assets.BTC]
