@@ -104,7 +104,7 @@ MarketSchema.static('updateAllMarketData', async function () {
     const rate = (config.assets[from].pegWith === to || config.assets[to].pegWith === from)
       ? 1
       : marketRates.find(market => market.from === from && market.to === to).rate
-    const rateWithSpread = rate.times(BN(1).minus(market.spread)).dp(8)
+    const rateWithSpread = BN(rate).times(BN(1).minus(market.spread)).dp(8)
     const reverseMarket = markets.find(market => market.to === from && market.from === to) || { rate: BN(1).div(rateWithSpread) }
     const fromAsset = ASSET_MAP[from]
     const toAsset = ASSET_MAP[to]
