@@ -68,3 +68,16 @@ killswitch = 'pm2 stop "Worker"'
     url = "http://localhost:8080"
     [assets.DAI.rpc]
     url = "http://localhost:8545"
+
+  [assets.RBTC]
+  blockTime = "20 seconds"
+  network = "rsk_testnet"
+  defaultFee = "average"
+  pegWith = "BTC"
+    [assets.RBTC.rpc]
+    url = "https://public-node.testnet.rsk.co"
+    [assets.RBTC.scraper]
+    url = "https://liquality.io/rsk-testnet-api/"
+    [assets.RBTC.wallet]
+    type = "js"
+    mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
