@@ -17,7 +17,10 @@ module.exports = async (err, job) => {
     return job.save()
   }
 
-  if (err.name === 'RescheduleError' || err.name === 'PossibleTimelockError') {
+  if (
+    err.name === 'RescheduleError' ||
+    err.name === 'PossibleTimelockError'
+  ) {
     const scheduleIn = typeof err.chain === 'string'
       ? 'in ' + config.assets[err.chain].blockTime
       : 'in ' + err.chain + ' seconds'
@@ -52,6 +55,14 @@ module.exports = async (err, job) => {
 
     Sentry.captureException(err)
   })
+
+  if (
+    err.name === 'InvalidDestinationAddressError' ||
+    err.name === 'TxFailedError'
+  ) {
+    job.fail(err)
+    return job.save()
+  }
 
   if (job.attrs.failCount <= config.worker.maxJobRetry) {
     debug('Retrying', job.attrs)
