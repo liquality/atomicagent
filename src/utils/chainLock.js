@@ -102,8 +102,8 @@ const withLock = async (asset, func) => {
     }
 
     if (
-      e.message.includes('non-final (code 64)') ||
-      e.message.includes('invalid opcode: opcode 0xfe not defined')
+      e.message.includes('non-final') ||
+      e.message.includes('opcode 0xfe not defined')
     ) {
       throw new PossibleTimelockError(e.message, chain)
     }

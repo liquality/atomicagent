@@ -8,7 +8,7 @@ const config = require('../src/config')
 const NUM_CONCURRENT_SWAPS_PER_MARKET = 3
 
 const AMOUNT = {
-  BTC: () => _.random(...[0.05, 0.051].map(v => v * 1e8)),
+  BTC: () => _.random(...[0.04, 0.041].map(v => v * 1e8)),
   ETH: () => _.random(...[0.26, 0.27].map(v => v * 1e18)),
   DAI: () => _.random(...[5, 5.1].map(v => v * 1e18))
 }
