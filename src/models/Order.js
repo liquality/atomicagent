@@ -438,14 +438,14 @@ OrderSchema.methods.initiateSwap = async function () {
   })
 }
 
-OrderSchema.methods.fundSwapTransaction = async function () {
+OrderSchema.methods.fundSwap = async function () {
   const toClient = this.toClient()
   const { defaultFee } = config.assets[this.to]
 
   return withLock(this.to, async () => {
     const fees = await toClient.chain.getFees()
 
-    return toClient.swap.fundSwapTransaction(
+    return toClient.swap.fundSwap(
       this.toFundHash,
       this.toAmount,
       this.toAddress,

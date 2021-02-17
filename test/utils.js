@@ -177,7 +177,7 @@ module.exports.fund = async (context, request) => {
   const tx = await withLock(context.from, async () => {
     const fees = await fromClient.chain.getFees()
 
-    return fromClient.swap.fundSwapTransaction(
+    return fromClient.swap.fundSwap(
       context.fromFundHash,
       context.fromAmount,
       context.fromCounterPartyAddress,

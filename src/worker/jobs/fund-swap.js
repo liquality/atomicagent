@@ -42,7 +42,7 @@ module.exports = async job => {
     return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
 
-  const toSecondaryFundTx = await order.fundSwapTransaction()
+  const toSecondaryFundTx = await order.fundSwap()
   if (toSecondaryFundTx) {
     debug('Initiated secondary funding transaction', order.orderId, toSecondaryFundTx.hash)
     order.addTx('toSecondaryFundHash', toSecondaryFundTx)
