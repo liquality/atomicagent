@@ -54,22 +54,6 @@ describe.only('Swap', () => {
     })
   })
 
-  describe('Unsuccessful single swap with no approval', () => {
-    Object.keys(SWAPS).forEach(market => {
-      describe(market, () => {
-        before(async function () {
-          this.timeout(0)
-          await clearJobs()
-
-          config.application.swapExpirationDurationInSeconds = 70
-          config.application.nodeSwapExpirationDurationInSeconds = 30
-        })
-
-        swap([SWAPS[market][0]], { refund: false, reject: true })
-      })
-    })
-  })
-
   describe('Unsuccessful single swap', () => {
     Object.keys(SWAPS).forEach(market => {
       describe(market, () => {
@@ -91,22 +75,10 @@ describe.only('Swap', () => {
       this.timeout(0)
       await clearJobs()
 
-      config.application.swapExpirationDurationInSeconds = 360
-      config.application.nodeSwapExpirationDurationInSeconds = 200
+      config.application.swapExpirationDurationInSeconds = 580
+      config.application.nodeSwapExpirationDurationInSeconds = 380
     })
 
     swap(SWAPS_ARR, { refund: false, reject: false })
-  })
-
-  describe('Unsuccessful concurrent swaps', () => {
-    before(async function () {
-      this.timeout(0)
-      await clearJobs()
-
-      config.application.swapExpirationDurationInSeconds = 360
-      config.application.nodeSwapExpirationDurationInSeconds = 200
-    })
-
-    swap(SWAPS_ARR, { refund: true, reject: false })
   })
 })
