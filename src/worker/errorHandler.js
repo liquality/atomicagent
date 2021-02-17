@@ -10,17 +10,15 @@ const getResponseBody = e => _.get(e, 'response.data') || _.get(e, 'response.bod
 const getRequestUrl = e => _.get(e, 'config.url', '')
 
 module.exports = async (err, job) => {
-  debug(err.name, err.message)
-
-  if (err.code === 'ECONNREFUSED') {
-    job.schedule('in ' + config.worker.httpConnectionErrorDelay)
-    return job.save()
-  }
-
   if (
     err.name === 'RescheduleError' ||
-    err.name === 'PossibleTimelockError'
+    ( // do not retry PossibleTimelockError in production
+      process.env.NODE_ENV !== 'production' &&
+      err.name === 'PossibleTimelockError'
+    )
   ) {
+    debug(`[x${job.attrs.failCount}]`, err.name, err.message, job.attrs.name, job.attrs.data)
+
     const scheduleIn = typeof err.chain === 'string'
       ? 'in ' + config.assets[err.chain].blockTime
       : 'in ' + err.chain + ' seconds'
@@ -36,10 +34,9 @@ module.exports = async (err, job) => {
   }
 
   debug(
+    '[failed]',
     err.name,
     err.message,
-    _.get(job, 'attrs.name'),
-    _.get(job, 'attrs.data.orderId'),
     job.attrs,
     httpData
   )
@@ -56,21 +53,6 @@ module.exports = async (err, job) => {
     Sentry.captureException(err)
   })
 
-  if (
-    err.name === 'InvalidDestinationAddressError' ||
-    err.name === 'TxFailedError'
-  ) {
-    job.fail(err)
-    return job.save()
-  }
-
-  if (job.attrs.failCount <= config.worker.maxJobRetry) {
-    debug('Retrying', job.attrs)
-
-    job.schedule('in ' + config.worker.jobRetryDelay)
-
-    await job.save()
-  } else {
-    debug('Max attempts reached. Job has failed', job.attrs)
-  }
+  job.fail(err)
+  return job.save()
 }

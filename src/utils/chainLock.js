@@ -97,13 +97,16 @@ const withLock = async (asset, func) => {
     const result = await func()
     return result
   } catch (e) {
-    if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
+    if (['TxNotFoundError', 'PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
       throw new RescheduleError(e.message, chain)
     }
 
     if (
-      e.message.includes('non-final') ||
-      e.message.includes('opcode 0xfe not defined')
+      (chain === 'BTC' && e.message.includes('non-final')) ||
+      (chain === 'ETH' && (
+        e.message.includes('opcode 0xfe not defined') ||
+        e.message.includes('execution reverted')
+      ))
     ) {
       throw new PossibleTimelockError(e.message, chain)
     }
