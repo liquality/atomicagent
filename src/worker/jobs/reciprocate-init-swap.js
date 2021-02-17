@@ -88,21 +88,10 @@ module.exports = async job => {
   debug('Initiated funding transaction', order.orderId, toFundTx.hash)
 
   order.addTx('toFundHash', toFundTx)
-  order.status = 'AGENT_FUNDED'
-
-  const toSecondaryFundTx = toFundTx.secondaryTx
-
-  if (toSecondaryFundTx) {
-    order.addTx('toSecondaryFundHash', toSecondaryFundTx)
-  }
-
+  order.status = 'AGENT_CONTRACT_CREATED'
   await order.save()
 
   await agenda.now('verify-tx', { orderId: order.orderId, type: 'toFundHash' })
-
-  if (toSecondaryFundTx) {
-    await agenda.now('verify-tx', { orderId: order.orderId, type: 'toSecondaryFundHash' })
-  }
 
   await order.log('RECIPROCATE_INIT_SWAP', null, {
     toLastScannedBlock: toLastScannedBlock,
@@ -110,5 +99,5 @@ module.exports = async job => {
     toSecondaryFundHash: order.toSecondaryFundHash
   })
 
-  return agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, toLastScannedBlock })
+  return agenda.now('fund-swap', { orderId: order.orderId, toLastScannedBlock })
 }

@@ -52,8 +52,12 @@ const getClient = function (asset) {
 
 module.exports.getClient = getClient
 
-const clear = () => Job.deleteMany({})
+const clearJobs = () => Job.deleteMany({})
   .then(() => debug('Cleared Job collection'))
+
+module.exports.clearJobs = clearJobs
+
+const clear = () => clearJobs()
   .then(() => Order.deleteMany({}))
   .then(() => debug('Cleared Order collection'))
   .then(() => Check.deleteMany({}))
@@ -79,8 +83,6 @@ module.exports.prepare = () => mongoose
   .then(() => worker.start())
   .then(() => waitForRandom(3500, 5000))
   .then(() => debug('Started api & worker'))
-
-module.exports.clear = clear
 
 module.exports.requestQuote = async (context, request) => {
   return request
@@ -166,6 +168,29 @@ module.exports.initiate = async (context, request) => {
   })
 
   context.fromFundHash = tx.hash
+}
+
+module.exports.fund = async (context, request) => {
+  const fromClient = getClient(context.from)
+  const { defaultFee } = config.assets[context.from]
+
+  const tx = await withLock(context.from, async () => {
+    const fees = await fromClient.chain.getFees()
+
+    return fromClient.swap.fundSwap(
+      context.fromFundHash,
+      context.fromAmount,
+      context.fromCounterPartyAddress,
+      context.fromAddress,
+      context.secretHash,
+      context.swapExpiration,
+      fees[defaultFee].fee
+    )
+  })
+
+  if (tx) {
+    context.fromSecondaryFundHash = tx.hash
+  }
 
   return request
     .post(`/api/swap/order/${context.orderId}`)
@@ -201,8 +226,8 @@ module.exports.verifyInitiate = async (context, request) => {
         return check()
       }
 
-      // if agent funds immediately, status will be AGENT_FUNDED instead of USER_FUNDED
-      res.body.status.should.be.oneOf(['USER_FUNDED', 'AGENT_FUNDED'])
+      // if agent funds immediately, status will be AGENT_CONTRACT_CREATED/AGENT_FUNDED instead of USER_FUNDED
+      res.body.status.should.be.oneOf(['USER_FUNDED', 'AGENT_CONTRACT_CREATED', 'AGENT_FUNDED'])
     }))
 
   return check()
@@ -214,7 +239,7 @@ module.exports.verifyAgentFunding = async (context, request) => {
     .then(res => {
       res.should.have.status(200)
 
-      if (res.body.status === 'USER_FUNDED') {
+      if (['USER_FUNDED', 'AGENT_CONTRACT_CREATED'].includes(res.body.status)) {
         return check()
       }
 
@@ -286,6 +311,7 @@ module.exports.refundSwap = async context => {
     context.fromRefundHash = hash
   }).catch(e => {
     if (e.name === 'PossibleTimelockError') {
+      console.log('[user] PossibleTimelockError')
       return wait(5000).then(() => module.exports.refundSwap(context))
     }
 

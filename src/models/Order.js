@@ -197,7 +197,7 @@ const OrderSchema = new mongoose.Schema({
     enum: [
       'QUOTE',
       'USER_FUNDED_UNVERIFIED', 'USER_FUNDED',
-      'AGENT_FUNDED',
+      'AGENT_CONTRACT_CREATED', 'AGENT_FUNDED',
       'USER_CLAIMED',
       'AGENT_CLAIMED',
       'AGENT_REFUNDED',
@@ -404,7 +404,7 @@ OrderSchema.methods.refundSwap = async function () {
   const toClient = this.toClient()
   const { defaultFee } = config.assets[this.to]
 
-  return withLock(this.from, async () => {
+  return withLock(this.to, async () => {
     const fees = await toClient.chain.getFees()
 
     const refundTx = await toClient.swap.refundSwap(
@@ -428,6 +428,25 @@ OrderSchema.methods.initiateSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.initiateSwap(
+      this.toAmount,
+      this.toAddress,
+      this.toCounterPartyAddress,
+      this.secretHash,
+      this.nodeSwapExpiration,
+      fees[defaultFee].fee
+    )
+  })
+}
+
+OrderSchema.methods.fundSwap = async function () {
+  const toClient = this.toClient()
+  const { defaultFee } = config.assets[this.to]
+
+  return withLock(this.to, async () => {
+    const fees = await toClient.chain.getFees()
+
+    return toClient.swap.fundSwap(
+      this.toFundHash,
       this.toAmount,
       this.toAddress,
       this.toCounterPartyAddress,

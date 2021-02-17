@@ -10,8 +10,7 @@ const { prepare } = require('./utils')
 
 describe('Market Info', () => {
   before(async function () {
-    this.timeout(30000)
-
+    this.timeout(0)
     await prepare()
   })
 
