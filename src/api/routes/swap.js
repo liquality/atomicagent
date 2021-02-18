@@ -23,9 +23,12 @@ router.get('/assetinfo', asyncHandler(async (req, res) => {
 
 router.get('/marketinfo', ensureUserAgentCompatible([]), asyncHandler(async (req, res) => {
   const { query } = req
-  const q = _.pick(query, ['from', 'to'])
 
-  const result = await Market.find(q).exec()
+  const result = await Market.find({
+    from: query.from,
+    to: query.to,
+    status: 'ACTIVE'
+  }).exec()
 
   res.json(result.map(r => {
     const json = r.json()
@@ -42,6 +45,10 @@ router.post('/order', asyncHandler(async (req, res) => {
   const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
   if (!market) {
     return res.notOk(400, `Market not found: ${body.from}-${body.to}`)
+  }
+
+  if (market.status !== 'ACTIVE') {
+    return res.notOk(400, `Market is not active: ${body.from}-${body.to}`)
   }
 
   const { fromAmount } = body
