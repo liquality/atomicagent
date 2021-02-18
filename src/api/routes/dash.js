@@ -20,10 +20,7 @@ const addressHashVariants = address => {
   return [...new Set(arr)]
 }
 
-router.get('/orders', asyncHandler(async (req, res) => {
-  const { q, from, to, start, end, status, excludeStatus, userAgent, pending } = req.query
-  let { limit, page, sort } = req.query
-
+const getLimitPageSort = ({ limit, page, sort }, defaultSortBy = '-createdAt') => {
   try {
     page = parseInt(page)
     if (!page || page < 1) throw new Error('Invalid page')
@@ -38,15 +35,28 @@ router.get('/orders', asyncHandler(async (req, res) => {
     limit = 25
   }
 
-  if (!sort) sort = '-createdAt'
+  if (!sort) sort = defaultSortBy
 
+  return {
+    limit,
+    page,
+    sort
+  }
+}
+
+const createQuery = _query => {
+  const { q, from, to, start, end, status, excludeStatus, userAgent, pending } = _query
   const query = {}
 
   if (userAgent && userAgent.length !== 2) {
     if (userAgent[0] === 'WALLET') {
-      query.userAgent = 'wallet'
+      query.userAgent = {
+        $regex: /^Wallet/i
+      }
     } else {
-      query.userAgent = { $exists: false }
+      query.userAgent = {
+        $regex: /^SwapUI/i
+      }
     }
   }
 
@@ -92,7 +102,6 @@ router.get('/orders', asyncHandler(async (req, res) => {
 
   if (end) {
     if (!query.createdAt) query.createdAt = {}
-
     query.createdAt.$lte = new Date(Number(end))
   }
 
@@ -105,6 +114,13 @@ router.get('/orders', asyncHandler(async (req, res) => {
       query.hasAgentUnconfirmedTx = true
     }
   }
+
+  return query
+}
+
+router.get('/orders', asyncHandler(async (req, res) => {
+  const query = createQuery(req.query)
+  const { limit, page, sort } = getLimitPageSort(req.query)
 
   const result = await Order.find(query, null, {
     sort,
@@ -165,23 +181,7 @@ router.get('/statsByAddress', asyncHandler(async (req, res) => {
 }))
 
 router.get('/topAddresses', asyncHandler(async (req, res) => {
-  let { sort, page, limit } = req.query
-
-  try {
-    page = parseInt(page)
-    if (!page || page < 1) throw new Error('Invalid page')
-  } catch (e) {
-    page = 1
-  }
-
-  try {
-    limit = parseInt(limit)
-    if (!limit || limit < 1 || limit > 25) throw new Error('Invalid limit')
-  } catch (e) {
-    limit = 25
-  }
-
-  if (!sort) sort = 'volume'
+  const { limit, page, sort } = getLimitPageSort(req.query, 'volume')
 
   const sortKey = sort.endsWith('volume')
     ? 'sum:fromAmountUsd'
@@ -232,10 +232,10 @@ router.get('/topAddresses', asyncHandler(async (req, res) => {
 }))
 
 router.get('/stats', asyncHandler(async (req, res) => {
-  let { start, end, address } = req.query
-  start = new Date(Number(start))
-  end = new Date(Number(end))
-
+  const query = createQuery({
+    ...req.query,
+    status: ['AGENT_CLAIMED']
+  })
   const markets = (await Market.find({}, 'from to').exec()).map(market => `${market.from}-${market.to}`)
 
   const $group = markets.reduce((acc, market) => {
@@ -246,28 +246,9 @@ router.get('/stats', asyncHandler(async (req, res) => {
     return acc
   }, {})
 
-  const $match = {
-    status: 'AGENT_CLAIMED',
-    createdAt: {
-      $gte: start,
-      $lte: end
-    }
-  }
-
-  if (address) {
-    const inAddresses = { $in: addressHashVariants(address) }
-
-    $match.$or = [
-      { fromCounterPartyAddress: inAddresses },
-      { toCounterPartyAddress: inAddresses },
-      { fromAddress: inAddresses },
-      { toAddress: inAddresses }
-    ]
-  }
-
   const result = await Order.aggregate([
     {
-      $match
+      $match: query
     },
     {
       $addFields: {
@@ -279,9 +260,9 @@ router.get('/stats', asyncHandler(async (req, res) => {
       $group: {
         _id: '$date',
         ...$group,
-        'wallet:sum:fromAmountUsd': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$fromAmountUsd', 0] } },
-        'wallet:sum:toAmountUsd': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, '$toAmountUsd', 0] } },
-        'wallet:count': { $sum: { $cond: [{ $eq: ['$userAgent', 'wallet'] }, 1, 0] } },
+        'wallet:sum:fromAmountUsd': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0] } },
+        'wallet:sum:toAmountUsd': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0] } },
+        'wallet:count': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0] } },
         'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
         'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
         'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
@@ -325,8 +306,8 @@ router.get('/stats', asyncHandler(async (req, res) => {
   }
 
   eachDayOfInterval({
-    start: start,
-    end: end
+    start: new Date(Number(req.query.start)),
+    end: new Date(Number(req.query.end))
   }).forEach(date => {
     date = format(date, 'yyyy-MM-dd')
     if (stats.find(stat => stat.date === date)) return
