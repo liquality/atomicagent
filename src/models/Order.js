@@ -72,6 +72,10 @@ const OrderSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
+  spread: {
+    type: Number,
+    index: true
+  },
   minConf: {
     type: Number,
     index: true
@@ -604,6 +608,7 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     from: market.from,
     to: market.to,
     rate: market.rate,
+    spread: market.spread,
     minConf: market.minConf,
 
     expiresAt: Date.now() + market.orderExpiresIn,
