@@ -1,9 +1,9 @@
 function formatAddress (address) {
-  return address.replace('0x', '').toLowerCase()
+  return address === undefined || address === null ? address : address.replace('0x', '').toLowerCase()
 }
 
 function formatHash (hash) {
-  return hash.replace('0x', '').toLowerCase()
+  return hash === undefined || hash === null ? hash : hash.replace('0x', '').toLowerCase()
 }
 
 module.exports = {

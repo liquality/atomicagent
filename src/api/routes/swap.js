@@ -111,26 +111,31 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     return res.notOk(400, 'Order cannot be updated after funding')
   }
 
-  const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
-  if (fromFundHashExists) {
-    return res.notOk(400, `Duplicate fromFundHash: ${body.fromFundHash}`)
-  }
-
-  const keysToBeCopied = oldStatus === 'USER_FUNDED_UNVERIFIED'
+  const validKeys = oldStatus === 'USER_FUNDED_UNVERIFIED'
     ? ['fromFundHash']
     : ['fromAddress', 'toAddress', 'fromFundHash', 'secretHash']
 
-  for (let i = 0; i < keysToBeCopied.length; i++) {
-    const key = keysToBeCopied[i]
-
+  for (const key of validKeys) {
     if (!body[key]) {
       return res.notOk(400, `Missing key from request body: ${key}`)
     }
-
-    order[key] = formatHash(body[key])
   }
 
-  order.addTx('fromFundHash', { hash: body.fromFundHash })
+  if (!(typeof body.fromFundHash === 'string' && formatHash(body.fromFundHash).length === 64)) {
+    return res.notOk(400, `Order fromFundHash invalid: ${body.fromFundHash}`)
+  }
+
+  const fromFundHash = formatHash(body.fromFundHash)
+
+  const fromFundHashExists = await Order.findOne({ fromFundHash }).exec()
+  if (fromFundHashExists) {
+    return res.notOk(400, `Duplicate fromFundHash: ${fromFundHash}`)
+  }
+
+  if (oldStatus === 'USER_FUNDED_UNVERIFIED') order.updateFromFundHash(fromFundHash)
+  else order.setUserParams(body.fromAddress, body.toAddress, fromFundHash, body.secretHash)
+
+  order.addTx('fromFundHash', { hash: fromFundHash })
   order.status = 'USER_FUNDED_UNVERIFIED'
 
   await order.save()
