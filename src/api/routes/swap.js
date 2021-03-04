@@ -11,6 +11,7 @@ const Job = require('../../models/Job')
 const pkg = require('../../../package.json')
 
 const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentCompatible')
+const { formatHash } = require('../../utils/format')
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
@@ -126,7 +127,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
       return res.notOk(400, `Missing key from request body: ${key}`)
     }
 
-    order[key] = body[key]
+    order[key] = formatHash(body[key])
   }
 
   order.addTx('fromFundHash', { hash: body.fromFundHash })

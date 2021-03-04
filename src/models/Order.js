@@ -10,6 +10,7 @@ const MarketHistory = require('./MarketHistory')
 const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
+const { formatAddress, formatHash } = require('../utils/format')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
@@ -254,8 +255,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = cryptoassets[this.from].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = cryptoassets[this.to].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = formatAddress(cryptoassets[this.from].formatAddress(fromAddresses.address))
+  this.toCounterPartyAddress = formatAddress(cryptoassets[this.to].formatAddress(toAddresses.address))
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -357,9 +358,10 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
+  const hash = formatHash(tx.hash)
   const asset = this[side]
-  const key = `txMap.${tx.hash}`
-  const value = { asset, type, hash: tx.hash }
+  const key = `txMap.${hash}`
+  const value = { asset, type, hash }
 
   if (tx.fee || tx.feePrice) {
     value.feeAmount = tx.fee
@@ -379,7 +381,7 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (tx.placeholder) {
     value.placeholder = true
   } else {
-    this.set(type, tx.hash)
+    this.set(type, hash)
   }
 
   this.txMap = omitBy(this.txMap, value => value.type === type && value.placeholder)
