@@ -277,17 +277,21 @@ OrderSchema.methods.verifyPassphrase = function (passphrase) {
   return crypto.verify(passphrase, this.passphraseSalt, this.passphraseHash)
 }
 
-OrderSchema.methods.setUserParams = async function (fromAddress, toAddress, fromFundHash, secretHash) {
+OrderSchema.methods.setUserParams = function (fromAddress, toAddress, secretHash) {
   if (secretHash.length !== 64) throw new Error('Secret hash size incorrect')
 
   this.fromAddress = fromAddress
   this.toAddress = toAddress
   this.secretHash = secretHash
-  await this.updateFromFundHash(fromFundHash)
 }
 
 OrderSchema.methods.updateFromFundHash = async function (fromFundHash) {
   if (fromFundHash.length !== 64) throw new Error('From fund hash size incorrect')
+
+  const fromFundHashExists = await Order.findOne({ fromFundHash }).exec()
+  if (fromFundHashExists) {
+    throw new Error(`Duplicate fromFundHash: ${fromFundHash}`)
+  }
 
   this.fromFundHash = fromFundHash
 } 

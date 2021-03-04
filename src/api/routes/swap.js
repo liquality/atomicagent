@@ -125,17 +125,14 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     return res.notOk(400, `Order fromFundHash invalid: ${body.fromFundHash}`)
   }
 
-  const fromFundHash = formatHash(body.fromFundHash)
-
-  const fromFundHashExists = await Order.findOne({ fromFundHash }).exec()
-  if (fromFundHashExists) {
-    return res.notOk(400, `Duplicate fromFundHash: ${fromFundHash}`)
+  if (oldStatus === 'QUOTE') {
+    order.setUserParams(body.fromAddress, body.toAddress, body.secretHash)
   }
 
-  if (oldStatus === 'USER_FUNDED_UNVERIFIED') order.updateFromFundHash(fromFundHash)
-  else order.setUserParams(body.fromAddress, body.toAddress, fromFundHash, body.secretHash)
-
+  const fromFundHash = formatHash(body.fromFundHash)
+  await order.updateFromFundHash(fromFundHash)
   order.addTx('fromFundHash', { hash: fromFundHash })
+
   order.status = 'USER_FUNDED_UNVERIFIED'
 
   await order.save()
