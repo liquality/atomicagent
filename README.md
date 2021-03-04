@@ -29,19 +29,14 @@ npm run migrate
 npm run api
 npm run worker # in a separate shell
 ```
-
-## Test
-
-### Configure
+## Test!
 
 ```bash
+# Remove old bitcoin data folder if it exists
+# rm -rf test/docker/config/regtest
 cp sample.config.toml test.config.toml
-nano config.toml # configure your agent as per your test environment
-```
-
-### Test!
-
-```bash
+chmod -R 777 test/docker/config
+npm run docker:start
 npm test
 ```
 
