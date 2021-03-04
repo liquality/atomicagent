@@ -87,61 +87,89 @@ const OrderSchema = new mongoose.Schema({
   },
   fromCounterPartyAddress: {
     type: String,
-    index: true
+    index: true,
+    get: address => formatAddress(address),
+    set: address => formatAddress(address)
   },
   toCounterPartyAddress: {
     type: String,
-    index: true
+    index: true,
+    get: address => formatAddress(address),
+    set: address => formatAddress(address)
   },
 
   fromAddress: {
     type: String,
-    index: true
+    index: true,
+    get: address => formatAddress(address),
+    set: address => formatAddress(address)
   },
   toAddress: {
     type: String,
-    index: true
+    index: true,
+    get: address => formatAddress(address),
+    set: address => formatAddress(address)
   },
 
   fromFundHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   fromSecondaryFundHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   fromRefundHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   fromClaimHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   toFundHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   toSecondaryFundHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   toClaimHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   toRefundHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   secretHash: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   secret: {
     type: String,
-    index: true
+    index: true,
+    get: hash => formatHash(hash),
+    set: hash => formatHash(hash)
   },
   swapExpiration: {
     type: Number,
