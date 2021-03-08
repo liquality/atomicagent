@@ -10,6 +10,7 @@ const MarketHistory = require('./MarketHistory')
 const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
+const { lowerCaseWithout0x } = require('../utils/tx')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
@@ -104,43 +105,73 @@ const OrderSchema = new mongoose.Schema({
 
   fromFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   fromSecondaryFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   fromRefundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   fromClaimHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   toFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   toSecondaryFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   toClaimHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   toRefundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   secretHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   secret: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: lowerCaseWithout0x
   },
   swapExpiration: {
     type: Number,
@@ -357,9 +388,10 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
+  const hash = lowerCaseWithout0x(tx.hash)
   const asset = this[side]
-  const key = `txMap.${tx.hash}`
-  const value = { asset, type, hash: tx.hash }
+  const key = `txMap.${hash}`
+  const value = { asset, type, hash }
 
   if (tx.fee || tx.feePrice) {
     value.feeAmount = tx.fee
@@ -379,7 +411,7 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (tx.placeholder) {
     value.placeholder = true
   } else {
-    this.set(type, tx.hash)
+    this.set(type, hash)
   }
 
   this.txMap = omitBy(this.txMap, value => value.type === type && value.placeholder)
