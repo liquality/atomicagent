@@ -5,9 +5,11 @@ const debug = require('debug')('liquality:agent:worker:error-handler')
 
 const config = require('../config')
 
-const getStatusCode = e => _.get(e, 'statusCode') || _.get(e, 'response.status') || _.get(e, 'response.statusCode', '')
-const getResponseBody = e => _.get(e, 'response.data') || _.get(e, 'response.body', '')
-const getRequestUrl = e => _.get(e, 'config.url', '')
+const getStatusCode = e => _.get(e, 'statusCode') || _.get(e, 'response.status') || _.get(e, 'response.statusCode')
+const getResponseBody = e => _.get(e, 'response.data') || _.get(e, 'response.body')
+const getRequestUrl = e => _.get(e, 'config.url') || e.url
+const getRequestData = e => e.data
+const getRequestParams = e => e.params
 
 module.exports = async (err, job) => {
   if (
@@ -28,9 +30,15 @@ module.exports = async (err, job) => {
   }
 
   const httpData = {
-    statusCode: getStatusCode(err),
-    url: getRequestUrl(err),
-    responseBody: getResponseBody(err)
+    req: {
+      url: getRequestUrl(err),
+      data: getRequestData(err),
+      params: getRequestParams(err)
+    },
+    res: {
+      statusCode: getStatusCode(err),
+      body: getResponseBody(err)
+    }
   }
 
   debug(
@@ -42,13 +50,15 @@ module.exports = async (err, job) => {
   )
 
   Sentry.withScope(scope => {
-    scope.setTag('httpUrl', httpData.url)
-    scope.setTag('httpStatusCode', httpData.statusCode)
+    scope.setTag('httpUrl', httpData.req.url)
+    scope.setTag('httpResponseStatusCode', httpData.res.statusCode)
     scope.setTag('jobName', _.get(job, 'attrs.name'))
     scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
 
     scope.setExtra('attrs', job.attrs)
-    scope.setExtra('response_body', httpData.responseBody)
+    scope.setExtra('httpRequestData', httpData.req.data)
+    scope.setExtra('httpRequestParams', httpData.req.params)
+    scope.setExtra('httpResponseBody', httpData.res.responseBody)
 
     Sentry.captureException(err)
   })

@@ -191,7 +191,9 @@ module.exports = (contexts, { refund, reject }) => {
         await wait(waitFor)
         console.log('[user] Attempting refund now')
 
-        return Bluebird.map(contexts, context => refundSwap(context))
+        return Bluebird
+          .map(contexts, context => refundSwap(context))
+          .then(() => console.log('[user] Refunded'))
       })
 
       it('should verify refund', async function () {
