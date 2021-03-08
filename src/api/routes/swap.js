@@ -24,9 +24,10 @@ router.get('/assetinfo', asyncHandler(async (req, res) => {
 router.get('/marketinfo', ensureUserAgentCompatible([]), asyncHandler(async (req, res) => {
   const { query } = req
 
+  const q = _.pick(query, ['from', 'to'])
+
   const result = await Market.find({
-    from: query.from,
-    to: query.to,
+    ...q,
     status: 'ACTIVE'
   }).exec()
 
