@@ -1,6 +1,7 @@
 const semver = require('semver')
+const Client = require('@liquality/client')
 
-const MIN_COMPATIBLE_CAL_VERSION = '0.8.15'
+const MIN_COMPATIBLE_CAL_VERSION = `~${Client.version}`
 const USER_AGENT_REGEX = /Wallet (\d.*?\.\d.*?\.\d.*?) \(CAL (\d.*?\.\d.*?\.\d.*?)\)/
 
 module.exports = (incompatibleResponse) => (req, res, next) => {
@@ -11,7 +12,7 @@ module.exports = (incompatibleResponse) => (req, res, next) => {
     const matches = USER_AGENT_REGEX.exec(userAgent)
     if (matches) {
       const calVersion = matches[2]
-      const isUserAgentCompatible = semver.gte(calVersion, MIN_COMPATIBLE_CAL_VERSION)
+      const isUserAgentCompatible = semver.satisfies(calVersion, MIN_COMPATIBLE_CAL_VERSION)
       if (!isUserAgentCompatible) return res.json(incompatibleResponse)
     }
   }
