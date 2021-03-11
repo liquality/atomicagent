@@ -427,10 +427,12 @@ OrderSchema.methods.claimSwap = async function () {
 
     return fromClient.swap.claimSwap(
       this.fromFundHash,
+      this.fromAmount,
       this.fromCounterPartyAddress,
       this.fromAddress,
-      this.secret,
+      this.secretHash,
       this.swapExpiration,
+      this.secret,
       fees[defaultFee].fee
     )
   })
@@ -445,6 +447,7 @@ OrderSchema.methods.refundSwap = async function () {
 
     const refundTx = await toClient.swap.refundSwap(
       this.toFundHash,
+      this.toAmount,
       this.toAddress,
       this.toCounterPartyAddress,
       this.secretHash,

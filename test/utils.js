@@ -282,10 +282,12 @@ module.exports.claim = async context => {
 
     return toClient.swap.claimSwap(
       context.toFundHash,
+      context.toAmount,
       context.toAddress,
       context.toCounterPartyAddress,
-      context.secret,
+      context.secretHash,
       context.nodeSwapExpiration,
+      context.secret,
       fees[defaultFee].fee
     )
   })
@@ -301,6 +303,7 @@ module.exports.refundSwap = async context => {
 
     const { hash } = await fromClient.swap.refundSwap(
       context.fromFundHash,
+      context.fromAmount,
       context.fromCounterPartyAddress,
       context.fromAddress,
       context.secretHash,
