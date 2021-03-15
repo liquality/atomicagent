@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
 const cryptoassets = require('@liquality/cryptoassets').default
-
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -578,6 +577,7 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
     try {
       const tx = await fromClient.swap.findRefundSwapTransaction(
         this.fromFundHash,
+        this.fromAmount,
         this.fromCounterPartyAddress,
         this.fromAddress,
         this.secretHash,
@@ -607,6 +607,7 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
     try {
       const tx = await toClient.swap.findClaimSwapTransaction(
         this.toFundHash,
+        this.toAmount,
         this.toAddress,
         this.toCounterPartyAddress,
         this.secretHash,

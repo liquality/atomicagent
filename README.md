@@ -42,7 +42,10 @@ nano config.toml # configure your agent as per your test environment
 ### Test!
 
 ```bash
-npm test
+chmod -R 777 test/docker/config
+npm run docker:start
+sleep 30
+npm run test
 ```
 
 ## License
