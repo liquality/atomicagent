@@ -9,7 +9,7 @@ const MarketHistory = require('./MarketHistory')
 const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
-const { lowerCaseWithout0x } = require('../utils/tx')
+const { toLowerCaseWithout0x } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
@@ -107,70 +107,70 @@ const OrderSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   fromSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   fromRefundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   fromClaimHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   toFundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   toSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   toClaimHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   toRefundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   secretHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   secret: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: true,
-    set: lowerCaseWithout0x
+    set: toLowerCaseWithout0x
   },
   swapExpiration: {
     type: Number,
@@ -387,7 +387,7 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
-  const hash = lowerCaseWithout0x(tx.hash)
+  const hash = toLowerCaseWithout0x(tx.hash)
   const asset = this[side]
   const key = `txMap.${hash}`
   const value = { asset, type, hash }

@@ -11,6 +11,7 @@ const Job = require('../../models/Job')
 const pkg = require('../../../package.json')
 
 const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentCompatible')
+const hashUtil = require('../../utils/hash')
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
@@ -111,9 +112,14 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     return res.notOk(400, 'Order cannot be updated after funding')
   }
 
-  const fromFundHashExists = await Order.findOne({ fromFundHash: body.fromFundHash }).exec()
-  if (fromFundHashExists) {
-    return res.notOk(400, `Duplicate fromFundHash: ${body.fromFundHash}`)
+  if (!hashUtil.isValidTxHash(body.fromFundHash)) {
+    return res.notOk(400, 'Invalid fromFundHash')
+  }
+
+  if (body.secretHash) {
+    if (!hashUtil.isValidSecretHash(body.secretHash)) {
+      return res.notOk(400, 'Invalid secretHash')
+    }
   }
 
   const keysToBeCopied = oldStatus === 'USER_FUNDED_UNVERIFIED'
@@ -133,7 +139,16 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
   order.addTx('fromFundHash', { hash: body.fromFundHash })
   order.status = 'USER_FUNDED_UNVERIFIED'
 
-  await order.save()
+  try {
+    await order.save()
+  } catch (e) {
+    if (e.name === 'MongoError' && e.code === 11000) {
+      return res.notOk(400, 'Duplicate order')
+    }
+
+    throw e
+  }
+
   await order.log('SWAP_UPDATE', null, body)
 
   if (oldStatus === 'QUOTE') {
