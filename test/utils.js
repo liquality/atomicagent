@@ -209,7 +209,7 @@ module.exports.updateAgentOrder = (context, request, isDuplicate = false) => {
     .then(res => {
       if (isDuplicate) {
         res.should.have.status(400)
-        res.body.error.should.equal('Duplicate order')
+        res.body.error.should.equal(`Duplicate order: ${context.orderId}`)
       } else {
         res.should.have.status(200)
         res.body.should.be.a('object')
