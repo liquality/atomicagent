@@ -1,3 +1,4 @@
+const Sentry = require('@sentry/node')
 const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
@@ -12,6 +13,18 @@ const pkg = require('../../../package.json')
 
 const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentCompatible')
 const hashUtil = require('../../utils/hash')
+const {
+  MarketNotFoundError,
+  MarketNotActiveError,
+  InvalidAmountError,
+  CounterPartyInsufficientBalanceError,
+  OrderNotFoundError,
+  UnauthorisedError,
+  InvalidOrderStateError,
+  InvalidHashError,
+  InvalidHTTPBodyError,
+  DuplicateOrderError
+} = require('../../utils/errors')
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
@@ -46,16 +59,25 @@ router.post('/order', asyncHandler(async (req, res) => {
 
   const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
   if (!market) {
+    Sentry.captureException(
+      new MarketNotFoundError(`Market not found: ${body.from}-${body.to}`)
+    )
     return res.notOk(400, `Market not found: ${body.from}-${body.to}`)
   }
 
   if (market.status !== 'ACTIVE') {
+    Sentry.captureException(
+      new MarketNotActiveError(`Market is not active: ${body.from}-${body.to}`)
+    )
     return res.notOk(400, `Market is not active: ${body.from}-${body.to}`)
   }
 
   const { fromAmount } = body
   if (!(market.min <= fromAmount &&
     fromAmount <= market.max)) {
+    Sentry.captureException(
+      new InvalidAmountError(`Invalid amount: ${fromAmount} (min: ${market.min}, max: ${market.max})`)
+    )
     return res.notOk(400, `Invalid amount: ${fromAmount} (min: ${market.min}, max: ${market.max})`)
   }
 
@@ -65,6 +87,9 @@ router.post('/order', asyncHandler(async (req, res) => {
   const balance = await order.toClient().chain.getBalance(addresses)
 
   if (BigNumber(balance).isLessThan(BigNumber(order.toAmount))) {
+    Sentry.captureException(
+      new CounterPartyInsufficientBalanceError('Counterparty has insufficient balance')
+    )
     return res.notOk(400, 'Counterparty has insufficient balance')
   }
 
@@ -95,6 +120,9 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
 
   const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) {
+    Sentry.captureException(
+      new OrderNotFoundError(`Order not found: ${params.orderId}`)
+    )
     return res.notOk(400, `Order not found: ${params.orderId}`)
   }
 
@@ -102,6 +130,9 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
     if (!passphrase || !order.verifyPassphrase(passphrase)) {
+      Sentry.captureException(
+        new UnauthorisedError('Unauthorised')
+      )
       return res.notOk(401, 'You are not authorised')
     }
   }
@@ -109,16 +140,25 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
   const oldStatus = order.status
 
   if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(oldStatus)) {
-    return res.notOk(400, 'Order cannot be updated after funding')
+    Sentry.captureException(
+      new InvalidOrderStateError(`Order cannot be updated after funding: ${params.orderId}`)
+    )
+    return res.notOk(400, `Order cannot be updated after funding: ${params.orderId}`)
   }
 
   if (!hashUtil.isValidTxHash(body.fromFundHash)) {
-    return res.notOk(400, 'Invalid fromFundHash')
+    Sentry.captureException(
+      new InvalidHashError(`Invalid fromFundHash: ${body.fromFundHash}`)
+    )
+    return res.notOk(400, `Invalid fromFundHash: ${body.fromFundHash}`)
   }
 
   if (body.secretHash) {
     if (!hashUtil.isValidSecretHash(body.secretHash)) {
-      return res.notOk(400, 'Invalid secretHash')
+      Sentry.captureException(
+        new InvalidHashError(`Invalid secretHash: ${body.secretHash}`)
+      )
+      return res.notOk(400, `Invalid secretHash: ${body.secretHash}`)
     }
   }
 
@@ -130,6 +170,9 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     const key = keysToBeCopied[i]
 
     if (!body[key]) {
+      Sentry.captureException(
+        new InvalidHTTPBodyError(`Missing key from request body: ${key}`)
+      )
       return res.notOk(400, `Missing key from request body: ${key}`)
     }
 
@@ -143,7 +186,10 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     await order.save()
   } catch (e) {
     if (e.name === 'MongoError' && e.code === 11000) {
-      return res.notOk(400, 'Duplicate order')
+      Sentry.captureException(
+        new DuplicateOrderError(`Duplicate order: ${params.orderId}`)
+      )
+      return res.notOk(400, `Duplicate order: ${params.orderId}`)
     }
 
     throw e
@@ -163,6 +209,9 @@ router.get('/order/:orderId', asyncHandler(async (req, res) => {
 
   const order = await Order.findOne({ orderId: params.orderId }).exec()
   if (!order) {
+    Sentry.captureException(
+      new OrderNotFoundError(`Order not found: ${params.orderId}`)
+    )
     return res.notOk(400, 'Order not found')
   }
 
@@ -170,6 +219,9 @@ router.get('/order/:orderId', asyncHandler(async (req, res) => {
     const passphrase = query.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
     if (!passphrase || !order.verifyPassphrase(passphrase)) {
+      Sentry.captureException(
+        new UnauthorisedError('Unauthorised')
+      )
       return res.notOk(401, 'You are not authorised')
     }
   }
