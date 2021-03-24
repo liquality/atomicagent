@@ -1,7 +1,9 @@
 const _ = require('lodash')
 
 module.exports = () => function (req, res, next) {
-  if (req.xhr || _.get(req, 'headers.accept', '').includes('json')) {
+  if (req.xhr ||
+      _.get(req, 'headers.accept', '').includes('json') ||
+      process.env.NODE_ENV === 'test') {
     req.acceptJson = true
   }
 

@@ -20,7 +20,7 @@ const EthereumErc20SwapProvider = require('@liquality/ethereum-erc20-swap-provid
 const EthereumNetworks = require('@liquality/ethereum-networks')
 const EthereumScraperSwapFindProvider = require('@liquality/ethereum-scraper-swap-find-provider')
 const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
-const EthereumGasStationFeeProvider = require('@liquality/ethereum-gas-station-fee-provider')
+const EthereumGasNowFeeProvider = require('@liquality/ethereum-gas-now-fee-provider')
 const EthereumRpcFeeProvider = require('@liquality/ethereum-rpc-fee-provider')
 
 function createBtcClient () {
@@ -83,7 +83,7 @@ function createEthClient (asset) {
   if (network.isTestnet || asset === 'RBTC') {
     ethClient.addProvider(new EthereumRpcFeeProvider())
   } else {
-    ethClient.addProvider(new EthereumGasStationFeeProvider())
+    ethClient.addProvider(new EthereumGasNowFeeProvider())
   }
 
   return ethClient
@@ -118,7 +118,7 @@ function createERC20Client (asset) {
   if (network.isTestnet || asset === 'RBTC') {
     erc20Client.addProvider(new EthereumRpcFeeProvider())
   } else {
-    erc20Client.addProvider(new EthereumGasStationFeeProvider())
+    erc20Client.addProvider(new EthereumGasNowFeeProvider())
   }
 
   return erc20Client

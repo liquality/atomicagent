@@ -31,6 +31,7 @@ async function main () {
 
     const fromClaimTx = await fromClient.swap.findClaimSwapTransaction(
       order.fromFundHash,
+      order.fromAmount,
       order.fromCounterPartyAddress,
       order.fromAddress,
       order.secretHash,

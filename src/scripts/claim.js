@@ -25,6 +25,7 @@ async function main () {
 
   const toClaimTx = await toClient.swap.findClaimSwapTransaction(
     order.toFundHash,
+    order.toAmount,
     order.toAddress,
     order.toCounterPartyAddress,
     order.secretHash,
@@ -38,10 +39,12 @@ async function main () {
 
   const fromClaimTx = await fromClient.swap.claimSwap(
     order.fromFundHash,
+    order.fromAmount,
     order.fromCounterPartyAddress,
     order.fromAddress,
-    order.secret,
-    order.swapExpiration
+    order.secretHash,
+    order.swapExpiration,
+    order.secret
   )
 
   order.status = 'AGENT_CLAIMED'

@@ -192,6 +192,10 @@ module.exports.fund = async (context, request) => {
     context.fromSecondaryFundHash = tx.hash
   }
 
+  return module.exports.updateAgentOrder(context, request)
+}
+
+module.exports.updateAgentOrder = (context, request, isDuplicate = false) => {
   return request
     .post(`/api/swap/order/${context.orderId}`)
     .send({
@@ -203,16 +207,21 @@ module.exports.fund = async (context, request) => {
       nodeSwapExpiration: context.nodeSwapExpiration
     })
     .then(res => {
-      res.should.have.status(200)
-      res.body.should.be.a('object')
+      if (isDuplicate) {
+        res.should.have.status(400)
+        res.body.error.should.equal(`Duplicate order: ${context.orderId}`)
+      } else {
+        res.should.have.status(200)
+        res.body.should.be.a('object')
 
-      res.body.orderId.should.equal(context.orderId)
-      res.body.from.should.equal(context.from)
-      res.body.to.should.equal(context.to)
-      res.body.fromAmount.should.equal(context.fromAmount)
-      res.body.status.should.equal('USER_FUNDED_UNVERIFIED')
+        res.body.orderId.should.equal(context.orderId)
+        res.body.from.should.equal(context.from)
+        res.body.to.should.equal(context.to)
+        res.body.fromAmount.should.equal(context.fromAmount)
+        res.body.status.should.equal('USER_FUNDED_UNVERIFIED')
 
-      Object.assign(context, res.body)
+        Object.assign(context, res.body)
+      }
     })
 }
 
@@ -282,10 +291,12 @@ module.exports.claim = async context => {
 
     return toClient.swap.claimSwap(
       context.toFundHash,
+      context.toAmount,
       context.toAddress,
       context.toCounterPartyAddress,
-      context.secret,
+      context.secretHash,
       context.nodeSwapExpiration,
+      context.secret,
       fees[defaultFee].fee
     )
   })
@@ -301,6 +312,7 @@ module.exports.refundSwap = async context => {
 
     const { hash } = await fromClient.swap.refundSwap(
       context.fromFundHash,
+      context.fromAmount,
       context.fromCounterPartyAddress,
       context.fromAddress,
       context.secretHash,

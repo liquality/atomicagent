@@ -34,6 +34,7 @@ async function main () {
     try {
       toRefundTx = await toClient.swap.findRefundSwapTransaction(
         order.toFundHash,
+        order.toAmount,
         order.toAddress,
         order.toCounterPartyAddress,
         order.secretHash,

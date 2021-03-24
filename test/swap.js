@@ -23,7 +23,8 @@ const {
   verifyClaimOrRefund,
   verifyUserRefund,
   verifyAllTxs,
-  approveOrder
+  approveOrder,
+  updateAgentOrder
 } = require('./utils')
 
 module.exports = (contexts, { refund, reject }) => {
@@ -97,6 +98,31 @@ module.exports = (contexts, { refund, reject }) => {
         await initiate(context, request)
         await fundContext(context, request)
       }).then(() => request.close())
+    })
+
+    it('should reject duplicate fromFundHash', async function () {
+      this.timeout(0)
+
+      const request = chai.request(app()).keepOpen()
+
+      return Bluebird
+        .map(contexts, async context => {
+          const ctx = {
+            from: context.from,
+            to: context.to,
+            fromAmount: context.fromAmount
+          }
+
+          await requestQuote(ctx, request)
+
+          ctx.fromAddress = context.fromAddress
+          ctx.toAddress = context.toAddress
+          ctx.secretHash = context.secretHash
+          ctx.fromFundHash = context.fromFundHash
+
+          return updateAgentOrder(ctx, request, true)
+        })
+        .then(() => request.close())
     })
 
     it('should verify funding of the quote', async function () {
@@ -191,7 +217,9 @@ module.exports = (contexts, { refund, reject }) => {
         await wait(waitFor)
         console.log('[user] Attempting refund now')
 
-        return Bluebird.map(contexts, context => refundSwap(context))
+        return Bluebird
+          .map(contexts, context => refundSwap(context))
+          .then(() => console.log('[user] Refunded'))
       })
 
       it('should verify refund', async function () {

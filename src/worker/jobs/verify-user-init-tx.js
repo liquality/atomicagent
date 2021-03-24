@@ -16,7 +16,7 @@ module.exports = async job => {
   if (order.isQuoteExpired()) {
     debug(`Order ${order.orderId} expired due to expiresAt`)
 
-    order.addTx('fromRefundHash', { hash: Date.now(), placeholder: true })
+    order.addTx('fromRefundHash', { placeholder: true })
     order.status = 'QUOTE_EXPIRED'
     await order.save()
 

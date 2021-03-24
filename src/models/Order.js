@@ -2,7 +2,6 @@ const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
 const cryptoassets = require('@liquality/cryptoassets').default
-
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -10,6 +9,7 @@ const MarketHistory = require('./MarketHistory')
 const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
+const { toLowerCaseWithout0x } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
@@ -72,6 +72,10 @@ const OrderSchema = new mongoose.Schema({
     type: Number,
     index: true
   },
+  spread: {
+    type: Number,
+    index: true
+  },
   minConf: {
     type: Number,
     index: true
@@ -100,43 +104,73 @@ const OrderSchema = new mongoose.Schema({
 
   fromFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   fromSecondaryFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   fromRefundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   fromClaimHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   toFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   toSecondaryFundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   toClaimHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   toRefundHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   secretHash: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   secret: {
     type: String,
-    index: true
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    set: toLowerCaseWithout0x
   },
   swapExpiration: {
     type: Number,
@@ -353,33 +387,38 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
+  const hash = tx.placeholder ? uuidv4() : toLowerCaseWithout0x(tx.hash)
   const asset = this[side]
-  const key = `txMap.${tx.hash}`
-  const value = { asset, type, hash: tx.hash }
+  const txMapItemValue = {
+    asset,
+    type,
+    hash
+  }
 
   if (tx.fee || tx.feePrice) {
-    value.feeAmount = tx.fee
-    value.feePrice = tx.feePrice
+    txMapItemValue.feeAmount = tx.fee
+    txMapItemValue.feePrice = tx.feePrice
 
     const { type } = cryptoassets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
     const chain = type === 'erc20' ? 'ETH' : asset
-    value.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
+    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
   if (tx.blockHash) {
-    value.blockHash = tx.blockHash
-    value.blockNumber = tx.blockNumber
+    txMapItemValue.blockHash = tx.blockHash
+    txMapItemValue.blockNumber = tx.blockNumber
   }
 
   if (tx.placeholder) {
-    value.placeholder = true
+    txMapItemValue.placeholder = true
   } else {
-    this.set(type, tx.hash)
+    this.set(type, hash)
   }
 
-  this.txMap = omitBy(this.txMap, value => value.type === type && value.placeholder)
-  this.set(key, value)
+  // remove existing placeholder tx with same type
+  this.txMap = omitBy(this.txMap, (value, key) => value.type === type && value.placeholder)
+  this.set(`txMap.${hash}`, txMapItemValue)
 }
 
 OrderSchema.methods.claimSwap = async function () {
@@ -391,10 +430,12 @@ OrderSchema.methods.claimSwap = async function () {
 
     return fromClient.swap.claimSwap(
       this.fromFundHash,
+      this.fromAmount,
       this.fromCounterPartyAddress,
       this.fromAddress,
-      this.secret,
+      this.secretHash,
       this.swapExpiration,
+      this.secret,
       fees[defaultFee].fee
     )
   })
@@ -409,6 +450,7 @@ OrderSchema.methods.refundSwap = async function () {
 
     const refundTx = await toClient.swap.refundSwap(
       this.toFundHash,
+      this.toAmount,
       this.toAddress,
       this.toCounterPartyAddress,
       this.secretHash,
@@ -539,6 +581,7 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
     try {
       const tx = await fromClient.swap.findRefundSwapTransaction(
         this.fromFundHash,
+        this.fromAmount,
         this.fromCounterPartyAddress,
         this.fromAddress,
         this.secretHash,
@@ -568,6 +611,7 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
     try {
       const tx = await toClient.swap.findClaimSwapTransaction(
         this.toFundHash,
+        this.toAmount,
         this.toAddress,
         this.toCounterPartyAddress,
         this.secretHash,
@@ -604,6 +648,7 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     from: market.from,
     to: market.to,
     rate: market.rate,
+    spread: market.spread,
     minConf: market.minConf,
 
     expiresAt: Date.now() + market.orderExpiresIn,
