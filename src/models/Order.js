@@ -387,34 +387,38 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
-  const hash = toLowerCaseWithout0x(tx.hash)
+  const hash = tx.placeholder ? uuidv4() : toLowerCaseWithout0x(tx.hash)
   const asset = this[side]
-  const key = `txMap.${hash}`
-  const value = { asset, type, hash }
+  const txMapItemValue = {
+    asset,
+    type,
+    hash
+  }
 
   if (tx.fee || tx.feePrice) {
-    value.feeAmount = tx.fee
-    value.feePrice = tx.feePrice
+    txMapItemValue.feeAmount = tx.fee
+    txMapItemValue.feePrice = tx.feePrice
 
     const { type } = cryptoassets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
     const chain = type === 'erc20' ? 'ETH' : asset
-    value.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
+    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
   if (tx.blockHash) {
-    value.blockHash = tx.blockHash
-    value.blockNumber = tx.blockNumber
+    txMapItemValue.blockHash = tx.blockHash
+    txMapItemValue.blockNumber = tx.blockNumber
   }
 
   if (tx.placeholder) {
-    value.placeholder = true
+    txMapItemValue.placeholder = true
   } else {
     this.set(type, hash)
   }
 
-  this.txMap = omitBy(this.txMap, value => value.type === type && value.placeholder)
-  this.set(key, value)
+  // remove existing placeholder tx with same type
+  this.txMap = omitBy(this.txMap, (value, key) => value.type === type && value.placeholder)
+  this.set(`txMap.${hash}`, txMapItemValue)
 }
 
 OrderSchema.methods.claimSwap = async function () {

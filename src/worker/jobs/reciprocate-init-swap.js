@@ -36,7 +36,7 @@ module.exports = async job => {
       order.status = 'SWAP_EXPIRED'
     }
 
-    order.addTx('fromRefundHash', { hash: Date.now(), placeholder: true })
+    order.addTx('fromRefundHash', { placeholder: true })
     await order.save()
 
     await order.log('RECIPROCATE_INIT_SWAP', null, {
