@@ -381,7 +381,7 @@ OrderSchema.methods.isNodeSwapExpired = function (toCurrentBlock) {
 
 OrderSchema.methods.addTx = function (type, tx) {
   if (!type) throw new Error('Invalid type')
-  if (!tx) throw new Error('Invalid tx')
+  if (!tx || !(tx.placeholder || tx.hash)) throw new Error('Invalid tx')
 
   let side = type.match(/^from|^to/)
   if (!side) throw new Error(`Invalid tx type: ${type}`)
