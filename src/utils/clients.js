@@ -80,7 +80,7 @@ function createEthClient (asset) {
   ethClient.addProvider(new EthereumSwapProvider())
   ethClient.addProvider(new EthereumScraperSwapFindProvider(ethConfig.scraper.url))
 
-  if (network.isTestnet || asset === 'RBTC') {
+  if (network.isTestnet || asset === 'RBTC' || asset === 'BNB') {
     ethClient.addProvider(new EthereumRpcFeeProvider())
   } else {
     ethClient.addProvider(new EthereumGasStationFeeProvider())
@@ -115,7 +115,7 @@ function createERC20Client (asset) {
   erc20Client.addProvider(new EthereumErc20SwapProvider())
   erc20Client.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
 
-  if (network.isTestnet || asset === 'RBTC') {
+  if (network.isTestnet || asset === 'RBTC' || asset === 'BNB') {
     erc20Client.addProvider(new EthereumRpcFeeProvider())
   } else {
     erc20Client.addProvider(new EthereumGasStationFeeProvider())
@@ -128,6 +128,7 @@ const clientCreators = {
   BTC: createBtcClient,
   ETH: createEthClient,
   RBTC: createEthClient,
+  BNB: createEthClient,
   ERC20: createERC20Client
 }
 
