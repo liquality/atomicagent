@@ -34,7 +34,7 @@ async function main () {
     const pendingTxs = txs.filter(({ blockHash }) => !blockHash)
 
     confirmedTxs.forEach(({ type, hash }) => {
-      const pendingTx = pendingTxs.find(ptx => ptx.type === type)
+      const pendingTx = pendingTxs.find(ptx => ptx.type === type && !ptx.replacedBy)
       if (pendingTx) {
         order.set(`txMap.${pendingTx.hash}.replacedBy`, hash)
       }
