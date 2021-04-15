@@ -16,7 +16,6 @@ const hashUtil = require('../../utils/hash')
 const {
   MarketNotFoundError,
   MarketNotActiveError,
-  InvalidAmountError,
   CounterPartyInsufficientBalanceError,
   OrderNotFoundError,
   UnauthorisedError,
@@ -75,9 +74,6 @@ router.post('/order', asyncHandler(async (req, res) => {
   const { fromAmount } = body
   if (!(market.min <= fromAmount &&
     fromAmount <= market.max)) {
-    Sentry.captureException(
-      new InvalidAmountError(`Invalid amount: ${fromAmount} (min: ${market.min}, max: ${market.max})`)
-    )
     return res.notOk(400, `Invalid amount: ${fromAmount} (min: ${market.min}, max: ${market.max})`)
   }
 
