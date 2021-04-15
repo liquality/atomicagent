@@ -335,8 +335,8 @@ OrderSchema.pre('save', function (next) {
     ({ type }) => (type.startsWith('to') && !type.includes('Claim')) || (type.startsWith('from') && type.includes('Claim'))
   )
 
-  this.hasUserUnconfirmedTx = !userTxs.every(({ blockHash }) => blockHash)
-  this.hasAgentUnconfirmedTx = !agentTxs.every(({ blockHash }) => blockHash)
+  this.hasUserUnconfirmedTx = !userTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
+  this.hasAgentUnconfirmedTx = !agentTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
   this.hasUnconfirmedTx = this.hasUserUnconfirmedTx || this.hasAgentUnconfirmedTx
 
   this.totalAgentFeeUsd = 0
@@ -408,6 +408,15 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (tx.blockHash) {
     txMapItemValue.blockHash = tx.blockHash
     txMapItemValue.blockNumber = tx.blockNumber
+
+    // update existing tx:type entry with replacedBy key:val
+    Object
+      .entries(this.txMap)
+      .forEach(([key, value]) => {
+        if (value.type === type && !value.replacedBy) {
+          this.set(`txMap.${key}.replacedBy`, hash)
+        }
+      })
   }
 
   if (tx.placeholder) {
