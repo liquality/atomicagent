@@ -130,14 +130,10 @@ router.post('/order/retry', ensureAuth(401), asyncHandler(async (req, res) => {
 
 router.post('/order/ignore', ensureAuth(401), asyncHandler(async (req, res) => {
   const { body } = req
-  const { orderId, jobName } = body
+  const { orderId } = body
 
   if (!orderId) {
     return res.notOk(400, 'Order ID missing')
-  }
-
-  if (!ALLOWED_RETRY_JOBS.includes(jobName)) {
-    return res.notOk(400, `Invalid job name: ${jobName}`)
   }
 
   const order = await Order.findOne({ orderId: orderId }).exec()
