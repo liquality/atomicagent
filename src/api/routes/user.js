@@ -130,7 +130,7 @@ router.post('/order/retry', ensureAuth(401), asyncHandler(async (req, res) => {
 
 router.post('/order/ignore', ensureAuth(401), asyncHandler(async (req, res) => {
   const { body } = req
-  const { orderId } = body
+  const { orderId, setQuoteExpired } = body
 
   if (!orderId) {
     return res.notOk(400, 'Order ID missing')
@@ -149,7 +149,10 @@ router.post('/order/ignore', ensureAuth(401), asyncHandler(async (req, res) => {
       }
     })
 
-  order.status = 'QUOTE_EXPIRED'
+  if (setQuoteExpired) {
+    order.status = 'QUOTE_EXPIRED'
+  }
+
   await order.save()
 
   await order.log('IGNORE')
