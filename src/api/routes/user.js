@@ -99,7 +99,7 @@ router.post('/order/retry', ensureAuth(401), asyncHandler(async (req, res) => {
     return res.notOk(400, 'Order ID missing')
   }
 
-  if (!ALLOWED_RETRY_JOBS.includes(jobName)) {
+  if (!ALLOWED_RETRY_JOBS.find(job => job.name === jobName)) {
     return res.notOk(400, `Invalid job name: ${jobName}`)
   }
 
