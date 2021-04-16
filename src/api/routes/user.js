@@ -152,6 +152,8 @@ router.post('/order/ignore', ensureAuth(401), asyncHandler(async (req, res) => {
   order.status = 'QUOTE_EXPIRED'
   await order.save()
 
+  await order.log('IGNORE')
+
   res.ok()
 }))
 
