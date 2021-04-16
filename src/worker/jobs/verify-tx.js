@@ -15,8 +15,20 @@ module.exports = async job => {
 
   const hash = order[type]
 
-  const { asset, blockHash } = order.txMap[hash]
-  if (blockHash) return
+  let asset
+  const txMapEntry = order.txMap[hash]
+
+  if (txMapEntry) {
+    if (txMapEntry.blockHash) return
+
+    asset = txMapEntry.asset
+  } else {
+    let side = type.match(/^from|^to/)
+    if (!side) throw new Error(`Invalid tx type: ${type}`)
+    side = side[0]
+
+    asset = order[side]
+  }
 
   const client = getClient(asset)
   const tx = await client.chain.getTransactionByHash(hash)
