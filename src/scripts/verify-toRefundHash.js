@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const config = require('../config')
+const BN = require('bignumber.js')
 
 const mongooseOnError = err => {
   console.error(err)
@@ -33,12 +34,16 @@ async function main () {
 
     try {
       toRefundTx = await toClient.swap.findRefundSwapTransaction(
+        {
+          value: BN(order.toAmount),
+          recipientAddress: order.toAddress,
+          refundAddress: order.toCounterPartyAddress,
+          secretHash: order.secretHash,
+          expiration: order.nodeSwapExpiration
+        },
         order.toFundHash,
-        order.toAmount,
-        order.toAddress,
-        order.toCounterPartyAddress,
-        order.secretHash,
-        order.nodeSwapExpiration
+        //TODO Find the right block
+        order.fromStartBlock
       )
 
       if (!toRefundTx) {

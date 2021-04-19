@@ -13,6 +13,7 @@ const { toLowerCaseWithout0x } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
+const BN = require('bignumber.js')
 
 const OrderSchema = new mongoose.Schema({
   migrationVersion: {
@@ -429,12 +430,14 @@ OrderSchema.methods.claimSwap = async function () {
     const fees = await fromClient.chain.getFees()
 
     return fromClient.swap.claimSwap(
+      {
+        value: BN(this.fromAmount),
+        recipientAddress: this.fromCounterPartyAddress,
+        refundAddress: this.fromAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration,
+      },
       this.fromFundHash,
-      this.fromAmount,
-      this.fromCounterPartyAddress,
-      this.fromAddress,
-      this.secretHash,
-      this.swapExpiration,
       this.secret,
       fees[defaultFee].fee
     )
@@ -449,12 +452,14 @@ OrderSchema.methods.refundSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     const refundTx = await toClient.swap.refundSwap(
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.nodeSwapExpiration,
+      },
       this.toFundHash,
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.nodeSwapExpiration,
       fees[defaultFee].fee
     )
 
@@ -470,11 +475,13 @@ OrderSchema.methods.initiateSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.initiateSwap(
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.nodeSwapExpiration,
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.nodeSwapExpiration
+      },
       fees[defaultFee].fee
     )
   })
@@ -488,12 +495,14 @@ OrderSchema.methods.fundSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.fundSwap(
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.nodeSwapExpiration,
+      },
       this.toFundHash,
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.nodeSwapExpiration,
       fees[defaultFee].fee
     )
   })
@@ -504,12 +513,14 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
 
   try {
     const verified = await fromClient.swap.verifyInitiateSwapTransaction(
-      this.fromFundHash,
-      this.fromAmount,
-      this.fromCounterPartyAddress,
-      this.fromAddress,
-      this.secretHash,
-      this.swapExpiration
+      {
+        value: BN(this.fromAmount),
+        recipientAddress: this.fromCounterPartyAddress,
+        refundAddress: this.fromAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
+      this.fromFundHash
     )
 
     if (!verified) {
@@ -529,12 +540,14 @@ OrderSchema.methods.findFromFundSwapTransaction = async function () {
 
   try {
     const fromSecondaryFundTx = await fromClient.swap.findFundSwapTransaction(
-      this.fromFundHash,
-      this.fromAmount,
-      this.fromCounterPartyAddress,
-      this.fromAddress,
-      this.secretHash,
-      this.swapExpiration
+      {
+        value: BN(this.fromAmount),
+        recipientAddress: this.fromCounterPartyAddress,
+        refundAddress: this.fromAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
+      this.fromFundHash
     )
 
     return fromSecondaryFundTx
@@ -552,12 +565,14 @@ OrderSchema.methods.findToFundSwapTransaction = async function () {
 
   try {
     const toSecondaryFundTx = await toClient.swap.findFundSwapTransaction(
-      this.toFundHash,
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.swapExpiration
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
+      this.toFundHash
     )
 
     return toSecondaryFundTx
@@ -580,12 +595,14 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
   return blockScanOrFind(fromClient, async blockNumber => {
     try {
       const tx = await fromClient.swap.findRefundSwapTransaction(
+        {
+          value: BN(this.fromAmount),
+          recipientAddress: this.fromCounterPartyAddress,
+          refundAddress: this.fromAddress,
+          secretHash: this.secretHash,
+          expiration: this.swapExpiration
+        },
         this.fromFundHash,
-        this.fromAmount,
-        this.fromCounterPartyAddress,
-        this.fromAddress,
-        this.secretHash,
-        this.swapExpiration,
         blockNumber
       )
 
@@ -610,12 +627,14 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
   return blockScanOrFind(toClient, async blockNumber => {
     try {
       const tx = await toClient.swap.findClaimSwapTransaction(
+        {
+          value: BN(this.toAmount),
+          recipientAddress: this.toAddress,
+          refundAddress: this.toCounterPartyAddress,
+          secretHash: this.secretHash,
+          expiration: this.nodeSwapExpiration
+        },
         this.toFundHash,
-        this.toAmount,
-        this.toAddress,
-        this.toCounterPartyAddress,
-        this.secretHash,
-        this.nodeSwapExpiration,
         blockNumber
       )
 

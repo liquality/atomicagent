@@ -3,8 +3,9 @@
 const program = require('commander')
 const { addCommonOptions } = require('./common')
 const { getClient } = require('../src/utils/clients')
-const assets = require('@liquality/cryptoassets').default
+const assets = require('@liquality/cryptoassets')
 const config = require('../src/config')
+const BN = require('bignumber.js')
 
 addCommonOptions(program)
 
@@ -56,7 +57,7 @@ program
   .action(async (asset, address, amount) => {
     const amountInUnit = assets[asset].currencyToUnit(amount).toNumber()
     const client = getClient(asset)
-    const tx = await client.chain.sendTransaction(address, amountInUnit)
+    const tx = await client.chain.sendTransaction({ to: address, value: amountInUnit })
 
     console.log(tx)
   })
