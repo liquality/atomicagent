@@ -34,7 +34,7 @@ module.exports = async job => {
   const tx = await client.chain.getTransactionByHash(hash)
 
   if (tx.blockHash) {
-    if (cryptoassets[asset] === 'ethereum') {
+    if (cryptoassets[asset].chain === 'ethereum') {
       const receipt = await client.getMethod('getTransactionReceipt')(hash)
 
       if (!receipt) {
