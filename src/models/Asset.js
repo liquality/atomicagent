@@ -22,6 +22,10 @@ const AssetSchema = new mongoose.Schema({
 
   minConf: {
     type: Number
+  },
+
+  fixedUsdRate: {
+    type: Number
   }
 }, { timestamps: true })
 

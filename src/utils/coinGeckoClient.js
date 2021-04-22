@@ -27,24 +27,37 @@ class CoinGecko {
     return formattedData
   }
 
-  async getRates (markets) {
+  async getRates (markets, fixedUsdRates = {}) {
     const vsCurrencies = await this.getVsCurrencies()
 
     const vs = new Set(['USD'])
     const all = new Set([])
-    markets.forEach((market) => {
-      all.add(market.from)
-      all.add(market.to)
 
-      if (vsCurrencies.includes(market.from)) vs.add(market.from)
-      if (vsCurrencies.includes(market.to)) vs.add(market.to)
+    markets.forEach(market => {
+      if (!fixedUsdRates[market.from]) {
+        all.add(market.from)
+
+        if (vsCurrencies.includes(market.from)) vs.add(market.from)
+      }
+
+      if (!fixedUsdRates[market.to]) {
+        all.add(market.to)
+
+        if (vsCurrencies.includes(market.to)) vs.add(market.to)
+      }
     })
 
     const coinIds = [...all].map(currency => cryptoassets[currency].coinGeckoId)
 
     const rates = await this.getPrices(coinIds, [...vs])
 
-    return markets.map((market) => {
+    Object
+      .entries(fixedUsdRates)
+      .forEach(([asset, usdRate]) => {
+        rates[asset] = { USD: usdRate }
+      })
+
+    return markets.map(market => {
       let rate
 
       if (market.from in rates && market.to in rates[market.from]) {
