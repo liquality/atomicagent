@@ -84,8 +84,8 @@ function createEthClient (asset) {
   }
 
   const FeeProvider = assetData.chain === 'ethereum' && !network.isTestnet
-                      ? EthereumGasNowFeeProvider
-                      : EthereumRpcFeeProvider
+    ? EthereumGasNowFeeProvider
+    : EthereumRpcFeeProvider
   ethClient.addProvider(new FeeProvider())
 
   return ethClient
