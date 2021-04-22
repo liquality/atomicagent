@@ -3,7 +3,7 @@ const Agenda = require('agenda')
 
 const configureJobs = require('./configureJobs')
 const jobReporter = require('./jobReporter')
-const errorHandler = require('./errorHandler')
+const handleJobError = require('./handleJobError')
 const config = require('../config')
 
 let agenda
@@ -21,7 +21,7 @@ module.exports.start = async () => {
     jobReporter(agenda)
   }
 
-  agenda.on('fail', errorHandler)
+  agenda.on('fail', handleJobError)
 
   await agenda.start()
   await agenda.every('30 seconds', 'update-market-data')
