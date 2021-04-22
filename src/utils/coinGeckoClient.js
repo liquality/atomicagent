@@ -8,15 +8,6 @@ class CoinGecko {
     this._axios = axios.create({ baseURL: url })
   }
 
-  async getVsCurrencies () {
-    if (this._vsCurrencies) return this._vsCurrencies
-
-    const { data } = await this._axios.get('/simple/supported_vs_currencies')
-    this._vsCurrencies = data.map(c => c.toUpperCase()) // Normalize to agent casing
-
-    return this._vsCurrencies
-  }
-
   async getPrices (coinIds, vsCurrencies) {
     const formattedCoinIds = coinIds.join(',')
     const formattedVsCurrencies = vsCurrencies.map(c => c.toLowerCase()).join(',') // Normalize to agent casing
@@ -28,28 +19,20 @@ class CoinGecko {
   }
 
   async getRates (markets, fixedUsdRates = {}) {
-    const vsCurrencies = await this.getVsCurrencies()
-
-    const vs = new Set(['USD'])
     const all = new Set([])
 
     markets.forEach(market => {
       if (!fixedUsdRates[market.from]) {
         all.add(market.from)
-
-        if (vsCurrencies.includes(market.from)) vs.add(market.from)
       }
 
       if (!fixedUsdRates[market.to]) {
         all.add(market.to)
-
-        if (vsCurrencies.includes(market.to)) vs.add(market.to)
       }
     })
 
     const coinIds = [...all].map(currency => cryptoassets[currency].coinGeckoId)
-
-    const rates = await this.getPrices(coinIds, [...vs])
+    const rates = await this.getPrices(coinIds, ['USD', ...all])
 
     Object
       .entries(fixedUsdRates)
