@@ -17,7 +17,7 @@ const wait = millis => new Promise(resolve => setTimeout(() => resolve(), millis
 const waitForRandom = (min, max) => wait(_.random(min, max))
 
 const isERC20 = asset => {
-  return cryptoassets[asset].type === 'erc20'
+  return cryptoassets.assets[asset].type === 'erc20'
 }
 
 const getChainFromAsset = asset => {

@@ -1,18 +1,18 @@
 const cryptoassets = require('@liquality/cryptoassets').default
 
 function calculateToAmount (from, to, fromAmount, rate) {
-  const fromAmountBase = cryptoassets[from].unitToCurrency(fromAmount)
+  const fromAmountBase = cryptoassets.unitToCurrency(cryptoassets.assets[from], fromAmount)
   const toBaseAmount = fromAmountBase.times(rate).toNumber()
-  const toAmount = Math.floor(cryptoassets[to].currencyToUnit(toBaseAmount).toNumber())
+  const toAmount = Math.floor(cryptoassets.currencyToUnit(cryptoassets.assets[to], toBaseAmount).toNumber())
   return toAmount
 }
 
 function calculateUsdAmount (asset, amount, usdRate) {
-  return cryptoassets[asset].unitToCurrency(amount).times(usdRate).dp(2).toNumber()
+  return cryptoassets.unitToCurrency(cryptoassets.assets[asset], amount).times(usdRate).dp(2).toNumber()
 }
 
 function calculateFeeUsdAmount (asset, fee, usdRate) {
-  return cryptoassets[asset].unitToCurrency(fee).times(usdRate).dp(2).toNumber()
+  return cryptoassets.unitToCurrency(cryptoassets.assets[asset], fee).times(usdRate).dp(2).toNumber()
 }
 
 module.exports = {

@@ -107,70 +107,70 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   fromSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   fromRefundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   fromClaimHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   toFundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   toSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   toClaimHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   toRefundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   secretHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   secret: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
+    lowercase: false,
     set: toLowerCaseWithout0x
   },
   swapExpiration: {
@@ -285,8 +285,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = cryptoassets[this.from].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = cryptoassets[this.to].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = cryptoassets.chains[cryptoassets.assets[this.from].chain].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = cryptoassets.chains[cryptoassets.assets[this.to].chain].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -305,8 +305,8 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromType = cryptoassets[this.from].type
-  const toType = cryptoassets[this.to].type
+  const fromType = cryptoassets.assets[this.from].type
+  const toType = cryptoassets.assets[this.to].type
   let ethUsd
 
   if ([fromType, toType].includes('erc20')) {
@@ -400,7 +400,7 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-    const { type } = cryptoassets[asset]
+    const { type } = cryptoassets.assets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
     const chain = type === 'erc20' ? 'ETH' : asset
     txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0

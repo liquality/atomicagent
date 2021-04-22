@@ -22,7 +22,7 @@ class CoinGecko {
     const formattedVsCurrencies = vsCurrencies.map(c => c.toLowerCase()).join(',') // Normalize to agent casing
     const { data } = await this._axios.get(`/simple/price?ids=${formattedCoinIds}&vs_currencies=${formattedVsCurrencies}`)
     // Normalize to agent casing
-    let formattedData = _.mapKeys(data, (v, coinGeckoId) => _.findKey(cryptoassets, asset => asset.coinGeckoId === coinGeckoId))
+    let formattedData = _.mapKeys(data, (v, coinGeckoId) => _.findKey(cryptoassets.assets, asset => asset.coinGeckoId === coinGeckoId))
     formattedData = _.mapValues(formattedData, rates => _.mapKeys(rates, (v, k) => k.toUpperCase()))
     return formattedData
   }
@@ -40,7 +40,7 @@ class CoinGecko {
       if (vsCurrencies.includes(market.to)) vs.add(market.to)
     })
 
-    const coinIds = [...all].map(currency => cryptoassets[currency].coinGeckoId)
+    const coinIds = [...all].map(currency => cryptoassets.assets[currency].coinGeckoId)
 
     const rates = await this.getPrices(coinIds, [...vs])
 

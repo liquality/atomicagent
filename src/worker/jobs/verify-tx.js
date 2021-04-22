@@ -22,7 +22,7 @@ module.exports = async job => {
   const tx = await client.chain.getTransactionByHash(hash)
 
   if (tx.blockHash) {
-    const assetType = cryptoassets[asset].type
+    const assetType = cryptoassets.assets[asset].type
     const chain = assetType === 'erc20' ? 'ETH' : asset
 
     if (chain === 'ETH') {

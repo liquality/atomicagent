@@ -43,13 +43,13 @@ async function main () {
     const fromClient = order.fromClient()
     const toClient = order.toClient()
 
-    order.fromRateUsd = BN(order.fromUsdValue).div(cryptoassets[order.from].unitToCurrency(order.fromAmount)).dp(2).toNumber()
-    order.toRateUsd = BN(order.toUsdValue).div(cryptoassets[order.to].unitToCurrency(order.toAmount)).dp(2).toNumber()
+    order.fromRateUsd = BN(order.fromUsdValue).div(cryptoassets.unitToCurrency(cryptoassets.assets[order.from], order.fromAmount)).dp(2).toNumber()
+    order.toRateUsd = BN(order.toUsdValue).div(cryptoassets.unitToCurrency(cryptoassets.assets[order.to], order.toAmount)).dp(2).toNumber()
     order.fromAmountUsd = order.fromUsdValue
     order.toAmountUsd = order.toUsdValue
 
-    const fromType = cryptoassets[order.from].type
-    const toType = cryptoassets[order.to].type
+    const fromType = cryptoassets.assets[order.from].type
+    const toType = cryptoassets.assets[order.to].type
     let ethUsd = 0
 
     if (fromType === 'erc20' || toType === 'erc20') {

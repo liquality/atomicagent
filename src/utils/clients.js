@@ -166,7 +166,7 @@ const clients = {}
 
 function getClient (asset) {
   if (asset in clients) return clients[asset]
-  const type = cryptoassets[asset].type === 'erc20'
+  const type = cryptoassets.assets[asset].type === 'erc20'
     ? 'ERC20'
     : asset
   const creator = clientCreators[type]
