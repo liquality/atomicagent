@@ -146,9 +146,9 @@ function createNearClient() {
     nearClient.addProvider(new NearJsWalletProvider(network, nearConfig.wallet.mnemonic))
   }
 
+  nearClient.addProvider(new NearRpcProvider(network))
   nearClient.addProvider(new NearSwapProvider())
   nearClient.addProvider(new NearSwapFindProvider(network.helperUrl))
-  nearClient.addProvider(new NearRpcProvider(network))
 
   return nearClient
 }
