@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets: cryptoassets, chains } = require('@liquality/cryptoassets')
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -284,8 +284,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = cryptoassets[this.from].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = cryptoassets[this.to].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = chains[cryptoassets[this.from].chain].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = chains[cryptoassets[this.to].chain].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -399,10 +399,10 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-    const { type } = cryptoassets[asset]
+    const { type, chain } = cryptoassets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
-    const chain = type === 'erc20' ? 'ETH' : asset
-    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
+    const nativeAsset = chains[chain].nativeAsset
+    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
   if (tx.blockHash) {

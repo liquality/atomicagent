@@ -21,9 +21,9 @@ module.exports = async (err, job) => {
   ) {
     debug(`[x${job.attrs.failCount}]`, err.name, err.message, job.attrs.name, job.attrs.data)
 
-    const scheduleIn = typeof err.chain === 'string'
-      ? 'in ' + config.assets[err.chain].blockTime
-      : 'in ' + err.chain + ' seconds'
+    const scheduleIn = typeof err.asset === 'string'
+      ? 'in ' + config.assets[err.asset].blockTime // TODO: blocktime should probably be per chain and in cryptoassets
+      : 'in ' + err.asset + ' seconds'
 
     job.schedule(scheduleIn)
     return job.save()

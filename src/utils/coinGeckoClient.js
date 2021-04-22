@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets: cryptoassets } = require('@liquality/cryptoassets')
 
 class CoinGecko {
   constructor (url = 'https://api.coingecko.com/api/v3') {
