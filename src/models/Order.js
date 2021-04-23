@@ -304,20 +304,15 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromType = cryptoassets[this.from].type
-  const toType = cryptoassets[this.to].type
-  let ethUsd
+  const fromChainNativeAsset = chains[cryptoassets[this.from].chain].nativeAsset
+  const toChainNativeAsset = chains[cryptoassets[this.to].chain].nativeAsset
 
-  if ([fromType, toType].includes('erc20')) {
-    ethUsd = await MarketHistory.getMostRecentRate('ETH-USD')
+  if (fromChainNativeAsset !== this.from) {
+    this.fromSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${fromChainNativeAsset}-USD`)
   }
 
-  if (fromType === 'erc20') {
-    this.fromSecondaryRateUsd = ethUsd
-  }
-
-  if (toType === 'erc20') {
-    this.toSecondaryRateUsd = ethUsd
+  if (toChainNativeAsset !== this.to) {
+    this.toSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${toChainNativeAsset}-USD`)
   }
 
   this.fromAmountUsd = calculateUsdAmount(this.from, this.fromAmount, fromRateUsd) || 0
