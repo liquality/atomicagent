@@ -81,3 +81,16 @@ killswitch = 'pm2 stop "Worker"'
     [assets.RBTC.wallet]
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
+
+  [assets.SOV]
+  blockTime = "20 seconds"
+  network = "rsk_testnet"
+  defaultFee = "average"
+  contractAddress = "0x6a9A07972D07E58f0daF5122D11e069288A375fB"
+    [assets.SOV.rpc]
+    url = "https://public-node.testnet.rsk.co"
+    [assets.SOV.scraper]
+    url="https://liquality.io/rsk-testnet-api/"
+    [assets.SOV.wallet]
+    type = "js"
+    mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
