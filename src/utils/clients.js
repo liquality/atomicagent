@@ -1,5 +1,5 @@
 const Client = require('@liquality/client').default
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets } = require('@liquality/cryptoassets').default
 const config = require('../config')
 
 const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider').default
@@ -166,7 +166,7 @@ const clients = {}
 
 function getClient (asset) {
   if (asset in clients) return clients[asset]
-  const type = cryptoassets.assets[asset].type === 'erc20'
+  const type = assets[asset].type === 'erc20'
     ? 'ERC20'
     : asset
   const creator = clientCreators[type]

@@ -3,7 +3,7 @@
 const program = require('commander')
 const { addCommonOptions } = require('./common')
 const { getClient } = require('../src/utils/clients')
-const assets = require('@liquality/cryptoassets')
+const { assets, unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets').default
 const config = require('../src/config')
 const BN = require('bignumber.js')
 
@@ -13,7 +13,7 @@ async function getBalance (asset) {
   const client = getClient(asset)
   const addresses = await client.wallet.getUsedAddresses()
   const balance = await client.chain.getBalance(addresses)
-  const balanceInCurrency = assets[asset].unitToCurrency(balance).toNumber()
+  const balanceInCurrency = unitToCurrency(assets[asset], balance).toNumber()
   const code = assets[asset].code
 
   return {
@@ -55,7 +55,7 @@ program
 program
   .command('sendtoaddress <asset> <address> <amount>')
   .action(async (asset, address, amount) => {
-    const amountInUnit = assets[asset].currencyToUnit(amount).toNumber()
+    const amountInUnit = currencyToUnit(assets[asset], amount).toNumber()
     const client = getClient(asset)
     const tx = await client.chain.sendTransaction({ to: address, value: amountInUnit })
 

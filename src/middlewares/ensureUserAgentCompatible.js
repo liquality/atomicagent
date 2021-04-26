@@ -10,7 +10,7 @@ module.exports = (incompatibleResponse) => (req, res, next) => {
     const matches = USER_AGENT_REGEX.exec(userAgent)
     if (matches) {
       const userCALVersion = matches[2]
-      const isUserAgentCompatible = semver.diff(userCALVersion, AGENT_CAL_VERSION) === 'patch'
+      const isUserAgentCompatible = ['patch', null].includes(semver.diff(userCALVersion, AGENT_CAL_VERSION))
       if (!isUserAgentCompatible) return res.json(incompatibleResponse)
     }
   }

@@ -12,7 +12,7 @@ const MongoStore = require('connect-mongo')(session)
 
 const config = require('../config')
 const httpHelpers = require('../middlewares/httpHelpers')
-const handleError = require('../middlewares/handleError')
+const handleHttpError = require('../middlewares/handleHttpError')
 
 let listen
 
@@ -68,7 +68,7 @@ module.exports.start = () => {
     app.use(Sentry.Handlers.errorHandler())
   }
 
-  app.use(handleError())
+  app.use(handleHttpError())
 
   listen = app.listen(config.application.apiPort || process.env.PORT)
 

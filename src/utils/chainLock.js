@@ -2,7 +2,7 @@ const debug = require('debug')('liquality:agent:chain-lock')
 
 const EventEmitter = require('events')
 const _ = require('lodash')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets } = require('@liquality/cryptoassets')
 
 const { RescheduleError, PossibleTimelockError } = require('./errors')
 
@@ -17,7 +17,7 @@ const wait = millis => new Promise(resolve => setTimeout(() => resolve(), millis
 const waitForRandom = (min, max) => wait(_.random(min, max))
 
 const isERC20 = asset => {
-  return cryptoassets.assets[asset].type === 'erc20'
+  return assets[asset].type === 'erc20'
 }
 
 const getChainFromAsset = asset => {
@@ -27,7 +27,7 @@ const getChainFromAsset = asset => {
 }
 
 const attemptToLockChain = asset => {
-  const chain = getChainFromAsset(asset)
+  const chain = assets[asset].chain
 
   if (CHAIN_LOCK[chain]) {
     return {
@@ -89,6 +89,10 @@ const getLockForAsset = async (asset, id) => {
   return chain
 }
 
+const isEthereumChain = chain => {
+  return ['ethereum', 'rsk', 'bsc'].includes(chain)
+}
+
 const withLock = async (asset, func) => {
   const id = ++counter
   const chain = await getLockForAsset(asset, id)
@@ -98,17 +102,17 @@ const withLock = async (asset, func) => {
     return result
   } catch (e) {
     if (['TxNotFoundError', 'PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-      throw new RescheduleError(e.message, chain)
+      throw new RescheduleError(e.message, asset)
     }
 
     if (
-      (chain === 'BTC' && e.message.includes('non-final')) ||
-      (chain === 'ETH' && (
+      (chain === 'bitcoin' && e.message.includes('non-final')) ||
+      (isEthereumChain(chain) && (
         e.message.includes('opcode 0xfe not defined') ||
         e.message.includes('execution reverted')
       ))
     ) {
-      throw new PossibleTimelockError(e.message, chain)
+      throw new PossibleTimelockError(e.message, asset)
     }
 
     throw e

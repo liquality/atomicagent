@@ -309,16 +309,12 @@ OrderSchema.methods.setUsdRates = async function () {
   const toType = assets[this.to].type
   let ethUsd
 
-  if ([fromType, toType].includes('erc20')) {
-    ethUsd = await MarketHistory.getMostRecentRate('ETH-USD')
+  if (fromChainNativeAsset !== this.from) {
+    this.fromSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${fromChainNativeAsset}-USD`)
   }
 
-  if (fromType === 'erc20') {
-    this.fromSecondaryRateUsd = ethUsd
-  }
-
-  if (toType === 'erc20') {
-    this.toSecondaryRateUsd = ethUsd
+  if (toChainNativeAsset !== this.to) {
+    this.toSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${toChainNativeAsset}-USD`)
   }
 
   this.fromAmountUsd = calculateUsdAmount(this.from, this.fromAmount, fromRateUsd) || 0
@@ -336,8 +332,8 @@ OrderSchema.pre('save', function (next) {
     ({ type }) => (type.startsWith('to') && !type.includes('Claim')) || (type.startsWith('from') && type.includes('Claim'))
   )
 
-  this.hasUserUnconfirmedTx = !userTxs.every(({ blockHash }) => blockHash)
-  this.hasAgentUnconfirmedTx = !agentTxs.every(({ blockHash }) => blockHash)
+  this.hasUserUnconfirmedTx = !userTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
+  this.hasAgentUnconfirmedTx = !agentTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
   this.hasUnconfirmedTx = this.hasUserUnconfirmedTx || this.hasAgentUnconfirmedTx
 
   this.totalAgentFeeUsd = 0
@@ -402,13 +398,22 @@ OrderSchema.methods.addTx = function (type, tx) {
 
     const { type } = assets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
-    const chain = type === 'erc20' ? 'ETH' : asset
-    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
+    const nativeAsset = chains[chain].nativeAsset
+    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
   if (tx.blockHash) {
     txMapItemValue.blockHash = tx.blockHash
     txMapItemValue.blockNumber = tx.blockNumber
+
+    // update existing tx:type entry with replacedBy key:val
+    Object
+      .entries(this.txMap)
+      .forEach(([key, value]) => {
+        if (value.type === type && !value.replacedBy) {
+          this.set(`txMap.${key}.replacedBy`, hash)
+        }
+      })
   }
 
   if (tx.placeholder) {

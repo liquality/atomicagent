@@ -1,6 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:verify-tx')
 const BN = require('bignumber.js')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets } = require('@liquality/cryptoassets').default
 
 const { getClient } = require('../../utils/clients')
 const Order = require('../../models/Order')
@@ -15,14 +15,26 @@ module.exports = async job => {
 
   const hash = order[type]
 
-  const { asset, blockHash } = order.txMap[hash]
-  if (blockHash) return
+  let asset
+  const txMapEntry = order.txMap[hash]
+
+  if (txMapEntry) {
+    if (txMapEntry.blockHash) return
+
+    asset = txMapEntry.asset
+  } else {
+    let side = type.match(/^from|^to/)
+    if (!side) throw new Error(`Invalid tx type: ${type}`)
+    side = side[0]
+
+    asset = order[side]
+  }
 
   const client = getClient(asset)
   const tx = await client.chain.getTransactionByHash(hash)
 
   if (tx.blockHash) {
-    const assetType = cryptoassets.assets[asset].type
+    const assetType = assets[asset].type
     const chain = assetType === 'erc20' ? 'ETH' : asset
 
     if (chain === 'ETH') {

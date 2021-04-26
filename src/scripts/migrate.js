@@ -1,4 +1,4 @@
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets, unitToCurrency } = require('@liquality/cryptoassets').default
 const dateFns = require('date-fns')
 const BN = require('bignumber.js')
 const mongoose = require('mongoose')
@@ -43,13 +43,13 @@ async function main () {
     const fromClient = order.fromClient()
     const toClient = order.toClient()
 
-    order.fromRateUsd = BN(order.fromUsdValue).div(cryptoassets.unitToCurrency(cryptoassets.assets[order.from], order.fromAmount)).dp(2).toNumber()
-    order.toRateUsd = BN(order.toUsdValue).div(cryptoassets.unitToCurrency(cryptoassets.assets[order.to], order.toAmount)).dp(2).toNumber()
+    order.fromRateUsd = BN(order.fromUsdValue).div(unitToCurrency(assets[order.from], order.fromAmount)).dp(2).toNumber()
+    order.toRateUsd = BN(order.toUsdValue).div(unitToCurrency(assets[order.to], order.toAmount)).dp(2).toNumber()
     order.fromAmountUsd = order.fromUsdValue
     order.toAmountUsd = order.toUsdValue
 
-    const fromType = cryptoassets.assets[order.from].type
-    const toType = cryptoassets.assets[order.to].type
+    const fromType = assets[order.from].type
+    const toType = assets[order.to].type
     let ethUsd = 0
 
     if (fromType === 'erc20' || toType === 'erc20') {
