@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets, chains } = require('@liquality/cryptoassets').default
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -9,7 +9,7 @@ const MarketHistory = require('./MarketHistory')
 const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
-const { toLowerCaseWithout0x } = require('../utils/hash')
+const { formatTxHash } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
@@ -108,70 +108,70 @@ const OrderSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   fromSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   fromRefundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   fromClaimHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   toFundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.to) }
   },
   toSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.to) }
   },
   toClaimHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   toRefundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   secretHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return hash.toLowerCase().replace(/0x/g, '') }
   },
   secret: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: toLowerCaseWithout0x
+    set: function (hash) { return hash.toLowerCase().replace(/0x/g, '') }
   },
   swapExpiration: {
     type: Number,
@@ -285,8 +285,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = cryptoassets.chains[cryptoassets.assets[this.from].chain].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = cryptoassets.chains[cryptoassets.assets[this.to].chain].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = chains[assets[this.from].chain].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = chains[assets[this.to].chain].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -305,8 +305,8 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromType = cryptoassets.assets[this.from].type
-  const toType = cryptoassets.assets[this.to].type
+  const fromType = assets[this.from].type
+  const toType = assets[this.to].type
   let ethUsd
 
   if ([fromType, toType].includes('erc20')) {
@@ -388,8 +388,8 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
-  const hash = tx.placeholder ? uuidv4() : toLowerCaseWithout0x(tx.hash)
   const asset = this[side]
+  const hash = tx.placeholder ? uuidv4() : formatTxHash(tx.hash, asset)
   const txMapItemValue = {
     asset,
     type,
@@ -400,7 +400,7 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-    const { type } = cryptoassets.assets[asset]
+    const { type } = assets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
     const chain = type === 'erc20' ? 'ETH' : asset
     txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
@@ -435,7 +435,7 @@ OrderSchema.methods.claimSwap = async function () {
         recipientAddress: this.fromCounterPartyAddress,
         refundAddress: this.fromAddress,
         secretHash: this.secretHash,
-        expiration: this.swapExpiration,
+        expiration: this.swapExpiration
       },
       this.fromFundHash,
       this.secret,
@@ -457,7 +457,7 @@ OrderSchema.methods.refundSwap = async function () {
         recipientAddress: this.toAddress,
         refundAddress: this.toCounterPartyAddress,
         secretHash: this.secretHash,
-        expiration: this.nodeSwapExpiration,
+        expiration: this.nodeSwapExpiration
       },
       this.toFundHash,
       fees[defaultFee].fee
@@ -500,7 +500,7 @@ OrderSchema.methods.fundSwap = async function () {
         recipientAddress: this.toAddress,
         refundAddress: this.toCounterPartyAddress,
         secretHash: this.secretHash,
-        expiration: this.nodeSwapExpiration,
+        expiration: this.nodeSwapExpiration
       },
       this.toFundHash,
       fees[defaultFee].fee
@@ -674,6 +674,11 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     status: 'QUOTE'
   })
 })
+
+function formatHash (hash, asset) {
+  return chains[assets[asset].chain]
+    .formatTransactionHash(hash)
+}
 
 const Order = mongoose.model('Order', OrderSchema)
 module.exports = Order
