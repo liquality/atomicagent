@@ -1,5 +1,5 @@
 const Client = require('@liquality/client').default
-const { assets } = require('@liquality/cryptoassets').default
+const { assets } = require('@liquality/cryptoassets')
 const config = require('../config')
 
 const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider').default

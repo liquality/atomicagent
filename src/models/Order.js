@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
-const { assets, chains } = require('@liquality/cryptoassets').default
+const { assets, chains } = require('@liquality/cryptoassets')
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -305,8 +305,8 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromType = assets[this.from].type
-  const toType = assets[this.to].type
+  const fromChainNativeAsset = assets[this.from].type
+  const toChainNativeAsset = assets[this.to].type
   let ethUsd
 
   if (fromChainNativeAsset !== this.from) {
@@ -398,7 +398,7 @@ OrderSchema.methods.addTx = function (type, tx) {
 
     const { type } = assets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
-    const nativeAsset = chains[chain].nativeAsset
+    const nativeAsset = chains[assets[asset].chain].nativeAsset
     txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 

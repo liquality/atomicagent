@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')
-const { assets } = require('@liquality/cryptoassets').default
+const { assets } = require('@liquality/cryptoassets')
 
 class CoinGecko {
   constructor (url = 'https://api.coingecko.com/api/v3') {
@@ -31,7 +31,7 @@ class CoinGecko {
       }
     })
 
-    const coinIds = [...all].map(currency = assets[currency].coinGeckoId)
+    const coinIds = [...all].map(currency => assets[currency].coinGeckoId)
     const rates = await this.getPrices(coinIds, ['USD', ...all])
 
     Object

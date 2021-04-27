@@ -1,4 +1,4 @@
-const { chains, assets } = require('@liquality/cryptoassets').default
+const { chains, assets } = require('@liquality/cryptoassets')
 module.exports.formatTxHash = function (hash, asset) {
     if (!assets[asset]) {
         return false

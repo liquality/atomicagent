@@ -1,6 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:verify-tx')
 const BN = require('bignumber.js')
-const { assets } = require('@liquality/cryptoassets').default
+const { assets } = require('@liquality/cryptoassets')
 
 const { getClient } = require('../../utils/clients')
 const Order = require('../../models/Order')

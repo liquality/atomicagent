@@ -1,4 +1,4 @@
-const { assets, unitToCurrency } = require('@liquality/cryptoassets').default
+const { assets, unitToCurrency } = require('@liquality/cryptoassets')
 const dateFns = require('date-fns')
 const BN = require('bignumber.js')
 const mongoose = require('mongoose')

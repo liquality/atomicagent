@@ -3,7 +3,7 @@
 const program = require('commander')
 const { addCommonOptions } = require('./common')
 const { getClient } = require('../src/utils/clients')
-const { assets, unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets').default
+const { assets, unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
 const config = require('../src/config')
 const BN = require('bignumber.js')
 
