@@ -43,9 +43,7 @@ async function main () {
           secretHash: order.secretHash,
           expiration: order.swapExpiration
         },
-        order.fromFundHash,
-        //TODO Find the right block
-        order.fromStartBlock
+        order.fromFundHash
       )
 
       if (!fromRefundTx) {

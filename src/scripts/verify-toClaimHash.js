@@ -51,9 +51,7 @@ async function main () {
           secretHash: order.secretHash,
           expiration: order.nodeSwapExpiration
         },
-        order.toFundHash,
-        //TODO Find the right block
-        order.fromStartBlock
+        order.toFundHash
       )
 
       if (!toClaimTx) {

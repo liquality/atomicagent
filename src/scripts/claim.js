@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 const config = require('../config')
 const BN = require('bignumber.js')
-const blockScanOrFind = require('../utils/blockScanOrFind')
 
 const mongooseOnError = err => {
   console.error(err)
@@ -33,9 +32,7 @@ async function main () {
       secretHash: order.secretHash,
       expiration: order.nodeSwapExpiration
     },
-    order.toFundHash,
-    // TODO add right block number param
-    fromStartBlock
+    order.toFundHash
   )
 
   console.log(`${order.to} claim tx hash: ${toClaimTx.hash}`)
@@ -43,7 +40,6 @@ async function main () {
   order.secret = toClaimTx.secret
   await order.save()
 
-  const fees = await fromClient.chain.getFees()
   const fromClaimTx = await fromClient.swap.claimSwap(
     {
       value: BN(order.fromAmount),
@@ -53,8 +49,7 @@ async function main () {
       expiration: order.swapExpiration
     },
     order.fromFundHash,
-    order.secret,
-    fees[defaultFee].fee
+    order.secret
   )
 
   order.status = 'AGENT_CLAIMED'

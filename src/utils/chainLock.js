@@ -16,16 +16,6 @@ emitter.setMaxListeners(20)
 const wait = millis => new Promise(resolve => setTimeout(() => resolve(), millis))
 const waitForRandom = (min, max) => wait(_.random(min, max))
 
-const isERC20 = asset => {
-  return assets[asset].type === 'erc20'
-}
-
-const getChainFromAsset = asset => {
-  if (isERC20(asset)) return 'ETH'
-
-  return asset
-}
-
 const attemptToLockChain = asset => {
   const chain = assets[asset].chain
 

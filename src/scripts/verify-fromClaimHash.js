@@ -38,9 +38,7 @@ async function main () {
         secretHash: order.secretHash,
         expiration: order.swapExpiration
       },
-      order.fromFundHash,
-      //TODO add right blockNumber
-      order.fromStartBlock
+      order.fromFundHash
     )
 
     if (!fromClaimTx) {

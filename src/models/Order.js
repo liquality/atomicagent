@@ -305,9 +305,8 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromChainNativeAsset = assets[this.from].type
-  const toChainNativeAsset = assets[this.to].type
-  let ethUsd
+  const fromChainNativeAsset = chains[assets[this.from].chain].nativeAsset
+  const toChainNativeAsset = chains[assets[this.to].chain].nativeAsset
 
   if (fromChainNativeAsset !== this.from) {
     this.fromSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${fromChainNativeAsset}-USD`)
@@ -396,9 +395,9 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-    const { type } = assets[asset]
+    const { type, chain } = assets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
-    const nativeAsset = chains[assets[asset].chain].nativeAsset
+    const nativeAsset = chains[chain].nativeAsset
     txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
