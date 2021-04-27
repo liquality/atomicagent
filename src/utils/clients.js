@@ -102,7 +102,7 @@ function createEthClient (asset) {
   return ethClient
 }
 
-function createNearClient() {
+function createNearClient () {
   const nearConfig = config.assets.NEAR
   const network = NearNetworks[nearConfig.network]
 
