@@ -1,20 +1,11 @@
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets: cryptoassets } = require('@liquality/cryptoassets')
 
 class CoinGecko {
   constructor (url = 'https://api.coingecko.com/api/v3') {
     this._axios = axios.create({ baseURL: url })
-  }
-
-  async getVsCurrencies () {
-    if (this._vsCurrencies) return this._vsCurrencies
-
-    const { data } = await this._axios.get('/simple/supported_vs_currencies')
-    this._vsCurrencies = data.map(c => c.toUpperCase()) // Normalize to agent casing
-
-    return this._vsCurrencies
   }
 
   async getPrices (coinIds, vsCurrencies) {
@@ -27,24 +18,29 @@ class CoinGecko {
     return formattedData
   }
 
-  async getRates (markets) {
-    const vsCurrencies = await this.getVsCurrencies()
-
-    const vs = new Set(['USD'])
+  async getRates (markets, fixedUsdRates = {}) {
     const all = new Set([])
-    markets.forEach((market) => {
-      all.add(market.from)
-      all.add(market.to)
 
-      if (vsCurrencies.includes(market.from)) vs.add(market.from)
-      if (vsCurrencies.includes(market.to)) vs.add(market.to)
+    markets.forEach(market => {
+      if (!fixedUsdRates[market.from]) {
+        all.add(market.from)
+      }
+
+      if (!fixedUsdRates[market.to]) {
+        all.add(market.to)
+      }
     })
 
     const coinIds = [...all].map(currency => cryptoassets[currency].coinGeckoId)
+    const rates = await this.getPrices(coinIds, ['USD', ...all])
 
-    const rates = await this.getPrices(coinIds, [...vs])
+    Object
+      .entries(fixedUsdRates)
+      .forEach(([asset, usdRate]) => {
+        rates[asset] = { USD: usdRate }
+      })
 
-    return markets.map((market) => {
+    return markets.map(market => {
       let rate
 
       if (market.from in rates && market.to in rates[market.from]) {

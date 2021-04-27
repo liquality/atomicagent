@@ -12,7 +12,7 @@ module.exports = async job => {
 
   const waitFor = order.swapExpiration - Math.ceil(Date.now() / 1000)
   if (waitFor > 0) {
-    throw new RescheduleError(`Waiting for user's swap to expire ${order.orderId}`, waitFor)
+    throw new RescheduleError(`Waiting for user's swap to expire ${order.orderId}`, order.from, { waitFor })
   }
 
   const fromCurrentBlockNumber = await order.fromClient().chain.getBlockHeight()

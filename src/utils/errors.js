@@ -7,9 +7,9 @@ function createError (name) {
 }
 
 class RescheduleError extends BaseError {
-  constructor (msg, chain, props) {
+  constructor (msg, asset, props) {
     super(msg, props)
-    this.chain = chain
+    this.asset = asset
   }
 }
 

@@ -74,8 +74,15 @@ MarketSchema.static('updateAllMarketData', async function () {
     return acc
   }, new Set())]
   const assets = await Asset.find({ code: { $in: assetCodes } }).exec()
+  const fixedUsdRates = assets.reduce((acc, asset) => {
+    if (asset.fixedUsdRate) {
+      acc[asset.code] = asset.fixedUsdRate
+    }
+
+    return acc
+  }, {})
   const plainMarkets = markets.map(m => ({ from: m.from, to: m.to }))
-  const marketRates = await coingecko.getRates(plainMarkets)
+  const marketRates = await coingecko.getRates(plainMarkets, fixedUsdRates)
 
   const ASSET_MAP = {}
   await Bluebird.map(assets, async asset => {

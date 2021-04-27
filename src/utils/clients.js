@@ -1,5 +1,5 @@
 const Client = require('@liquality/client')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets: cryptoassets } = require('@liquality/cryptoassets')
 const config = require('../config')
 
 const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider')
@@ -56,42 +56,8 @@ function createBtcClient () {
 }
 
 function createEthClient (asset) {
-  const ethConfig = config.assets[asset]
-  const ethClient = new Client()
-
-  let network = EthereumNetworks[ethConfig.network]
-  if (network.name === 'local') {
-    network = {
-      ...network,
-      name: 'mainnet',
-      chainId: 1337,
-      networkId: 1337
-    }
-  }
-
-  ethClient.addProvider(new EthereumRpcProvider(ethConfig.rpc.url))
-
-  if (ethConfig.wallet && ethConfig.wallet.type === 'js') {
-    ethClient.addProvider(new EthereumJsWalletProvider(
-      network, ethConfig.wallet.mnemonic
-    ))
-  }
-
-  ethClient.addProvider(new EthereumSwapProvider())
-  ethClient.addProvider(new EthereumScraperSwapFindProvider(ethConfig.scraper.url))
-
-  if (network.isTestnet || asset === 'RBTC' || asset === 'BNB') {
-    ethClient.addProvider(new EthereumRpcFeeProvider())
-  } else {
-    ethClient.addProvider(new EthereumGasNowFeeProvider())
-  }
-
-  return ethClient
-}
-
-function createERC20Client (asset) {
+  const assetData = cryptoassets[asset]
   const assetConfig = config.assets[asset]
-  const erc20Client = new Client()
 
   let network = EthereumNetworks[assetConfig.network]
   if (network.name === 'local') {
@@ -103,44 +69,44 @@ function createERC20Client (asset) {
     }
   }
 
-  erc20Client.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
+  const ethClient = new Client()
+  ethClient.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
+  ethClient.addProvider(new EthereumJsWalletProvider(network, assetConfig.wallet.mnemonic))
 
-  if (assetConfig.wallet && assetConfig.wallet.type === 'js') {
-    erc20Client.addProvider(new EthereumJsWalletProvider(
-      network, assetConfig.wallet.mnemonic
-    ))
-  }
-
-  erc20Client.addProvider(new EthereumErc20Provider(assetConfig.contractAddress))
-  erc20Client.addProvider(new EthereumErc20SwapProvider())
-  erc20Client.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
-
-  if (network.isTestnet || asset === 'RBTC' || asset === 'BNB') {
-    erc20Client.addProvider(new EthereumRpcFeeProvider())
+  if (assetData.type === 'erc20') {
+    const contractAddress = assetConfig.contractAddress
+    ethClient.addProvider(new EthereumErc20Provider(contractAddress))
+    ethClient.addProvider(new EthereumErc20SwapProvider())
+    ethClient.addProvider(new EthereumErc20ScraperSwapFindProvider(assetConfig.scraper.url))
   } else {
-    erc20Client.addProvider(new EthereumGasNowFeeProvider())
+    ethClient.addProvider(new EthereumSwapProvider())
+    ethClient.addProvider(new EthereumScraperSwapFindProvider(assetConfig.scraper.url))
   }
 
-  return erc20Client
-}
+  const FeeProvider = assetData.chain === 'ethereum' && !network.isTestnet
+    ? EthereumGasNowFeeProvider
+    : EthereumRpcFeeProvider
+  ethClient.addProvider(new FeeProvider())
 
-const clientCreators = {
-  BTC: createBtcClient,
-  ETH: createEthClient,
-  RBTC: createEthClient,
-  BNB: createEthClient,
-  ERC20: createERC20Client
+  return ethClient
 }
 
 const clients = {}
 
+function createClient (asset) {
+  const assetData = cryptoassets[asset]
+
+  if (assetData.chain === 'bitcoin') return createBtcClient()
+  if (assetData.chain === 'rsk') return createEthClient(asset)
+  if (assetData.chain === 'bsc') return createEthClient(asset)
+  if (assetData.chain === 'ethereum') return createEthClient(asset)
+
+  throw new Error(`Could not create client for asset ${asset}`)
+}
+
 function getClient (asset) {
   if (asset in clients) return clients[asset]
-  const type = cryptoassets[asset].type === 'erc20'
-    ? 'ERC20'
-    : asset
-  const creator = clientCreators[type]
-  const client = creator(asset)
+  const client = createClient(asset)
   clients[asset] = client
   return client
 }

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets: cryptoassets, chains } = require('@liquality/cryptoassets')
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -284,8 +284,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = cryptoassets[this.from].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = cryptoassets[this.to].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = chains[cryptoassets[this.from].chain].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = chains[cryptoassets[this.to].chain].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -304,20 +304,15 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromType = cryptoassets[this.from].type
-  const toType = cryptoassets[this.to].type
-  let ethUsd
+  const fromChainNativeAsset = chains[cryptoassets[this.from].chain].nativeAsset
+  const toChainNativeAsset = chains[cryptoassets[this.to].chain].nativeAsset
 
-  if ([fromType, toType].includes('erc20')) {
-    ethUsd = await MarketHistory.getMostRecentRate('ETH-USD')
+  if (fromChainNativeAsset !== this.from) {
+    this.fromSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${fromChainNativeAsset}-USD`)
   }
 
-  if (fromType === 'erc20') {
-    this.fromSecondaryRateUsd = ethUsd
-  }
-
-  if (toType === 'erc20') {
-    this.toSecondaryRateUsd = ethUsd
+  if (toChainNativeAsset !== this.to) {
+    this.toSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${toChainNativeAsset}-USD`)
   }
 
   this.fromAmountUsd = calculateUsdAmount(this.from, this.fromAmount, fromRateUsd) || 0
@@ -399,10 +394,10 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-    const { type } = cryptoassets[asset]
+    const { type, chain } = cryptoassets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
-    const chain = type === 'erc20' ? 'ETH' : asset
-    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(chain, tx.fee, this[`${side}${key}RateUsd`]) || 0
+    const nativeAsset = chains[chain].nativeAsset
+    txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
   }
 
   if (tx.blockHash) {

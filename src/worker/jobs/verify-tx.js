@@ -1,6 +1,6 @@
 const debug = require('debug')('liquality:agent:worker:verify-tx')
 const BN = require('bignumber.js')
-const cryptoassets = require('@liquality/cryptoassets').default
+const { assets: cryptoassets } = require('@liquality/cryptoassets')
 
 const { getClient } = require('../../utils/clients')
 const Order = require('../../models/Order')
@@ -34,10 +34,7 @@ module.exports = async job => {
   const tx = await client.chain.getTransactionByHash(hash)
 
   if (tx.blockHash) {
-    const assetType = cryptoassets[asset].type
-    const chain = assetType === 'erc20' ? 'ETH' : asset
-
-    if (chain === 'ETH') {
+    if (cryptoassets[asset].chain === 'ethereum') {
       const receipt = await client.getMethod('getTransactionReceipt')(hash)
 
       if (!receipt) {
