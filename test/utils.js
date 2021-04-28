@@ -10,7 +10,7 @@ const { expect } = chai
 
 const { v4: uuidv4 } = require('uuid')
 const mongoose = require('mongoose')
-const ClientFactory = require('@liquality/client-factory')
+const ClientFactory = require('@liquality/client-factory').default
 const { sha256 } = require('@liquality/crypto')
 
 const api = require('../src/api')
@@ -407,7 +407,7 @@ module.exports.deployAndMintMidman = async () => {
 
   debug('MIDMAN Contract Address', txReceipt.contractAddress)
 
-  if (config.assets.DAI.contractAddress.replace('0x', '') !== txReceipt.contractAddress) {
+  if (config.assets.DAI.contractAddress !== txReceipt.contractAddress) {
     throw new Error(`Deployed contract address doesn't match ${config.assets.DAI.contractAddress}`)
   }
 
