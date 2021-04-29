@@ -270,7 +270,7 @@ module.exports.findAgentFundingTx = async context => {
     const currentBlock = await toClient.chain.getBlockHeight()
     const initSwapTx = await blockScanOrFind(toClient, async blockNumber => toClient.swap.findInitiateSwapTransaction(
       {
-        value: BN(context.fromAmount),
+        value: BN(context.toAmount),
         recipientAddress: context.toAddress,
         refundAddress: context.toCounterPartyAddress,
         secretHash: context.secretHash,
