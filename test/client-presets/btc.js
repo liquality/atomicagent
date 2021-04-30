@@ -1,33 +1,33 @@
-const BitcoinEsploraBatchApiProvider = require('@liquality/bitcoin-esplora-batch-api-provider')
-const BitcoinJsWalletProvider = require('@liquality/bitcoin-js-wallet-provider')
-const BitcoinSwapProvider = require('@liquality/bitcoin-swap-provider')
-const BitcoinEsploraSwapFindProvider = require('@liquality/bitcoin-esplora-swap-find-provider')
-const BitcoinRpcFeeProvider = require('@liquality/bitcoin-rpc-fee-provider')
-const BitcoinNetworks = require('@liquality/bitcoin-networks')
+const { BitcoinEsploraBatchApiProvider } = require('@liquality/bitcoin-esplora-batch-api-provider')
+const { BitcoinJsWalletProvider } = require('@liquality/bitcoin-js-wallet-provider')
+const { BitcoinSwapProvider } = require('@liquality/bitcoin-swap-provider')
+const { BitcoinEsploraSwapFindProvider } = require('@liquality/bitcoin-esplora-swap-find-provider')
+const { BitcoinRpcFeeProvider } = require('@liquality/bitcoin-rpc-fee-provider')
+const { BitcoinNetworks } = require('@liquality/bitcoin-networks')
 
 module.exports = [
   {
     provider: BitcoinEsploraBatchApiProvider,
-    args: config => [
-      config.assetConfig.batchApi.url,
-      config.assetConfig.api.url,
-      BitcoinNetworks.bitcoin_regtest,
-      config.assetConfig.feeNumberOfBlocks
-    ]
+    args: config => [{
+      batchUrl: config.assetConfig.batchApi.url,
+      url: config.assetConfig.api.url,
+      network: BitcoinNetworks.bitcoin_regtest,
+      numberOfBlockConfirmation: config.assetConfig.feeNumberOfBlocks
+    }]
   },
   {
     provider: BitcoinJsWalletProvider,
     requires: ['mnemonic'],
-    args: config => [
-      BitcoinNetworks.bitcoin_regtest,
-      config.mnemonic
-    ]
+    args: config => [{
+      network: BitcoinNetworks.bitcoin_regtest,
+      mnemonic: config.mnemonic
+    }]
   },
   {
     provider: BitcoinSwapProvider,
-    args: [
-      BitcoinNetworks.bitcoin_regtest
-    ]
+    args: [{
+      network: BitcoinNetworks.bitcoin_regtest
+    }]
   },
   {
     provider: BitcoinEsploraSwapFindProvider,

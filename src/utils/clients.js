@@ -1,27 +1,33 @@
-const Client = require('@liquality/client')
-const { assets: cryptoassets } = require('@liquality/cryptoassets')
+const { Client } = require('@liquality/client')
+const { assets } = require('@liquality/cryptoassets')
 const config = require('../config')
 
-const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider')
-const BitcoinSwapProvider = require('@liquality/bitcoin-swap-provider')
-const BitcoinNodeWalletProvider = require('@liquality/bitcoin-node-wallet-provider')
-const BitcoinJsWalletProvider = require('@liquality/bitcoin-js-wallet-provider')
-const BitcoinEsploraBatchApiProvider = require('@liquality/bitcoin-esplora-batch-api-provider')
-const BitcoinEsploraSwapFindProvider = require('@liquality/bitcoin-esplora-swap-find-provider')
-const BitcoinEarnFeeProvider = require('@liquality/bitcoin-earn-fee-provider')
-const BitcoinRpcFeeProvider = require('@liquality/bitcoin-rpc-fee-provider')
-const BitcoinNetworks = require('@liquality/bitcoin-networks')
+const { BitcoinRpcProvider } = require('@liquality/bitcoin-rpc-provider')
+const { BitcoinSwapProvider } = require('@liquality/bitcoin-swap-provider')
+const { BitcoinNodeWalletProvider } = require('@liquality/bitcoin-node-wallet-provider')
+const { BitcoinJsWalletProvider } = require('@liquality/bitcoin-js-wallet-provider')
+const { BitcoinEsploraBatchApiProvider } = require('@liquality/bitcoin-esplora-batch-api-provider')
+const { BitcoinEsploraSwapFindProvider } = require('@liquality/bitcoin-esplora-swap-find-provider')
+const { BitcoinFeeApiProvider } = require('@liquality/bitcoin-fee-api-provider')
+const { BitcoinRpcFeeProvider } = require('@liquality/bitcoin-rpc-fee-provider')
+const { BitcoinNetworks } = require('@liquality/bitcoin-networks')
 
-const EthereumRpcProvider = require('@liquality/ethereum-rpc-provider')
-const EthereumJsWalletProvider = require('@liquality/ethereum-js-wallet-provider')
-const EthereumSwapProvider = require('@liquality/ethereum-swap-provider')
-const EthereumErc20Provider = require('@liquality/ethereum-erc20-provider')
-const EthereumErc20SwapProvider = require('@liquality/ethereum-erc20-swap-provider')
-const EthereumNetworks = require('@liquality/ethereum-networks')
-const EthereumScraperSwapFindProvider = require('@liquality/ethereum-scraper-swap-find-provider')
-const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
-const EthereumGasNowFeeProvider = require('@liquality/ethereum-gas-now-fee-provider')
-const EthereumRpcFeeProvider = require('@liquality/ethereum-rpc-fee-provider')
+const { EthereumRpcProvider } = require('@liquality/ethereum-rpc-provider')
+const { EthereumJsWalletProvider } = require('@liquality/ethereum-js-wallet-provider')
+const { EthereumSwapProvider } = require('@liquality/ethereum-swap-provider')
+const { EthereumErc20Provider } = require('@liquality/ethereum-erc20-provider')
+const { EthereumErc20SwapProvider } = require('@liquality/ethereum-erc20-swap-provider')
+const { EthereumNetworks } = require('@liquality/ethereum-networks')
+const { EthereumScraperSwapFindProvider } = require('@liquality/ethereum-scraper-swap-find-provider')
+const { EthereumErc20ScraperSwapFindProvider } = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
+const { EthereumGasNowFeeProvider } = require('@liquality/ethereum-gas-now-fee-provider')
+const { EthereumRpcFeeProvider } = require('@liquality/ethereum-rpc-fee-provider')
+
+const { NearSwapProvider } = require('@liquality/near-swap-provider')
+const { NearJsWalletProvider } = require('@liquality/near-js-wallet-provider')
+const { NearRpcProvider } = require('@liquality/near-rpc-provider')
+const { NearSwapFindProvider } = require('@liquality/near-swap-find-provider')
+const { NearNetworks } = require('@liquality/near-networks')
 
 function createBtcClient () {
   const btcConfig = config.assets.BTC
@@ -33,14 +39,19 @@ function createBtcClient () {
 
   const btcClient = new Client()
   if (btcConfig.wallet && btcConfig.wallet.type === 'js') {
-    btcClient.addProvider(new BitcoinEsploraBatchApiProvider(btcConfig.batchApi.url, btcConfig.api.url, network, btcConfig.feeNumberOfBlocks))
-    btcClient.addProvider(new BitcoinJsWalletProvider(network, btcConfig.wallet.mnemonic))
+    btcClient.addProvider(new BitcoinEsploraBatchApiProvider({
+      batchUrl: btcConfig.batchApi.url,
+      url: btcConfig.api.url,
+      network: network,
+      numberOfBlockConfirmation: btcConfig.feeNumberOfBlocks
+    }))
+    btcClient.addProvider(new BitcoinJsWalletProvider({ network: network, mnemonic: btcConfig.wallet.mnemonic }))
   } else {
-    btcClient.addProvider(new BitcoinRpcProvider(btcConfig.rpc.url, btcConfig.rpc.username, btcConfig.rpc.password, btcConfig.feeNumberOfBlocks))
-    btcClient.addProvider(new BitcoinNodeWalletProvider(network, btcConfig.rpc.url, btcConfig.rpc.username, btcConfig.rpc.password, btcConfig.addressType))
+    btcClient.addProvider(new BitcoinRpcProvider({ uri: btcConfig.rpc.url, username: btcConfig.rpc.username, password: btcConfig.rpc.password, network: network, feeBlockConfirmations: btcConfig.feeNumberOfBlocks }))
+    btcClient.addProvider(new BitcoinNodeWalletProvider({ network: network, uri: btcConfig.rpc.url, username: btcConfig.rpc.username, password: btcConfig.rpc.password, addressType: btcConfig.addressType }))
   }
 
-  btcClient.addProvider(new BitcoinSwapProvider(network, btcConfig.swapMode))
+  btcClient.addProvider(new BitcoinSwapProvider({ network: network, mode: btcConfig.swapMode }))
 
   if (btcConfig.wallet && btcConfig.wallet.type === 'js') { // Override swap finding with esplora
     btcClient.addProvider(new BitcoinEsploraSwapFindProvider(btcConfig.api.url))
@@ -49,14 +60,14 @@ function createBtcClient () {
   if (network.isTestnet) {
     btcClient.addProvider(new BitcoinRpcFeeProvider())
   } else {
-    btcClient.addProvider(new BitcoinEarnFeeProvider('https://liquality.io/swap/mempool/v1/fees/recommended'))
+    btcClient.addProvider(new BitcoinFeeApiProvider('https://liquality.io/swap/mempool/v1/fees/recommended'))
   }
 
   return btcClient
 }
 
 function createEthClient (asset) {
-  const assetData = cryptoassets[asset]
+  const assetData = assets[asset]
   const assetConfig = config.assets[asset]
 
   let network = EthereumNetworks[assetConfig.network]
@@ -70,7 +81,7 @@ function createEthClient (asset) {
   }
 
   const ethClient = new Client()
-  ethClient.addProvider(new EthereumRpcProvider(assetConfig.rpc.url))
+  ethClient.addProvider(new EthereumRpcProvider({ uri: assetConfig.rpc.url }))
   ethClient.addProvider(new EthereumJsWalletProvider(network, assetConfig.wallet.mnemonic))
 
   if (assetData.type === 'erc20') {
@@ -91,15 +102,32 @@ function createEthClient (asset) {
   return ethClient
 }
 
+function createNearClient () {
+  const nearConfig = config.assets.NEAR
+  const network = NearNetworks[nearConfig.network]
+
+  const nearClient = new Client()
+  if (nearConfig.wallet && nearConfig.wallet.type === 'js') {
+    nearClient.addProvider(new NearJsWalletProvider(network, nearConfig.wallet.mnemonic))
+  }
+
+  nearClient.addProvider(new NearRpcProvider(network))
+  nearClient.addProvider(new NearSwapProvider())
+  nearClient.addProvider(new NearSwapFindProvider(network.helperUrl))
+
+  return nearClient
+}
+
 const clients = {}
 
 function createClient (asset) {
-  const assetData = cryptoassets[asset]
+  const assetData = assets[asset]
 
   if (assetData.chain === 'bitcoin') return createBtcClient()
   if (assetData.chain === 'rsk') return createEthClient(asset)
   if (assetData.chain === 'bsc') return createEthClient(asset)
   if (assetData.chain === 'ethereum') return createEthClient(asset)
+  if (assetData.chain === 'near') return createNearClient()
 
   throw new Error(`Could not create client for asset ${asset}`)
 }
