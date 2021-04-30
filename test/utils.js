@@ -10,7 +10,7 @@ const { expect } = chai
 
 const { v4: uuidv4 } = require('uuid')
 const mongoose = require('mongoose')
-const ClientFactory = require('@liquality/client-factory').default
+const { ClientFactory } = require('@liquality/client-factory')
 const { sha256 } = require('@liquality/crypto')
 
 const api = require('../src/api')

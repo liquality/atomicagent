@@ -1,33 +1,33 @@
-const Client = require('@liquality/client').default
+const { Client } = require('@liquality/client')
 const { assets } = require('@liquality/cryptoassets')
 const config = require('../config')
 
-const BitcoinRpcProvider = require('@liquality/bitcoin-rpc-provider').default
-const BitcoinSwapProvider = require('@liquality/bitcoin-swap-provider').default
-const BitcoinNodeWalletProvider = require('@liquality/bitcoin-node-wallet-provider').default
-const BitcoinJsWalletProvider = require('@liquality/bitcoin-js-wallet-provider').default
-const BitcoinEsploraBatchApiProvider = require('@liquality/bitcoin-esplora-batch-api-provider').default
-const BitcoinEsploraSwapFindProvider = require('@liquality/bitcoin-esplora-swap-find-provider').default
-const BitcoinFeeApiProvider = require('@liquality/bitcoin-fee-api-provider').default
-const BitcoinRpcFeeProvider = require('@liquality/bitcoin-rpc-fee-provider').default
-const BitcoinNetworks = require('@liquality/bitcoin-networks').default
+const { BitcoinRpcProvider } = require('@liquality/bitcoin-rpc-provider')
+const { BitcoinSwapProvider } = require('@liquality/bitcoin-swap-provider')
+const { BitcoinNodeWalletProvider } = require('@liquality/bitcoin-node-wallet-provider')
+const { BitcoinJsWalletProvider } = require('@liquality/bitcoin-js-wallet-provider')
+const { BitcoinEsploraBatchApiProvider } = require('@liquality/bitcoin-esplora-batch-api-provider')
+const { BitcoinEsploraSwapFindProvider } = require('@liquality/bitcoin-esplora-swap-find-provider')
+const { BitcoinFeeApiProvider } = require('@liquality/bitcoin-fee-api-provider')
+const { BitcoinRpcFeeProvider } = require('@liquality/bitcoin-rpc-fee-provider')
+const { BitcoinNetworks } = require('@liquality/bitcoin-networks')
 
-const EthereumRpcProvider = require('@liquality/ethereum-rpc-provider').default
-const EthereumJsWalletProvider = require('@liquality/ethereum-js-wallet-provider').default
-const EthereumSwapProvider = require('@liquality/ethereum-swap-provider').default
-const EthereumErc20Provider = require('@liquality/ethereum-erc20-provider').default
-const EthereumErc20SwapProvider = require('@liquality/ethereum-erc20-swap-provider').default
-const EthereumNetworks = require('@liquality/ethereum-networks').default
-const EthereumScraperSwapFindProvider = require('@liquality/ethereum-scraper-swap-find-provider').default
-const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-scraper-swap-find-provider').default
-const EthereumGasNowFeeProvider = require('@liquality/ethereum-gas-now-fee-provider').default
-const EthereumRpcFeeProvider = require('@liquality/ethereum-rpc-fee-provider').default
+const { EthereumRpcProvider } = require('@liquality/ethereum-rpc-provider')
+const { EthereumJsWalletProvider } = require('@liquality/ethereum-js-wallet-provider')
+const { EthereumSwapProvider } = require('@liquality/ethereum-swap-provider')
+const { EthereumErc20Provider } = require('@liquality/ethereum-erc20-provider')
+const { EthereumErc20SwapProvider } = require('@liquality/ethereum-erc20-swap-provider')
+const { EthereumNetworks } = require('@liquality/ethereum-networks')
+const { EthereumScraperSwapFindProvider } = require('@liquality/ethereum-scraper-swap-find-provider')
+const { EthereumErc20ScraperSwapFindProvider } = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
+const { EthereumGasNowFeeProvider } = require('@liquality/ethereum-gas-now-fee-provider')
+const { EthereumRpcFeeProvider } = require('@liquality/ethereum-rpc-fee-provider')
 
-const NearSwapProvider = require('@liquality/near-swap-provider').default
-const NearJsWalletProvider = require('@liquality/near-js-wallet-provider').default
-const NearRpcProvider = require('@liquality/near-rpc-provider').default
-const NearSwapFindProvider = require('@liquality/near-swap-find-provider').default
-const NearNetworks = require('@liquality/near-networks').default
+const { NearSwapProvider } = require('@liquality/near-swap-provider')
+const { NearJsWalletProvider } = require('@liquality/near-js-wallet-provider')
+const { NearRpcProvider } = require('@liquality/near-rpc-provider')
+const { NearSwapFindProvider } = require('@liquality/near-swap-find-provider')
+const { NearNetworks } = require('@liquality/near-networks')
 
 function createBtcClient () {
   const btcConfig = config.assets.BTC

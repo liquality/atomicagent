@@ -1,5 +1,5 @@
 const semver = require('semver')
-const Client = require('@liquality/client')
+const { Client } = require('@liquality/client')
 
 const AGENT_CAL_VERSION = Client.version
 const USER_AGENT_REGEX = /Wallet (\d.*?\.\d.*?\.\d.*?) \(CAL (\d.*?\.\d.*?\.\d.*?)\)/
