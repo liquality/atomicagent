@@ -49,7 +49,7 @@ program
     const client = getClient(asset)
     const address = await client.wallet.getUnusedAddress()
 
-    console.log(address.toString())
+    console.log(address)
   })
 
 program
