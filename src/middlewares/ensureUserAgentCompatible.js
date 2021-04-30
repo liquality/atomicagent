@@ -1,7 +1,7 @@
 const semver = require('semver')
-const { Client } = require('@liquality/client')
+const pkg = require('../../package.json')
 
-const AGENT_CAL_VERSION = Client.version
+const AGENT_CAL_VERSION = pkg.dependencies['@liquality/client'].replace('^', '').replace('~', '')
 const USER_AGENT_REGEX = /Wallet (\d.*?\.\d.*?\.\d.*?) \(CAL (\d.*?\.\d.*?\.\d.*?)\)/
 
 module.exports = (incompatibleResponse) => (req, res, next) => {
