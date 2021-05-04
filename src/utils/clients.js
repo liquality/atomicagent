@@ -45,7 +45,7 @@ function createBtcClient () {
       network: network,
       numberOfBlockConfirmation: btcConfig.feeNumberOfBlocks
     }))
-    btcClient.addProvider(new BitcoinJsWalletProvider({ network: network, mnemonic: btcConfig.wallet.mnemonic }))
+    btcClient.addProvider(new BitcoinJsWalletProvider({ network: network, mnemonic: btcConfig.wallet.mnemonic, baseDerivationPath: `m/84'/${network.coinType}'/0'` }))
   } else {
     btcClient.addProvider(new BitcoinRpcProvider({ uri: btcConfig.rpc.url, username: btcConfig.rpc.username, password: btcConfig.rpc.password, network: network, feeBlockConfirmations: btcConfig.feeNumberOfBlocks }))
     btcClient.addProvider(new BitcoinNodeWalletProvider({ network: network, uri: btcConfig.rpc.url, username: btcConfig.rpc.username, password: btcConfig.rpc.password, addressType: btcConfig.addressType }))
@@ -82,7 +82,7 @@ function createEthClient (asset) {
 
   const ethClient = new Client()
   ethClient.addProvider(new EthereumRpcProvider({ uri: assetConfig.rpc.url }))
-  ethClient.addProvider(new EthereumJsWalletProvider(network, assetConfig.wallet.mnemonic))
+  ethClient.addProvider(new EthereumJsWalletProvider({ network, mnemonic: assetConfig.wallet.mnemonic, derivationPath: `m/44'/${network.coinType}'/0'/0/0` }))
 
   if (assetData.type === 'erc20') {
     const contractAddress = assetConfig.contractAddress
@@ -108,7 +108,7 @@ function createNearClient () {
 
   const nearClient = new Client()
   if (nearConfig.wallet && nearConfig.wallet.type === 'js') {
-    nearClient.addProvider(new NearJsWalletProvider(network, nearConfig.wallet.mnemonic))
+    nearClient.addProvider(new NearJsWalletProvider({ network, mnemonic: nearConfig.wallet.mnemonic, derivationPath: `m/44'/${network.coinType}'/0'` }))
   }
 
   nearClient.addProvider(new NearRpcProvider(network))

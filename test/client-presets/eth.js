@@ -24,10 +24,11 @@ module.exports = [
   {
     provider: EthereumJsWalletProvider,
     requires: ['mnemonic'],
-    args: config => [
+    args: config => [{
       network,
-      config.mnemonic
-    ]
+      mnemonic: config.mnemonic,
+      derivationPath: `m/44'/${network.coinType}'/0'/0/0`
+    }]
   },
   {
     provider: EthereumSwapProvider

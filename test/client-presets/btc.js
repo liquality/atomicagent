@@ -20,7 +20,8 @@ module.exports = [
     requires: ['mnemonic'],
     args: config => [{
       network: BitcoinNetworks.bitcoin_regtest,
-      mnemonic: config.mnemonic
+      mnemonic: config.mnemonic,
+      baseDerivationPath: `m/84'/${BitcoinNetworks.bitcoin_regtest.coinType}'/0'`
     }]
   },
   {
