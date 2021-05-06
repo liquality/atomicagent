@@ -54,32 +54,53 @@ module.exports = async job => {
     return
   }
 
-  if (
-    order.fromAmountUsd > 0 &&
-    order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd) {
-    if (!flag.approve) {
-      const type = 'reciprocate-init-swap'
-      const action = 'approve'
-      const message = `${order.fromAmountUsd} < ${config.threshold.manualAboveFromAmountUsd}`
-
-      check.set(`flags.${type}`, {
-        [action]: new Date(),
-        message
-      })
-
-      await check.save()
-
-      await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
-
-      debug(`Auto-approved order ${data.orderId} worth $${order.fromAmountUsd}`)
-    }
-  } else {
-    if (!flag.approve) {
+  const withinUsdThreshold = order.fromAmountUsd > 0 && order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd
+  if (!withinUsdThreshold) {
+    if (!flags.approve) {
       throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
     }
-
     debug(`Approved ${data.orderId}`, flag.message)
   }
+
+  const fromAsset = await Asset.find({ code: order.from }).exec()
+  if (fromAsset.dailyUsdLimit) {
+    const yesterday = (new Date()) - (1000 * 60 * 60 * 24)
+    const query = await Order.aggregate([
+      {
+        $match: {
+          status: { $nin: ['QUOTE', 'QUOTE_EXPIRED'] },
+          createdAt: { $gte: new Date(yesterday) }
+        }
+      },
+      {
+        $group: {
+          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' }
+        }
+      }
+    ]).exec()
+    const fromAmountDaily = query['sum:fromAmountUsd']
+    if (fromAmountDaily > fromAsset.dailyUsdLimit) {
+      if (!flags.approve) {
+        throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
+      }
+      debug(`Approved ${data.orderId}`, flag.message)
+    }
+  }
+
+  const type = 'reciprocate-init-swap'
+  const action = 'approve'
+  const message = `${order.fromAmountUsd} < ${config.threshold.manualAboveFromAmountUsd}`
+
+  check.set(`flags.${type}`, {
+    [action]: new Date(),
+    message
+  })
+
+  await check.save()
+
+  await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
+
+  debug(`Auto-approved order ${data.orderId} worth $${order.fromAmountUsd}`)
 
   const toLastScannedBlock = await toClient.chain.getBlockHeight()
 
