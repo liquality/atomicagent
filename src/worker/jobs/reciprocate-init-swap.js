@@ -3,6 +3,7 @@ const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
 const config = require('../../config')
 const Check = require('../../models/Check')
 const Order = require('../../models/Order')
+const Asset = require('../../models/Asset')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async job => {
@@ -56,13 +57,13 @@ module.exports = async job => {
 
   const withinUsdThreshold = order.fromAmountUsd > 0 && order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd
   if (!withinUsdThreshold) {
-    if (!flags.approve) {
+    if (!flag.approve) {
       throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
     }
     debug(`Approved ${data.orderId}`, flag.message)
   }
 
-  const fromAsset = await Asset.find({ code: order.from }).exec()
+  const fromAsset = await Asset.findOne({ code: order.from }).exec()
   if (fromAsset.dailyUsdLimit) {
     const yesterday = (new Date()) - (1000 * 60 * 60 * 24)
     const query = await Order.aggregate([
@@ -74,13 +75,14 @@ module.exports = async job => {
       },
       {
         $group: {
+          _id: null,
           'sum:fromAmountUsd': { $sum: '$fromAmountUsd' }
         }
       }
     ]).exec()
-    const fromAmountDaily = query['sum:fromAmountUsd']
+    const fromAmountDaily = query[0]['sum:fromAmountUsd']
     if (fromAmountDaily > fromAsset.dailyUsdLimit) {
-      if (!flags.approve) {
+      if (!flag.approve) {
         throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
       }
       debug(`Approved ${data.orderId}`, flag.message)
