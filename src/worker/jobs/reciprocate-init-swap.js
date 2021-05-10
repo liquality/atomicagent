@@ -64,7 +64,7 @@ module.exports = async job => {
   }
 
   const fromAsset = await Asset.findOne({ code: order.from }).exec()
-  if (fromAsset.dailyUsdLimit) {
+  if (fromAsset['24hrUsdLimit']) {
     const yesterday = (new Date()) - (1000 * 60 * 60 * 24)
     const query = await Order.aggregate([
       {
@@ -81,7 +81,7 @@ module.exports = async job => {
       }
     ]).exec()
     const fromAmountDaily = query[0]['sum:fromAmountUsd']
-    if (fromAmountDaily > fromAsset.dailyUsdLimit) {
+    if (fromAmountDaily > fromAsset['24hrUsdLimit']) {
       if (!flag.approve) {
         throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
       }

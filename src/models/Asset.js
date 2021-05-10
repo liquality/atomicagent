@@ -28,7 +28,7 @@ const AssetSchema = new mongoose.Schema({
     type: Number
   },
 
-  dailyUsdLimit: {
+  '24hrUsdLimit': {
     type: Number
   }
 }, { timestamps: true })
