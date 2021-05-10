@@ -3,6 +3,7 @@ const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
 const config = require('../../config')
 const Check = require('../../models/Check')
 const Order = require('../../models/Order')
+const Asset = require('../../models/Asset')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async job => {
@@ -54,32 +55,54 @@ module.exports = async job => {
     return
   }
 
-  if (
-    order.fromAmountUsd > 0 &&
-    order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd) {
-    if (!flag.approve) {
-      const type = 'reciprocate-init-swap'
-      const action = 'approve'
-      const message = `${order.fromAmountUsd} < ${config.threshold.manualAboveFromAmountUsd}`
-
-      check.set(`flags.${type}`, {
-        [action]: new Date(),
-        message
-      })
-
-      await check.save()
-
-      await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
-
-      debug(`Auto-approved order ${data.orderId} worth $${order.fromAmountUsd}`)
-    }
-  } else {
+  const withinUsdThreshold = order.fromAmountUsd > 0 && order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd
+  if (!withinUsdThreshold) {
     if (!flag.approve) {
       throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
     }
-
     debug(`Approved ${data.orderId}`, flag.message)
   }
+
+  const fromAsset = await Asset.findOne({ code: order.from }).exec()
+  if (fromAsset['24hrUsdLimit']) {
+    const yesterday = (new Date()) - (1000 * 60 * 60 * 24)
+    const query = await Order.aggregate([
+      {
+        $match: {
+          status: { $nin: ['QUOTE', 'QUOTE_EXPIRED'] },
+          createdAt: { $gte: new Date(yesterday) }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' }
+        }
+      }
+    ]).exec()
+    const fromAmountDaily = query[0]['sum:fromAmountUsd']
+    if (fromAmountDaily > fromAsset['24hrUsdLimit']) {
+      if (!flag.approve) {
+        throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
+      }
+      debug(`Approved ${data.orderId}`, flag.message)
+    }
+  }
+
+  const type = 'reciprocate-init-swap'
+  const action = 'approve'
+  const message = `${order.fromAmountUsd} < ${config.threshold.manualAboveFromAmountUsd}`
+
+  check.set(`flags.${type}`, {
+    [action]: new Date(),
+    message
+  })
+
+  await check.save()
+
+  await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
+
+  debug(`Auto-approved order ${data.orderId} worth $${order.fromAmountUsd}`)
 
   const toLastScannedBlock = await toClient.chain.getBlockHeight()
 

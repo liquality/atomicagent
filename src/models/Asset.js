@@ -26,6 +26,10 @@ const AssetSchema = new mongoose.Schema({
 
   fixedUsdRate: {
     type: Number
+  },
+
+  '24hrUsdLimit': {
+    type: Number
   }
 }, { timestamps: true })
 
