@@ -10,6 +10,9 @@
 ## Setup
 
 ```bash
+git clone git@github.com:liquality/atomicagent.git
+cd atomicagent
+npm ci
 cp sample.config.toml config.toml   # copy sample config
 nano config.toml                    # configure your agent
 nano src/migrate/data/assets.json   # add/remove assets
