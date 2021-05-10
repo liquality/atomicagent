@@ -10,11 +10,11 @@
 ## Setup
 
 ```bash
-cp sample.config.toml config.toml
-nano config.toml # configure your agent
-nano src/migrate/data/assets.json # add/remove assets
-nano src/migrate/data/markets.json # add/remove markets
-npm run migrate
+cp sample.config.toml config.toml   # copy sample config
+nano config.toml                    # configure your agent
+nano src/migrate/data/assets.json   # add/remove assets
+nano src/migrate/data/markets.json  # add/remove markets
+npm run migrate                     # prepare agent with assets & markets
 ```
 
 ## Liquality Nodes
@@ -35,8 +35,8 @@ npm run migrate
 ## Run!
 
 ```bash
-npm run api # runs agent market maker api
-npm run worker # runs the background process
+npm run api     # runs agent market maker api
+npm run worker  # runs the background process
 ```
 
 ## Test
@@ -44,8 +44,8 @@ npm run worker # runs the background process
 ### Configure
 
 ```bash
-cp sample.config.toml test.config.toml
-nano config.toml # configure your agent as per your test environment
+cp sample.config.toml test.config.toml  # copy sample config
+nano config.toml                        # configure your agent as per your test environment
 ```
 
 ### Test!
@@ -53,7 +53,7 @@ nano config.toml # configure your agent as per your test environment
 ```bash
 chmod -R 777 test/docker/config
 npm run docker:start
-sleep 30 # let bitcoind[regtest] mine first 100 blocks
+sleep 30                          # let bitcoind[regtest] mine first 100 blocks
 npm run test
 ```
 
