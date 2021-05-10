@@ -1,33 +1,42 @@
 # 💥 Atomic Agent ![Build status](https://github.com/liquality/agent/workflows/Test,%20publish%20&%20deploy/badge.svg)
 
-> Atomic Swap Agent
+## Prerequisites
+
+1. Linux VM
+2. node 8
+3. mongoDB 4.2+
+4. [RPC/API endpoints for the chains you want to support](#liquality-nodes)
 
 ## Setup
 
-Follow these steps to setup your local environment: https://github.com/liquality/documentation/blob/dev/_posts/2019-11-13-installation.md#prerequisites
-
-## Demo
-
-Follow these steps to get started with your atomic agent locally!
-
-### Configure
-
 ```bash
 cp sample.config.toml config.toml
-nano config.toml # configure your agent as per your environment
-```
-
-### Add test data
-
-```bash
+nano config.toml # configure your agent
+nano src/migrate/data/assets.json # add/remove assets
+nano src/migrate/data/markets.json # add/remove markets
 npm run migrate
 ```
 
-### Run!
+## Liquality Nodes
+
+| Node                  | Network | Endpoint                                               |
+|-----------------------|---------|--------------------------------------------------------|
+| Bitcoin Electrs       | Testnet | https://liquality.io/testnet/electrs                   |
+| Bitcoin Electrs       | Mainnet | https://api-mainnet-bitcoin-electrs.liquality.io       |
+| Bitcoin Batch Electrs | Testnet | https://liquality.io/electrs-testnet-batch             |
+| Bitcoin Batch Electrs | Mainnet | https://api-mainnet-bitcoin-electrs-batch.liquality.io |
+| Ethereum Scraper      | Testnet | https://liquality.io/eth-rinkeby-api                   |
+| Ethereum Scraper      | Mainnet | https://liquality.io/eth-mainnet-api                   |
+| RSK Scraper           | Testnet | https://liquality.io/rsk-testnet-api                   |
+| RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
+| BSC Scraper           | Testnet | https://liquality.io/bsc-testnet-api                   |
+| BSC Scraper           | Mainnet | https://liquality.io/bsc-mainnet-api                   |
+
+## Run!
 
 ```bash
-npm run api
-npm run worker # in a separate shell
+npm run api # runs agent market maker api
+npm run worker # runs the background process
 ```
 
 ## Test
@@ -44,7 +53,7 @@ nano config.toml # configure your agent as per your test environment
 ```bash
 chmod -R 777 test/docker/config
 npm run docker:start
-sleep 30
+sleep 30 # let bitcoind[regtest] mine first 100 blocks
 npm run test
 ```
 
