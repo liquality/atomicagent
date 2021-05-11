@@ -55,7 +55,7 @@ program
 program
   .command('sendtoaddress <asset> <address> <amount>')
   .action(async (asset, address, amount) => {
-    const amountInUnit = currencyToUnit(assets[asset], amount).toNumber()
+    const amountInUnit = currencyToUnit(assets[asset], amount)
     const client = getClient(asset)
     const tx = await client.chain.sendTransaction({ to: address, value: amountInUnit })
 
