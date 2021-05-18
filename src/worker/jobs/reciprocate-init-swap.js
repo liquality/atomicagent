@@ -18,7 +18,17 @@ module.exports = async job => {
   const toClient = order.toClient()
 
   const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
-  const fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
+  let fromCurrentBlock
+
+  try {
+    fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
+  } catch (e) {
+    if (['BlockNotFoundError'].includes(e.name)) {
+      throw new RescheduleError(e.message, order.from)
+    }
+
+    throw e
+  }
 
   const stop = order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock) || order.isNodeSwapExpired(fromCurrentBlock)
   if (stop) {
