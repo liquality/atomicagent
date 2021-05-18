@@ -1,11 +1,7 @@
 const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
-<<<<<<< HEAD
 const { assets, chains } = require('@liquality/cryptoassets')
-=======
-const { assets: cryptoassets, chains } = require('@liquality/cryptoassets')
->>>>>>> master
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -289,13 +285,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-<<<<<<< HEAD
   this.fromCounterPartyAddress = chains[assets[this.from].chain].formatAddress(fromAddresses.address)
   this.toCounterPartyAddress = chains[assets[this.to].chain].formatAddress(toAddresses.address)
-=======
-  this.fromCounterPartyAddress = chains[cryptoassets[this.from].chain].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = chains[cryptoassets[this.to].chain].formatAddress(toAddresses.address)
->>>>>>> master
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -314,13 +305,8 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-<<<<<<< HEAD
   const fromChainNativeAsset = chains[assets[this.from].chain].nativeAsset
   const toChainNativeAsset = chains[assets[this.to].chain].nativeAsset
-=======
-  const fromChainNativeAsset = chains[cryptoassets[this.from].chain].nativeAsset
-  const toChainNativeAsset = chains[cryptoassets[this.to].chain].nativeAsset
->>>>>>> master
 
   if (fromChainNativeAsset !== this.from) {
     this.fromSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${fromChainNativeAsset}-USD`)
@@ -409,11 +395,7 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-<<<<<<< HEAD
     const { type, chain } = assets[asset]
-=======
-    const { type, chain } = cryptoassets[asset]
->>>>>>> master
     const key = type === 'erc20' ? 'Secondary' : ''
     const nativeAsset = chains[chain].nativeAsset
     txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
