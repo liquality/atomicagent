@@ -80,10 +80,7 @@ function createEthClient (asset) {
     }
   }
 
-  console.log('before client')
-  console.log(Client)
   const ethClient = new Client()
-  console.log('after client')
   ethClient.addProvider(new EthereumRpcProvider({ uri: assetConfig.rpc.url }))
   ethClient.addProvider(new EthereumJsWalletProvider({ network, mnemonic: assetConfig.wallet.mnemonic, derivationPath: `m/44'/${network.coinType}'/0'/0/0` }))
 
