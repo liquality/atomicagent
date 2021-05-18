@@ -1,10 +1,10 @@
-const EthereumRpcProvider = require('@liquality/ethereum-rpc-provider')
-const EthereumJsWalletProvider = require('@liquality/ethereum-js-wallet-provider')
-const EthereumErc20Provider = require('@liquality/ethereum-erc20-provider')
-const EthereumErc20SwapProvider = require('@liquality/ethereum-erc20-swap-provider')
-const EthereumErc20ScraperSwapFindProvider = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
-const EthereumRpcFeeProvider = require('@liquality/ethereum-rpc-fee-provider')
-const EthereumNetworks = require('@liquality/ethereum-networks')
+const { EthereumRpcProvider } = require('@liquality/ethereum-rpc-provider')
+const { EthereumJsWalletProvider } = require('@liquality/ethereum-js-wallet-provider')
+const { EthereumErc20Provider } = require('@liquality/ethereum-erc20-provider')
+const { EthereumErc20SwapProvider } = require('@liquality/ethereum-erc20-swap-provider')
+const { EthereumErc20ScraperSwapFindProvider } = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
+const { EthereumRpcFeeProvider } = require('@liquality/ethereum-rpc-fee-provider')
+const { EthereumNetworks } = require('@liquality/ethereum-networks')
 
 let network = EthereumNetworks.local
 
@@ -18,17 +18,18 @@ network = {
 module.exports = [
   {
     provider: EthereumRpcProvider,
-    args: config => [
-      config.assetConfig.rpc.url
-    ]
+    args: config => [{
+      uri: config.assetConfig.rpc.url
+    }]
   },
   {
     provider: EthereumJsWalletProvider,
     requires: ['mnemonic'],
-    args: config => [
+    args: config => [{
       network,
-      config.mnemonic
-    ]
+      mnemonic: config.mnemonic,
+      derivationPath: `m/44'/${network.coinType}'/0'/0/0`
+    }]
   },
   {
     provider: EthereumErc20Provider,

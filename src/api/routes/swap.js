@@ -142,7 +142,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
     return res.notOk(400, `Order cannot be updated after funding: ${params.orderId}`)
   }
 
-  if (!hashUtil.isValidTxHash(body.fromFundHash)) {
+  if (!hashUtil.isValidTxHash(body.fromFundHash, order.from)) {
     Sentry.captureException(
       new InvalidHashError(`Invalid fromFundHash: ${body.fromFundHash}`)
     )

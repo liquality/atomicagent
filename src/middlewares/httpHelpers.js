@@ -28,7 +28,7 @@ module.exports = () => function (req, res, next) {
 
       if (id) data.id = id
 
-      return res.json({ error: message })
+      return res.json(data)
     } else {
       let data = message
 

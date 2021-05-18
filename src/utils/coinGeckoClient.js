@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')
-const { assets: cryptoassets } = require('@liquality/cryptoassets')
+const { assets } = require('@liquality/cryptoassets')
 
 class CoinGecko {
   constructor (url = 'https://api.coingecko.com/api/v3') {
@@ -13,7 +13,7 @@ class CoinGecko {
     const formattedVsCurrencies = vsCurrencies.map(c => c.toLowerCase()).join(',') // Normalize to agent casing
     const { data } = await this._axios.get(`/simple/price?ids=${formattedCoinIds}&vs_currencies=${formattedVsCurrencies}`)
     // Normalize to agent casing
-    let formattedData = _.mapKeys(data, (v, coinGeckoId) => _.findKey(cryptoassets, asset => asset.coinGeckoId === coinGeckoId))
+    let formattedData = _.mapKeys(data, (v, coinGeckoId) => _.findKey(assets, asset => asset.coinGeckoId === coinGeckoId))
     formattedData = _.mapValues(formattedData, rates => _.mapKeys(rates, (v, k) => k.toUpperCase()))
     return formattedData
   }
@@ -31,7 +31,7 @@ class CoinGecko {
       }
     })
 
-    const coinIds = [...all].map(currency => cryptoassets[currency].coinGeckoId)
+    const coinIds = [...all].map(currency => assets[currency].coinGeckoId)
     const rates = await this.getPrices(coinIds, ['USD', ...all])
 
     Object

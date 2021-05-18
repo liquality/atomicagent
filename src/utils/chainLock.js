@@ -2,7 +2,7 @@ const debug = require('debug')('liquality:agent:chain-lock')
 
 const EventEmitter = require('events')
 const _ = require('lodash')
-const { assets: cryptoassets } = require('@liquality/cryptoassets')
+const { assets } = require('@liquality/cryptoassets')
 
 const { RescheduleError, PossibleTimelockError } = require('./errors')
 
@@ -17,7 +17,7 @@ const wait = millis => new Promise(resolve => setTimeout(() => resolve(), millis
 const waitForRandom = (min, max) => wait(_.random(min, max))
 
 const attemptToLockChain = asset => {
-  const chain = cryptoassets[asset].chain
+  const chain = assets[asset].chain
 
   if (CHAIN_LOCK[chain]) {
     return {

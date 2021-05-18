@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const { omitBy } = require('lodash')
 const { v4: uuidv4 } = require('uuid')
-const { assets: cryptoassets, chains } = require('@liquality/cryptoassets')
+const { assets, chains } = require('@liquality/cryptoassets')
 const config = require('../config')
 const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
@@ -9,10 +9,11 @@ const MarketHistory = require('./MarketHistory')
 const { getClient } = require('../utils/clients')
 const { withLock } = require('../utils/chainLock')
 const crypto = require('../utils/crypto')
-const { toLowerCaseWithout0x } = require('../utils/hash')
+const { formatTxHash } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
 const blockScanOrFind = require('../utils/blockScanOrFind')
+const BN = require('bignumber.js')
 
 const OrderSchema = new mongoose.Schema({
   migrationVersion: {
@@ -106,71 +107,71 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   fromSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   fromRefundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   fromClaimHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   toFundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.to) }
   },
   toSecondaryFundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.to) }
   },
   toClaimHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   toRefundHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return formatHash(hash, this.from) }
   },
   secretHash: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return hash.toLowerCase().replace(/0x/g, '') }
   },
   secret: {
     type: String,
     unique: true,
     sparse: true,
-    lowercase: true,
-    set: toLowerCaseWithout0x
+    lowercase: false,
+    set: function (hash) { return hash.toLowerCase().replace(/0x/g, '') }
   },
   swapExpiration: {
     type: Number,
@@ -284,8 +285,8 @@ OrderSchema.methods.setAgentAddresses = async function () {
   const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
   const toAddresses = await this.toClient().wallet.getUnusedAddress()
 
-  this.fromCounterPartyAddress = chains[cryptoassets[this.from].chain].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = chains[cryptoassets[this.to].chain].formatAddress(toAddresses.address)
+  this.fromCounterPartyAddress = chains[assets[this.from].chain].formatAddress(fromAddresses.address)
+  this.toCounterPartyAddress = chains[assets[this.to].chain].formatAddress(toAddresses.address)
 }
 
 OrderSchema.methods.setExpiration = async function () {
@@ -304,8 +305,8 @@ OrderSchema.methods.setUsdRates = async function () {
   this.fromRateUsd = fromRateUsd
   this.toRateUsd = toRateUsd
 
-  const fromChainNativeAsset = chains[cryptoassets[this.from].chain].nativeAsset
-  const toChainNativeAsset = chains[cryptoassets[this.to].chain].nativeAsset
+  const fromChainNativeAsset = chains[assets[this.from].chain].nativeAsset
+  const toChainNativeAsset = chains[assets[this.to].chain].nativeAsset
 
   if (fromChainNativeAsset !== this.from) {
     this.fromSecondaryRateUsd = await MarketHistory.getMostRecentRate(`${fromChainNativeAsset}-USD`)
@@ -382,8 +383,8 @@ OrderSchema.methods.addTx = function (type, tx) {
   if (!side) throw new Error(`Invalid tx type: ${type}`)
   side = side[0]
 
-  const hash = tx.placeholder ? uuidv4() : toLowerCaseWithout0x(tx.hash)
   const asset = this[side]
+  const hash = tx.placeholder ? uuidv4() : formatTxHash(tx.hash, asset)
   const txMapItemValue = {
     asset,
     type,
@@ -394,7 +395,7 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.feeAmount = tx.fee
     txMapItemValue.feePrice = tx.feePrice
 
-    const { type, chain } = cryptoassets[asset]
+    const { type, chain } = assets[asset]
     const key = type === 'erc20' ? 'Secondary' : ''
     const nativeAsset = chains[chain].nativeAsset
     txMapItemValue.feeAmountUsd = calculateFeeUsdAmount(nativeAsset, tx.fee, this[`${side}${key}RateUsd`]) || 0
@@ -433,12 +434,14 @@ OrderSchema.methods.claimSwap = async function () {
     const fees = await fromClient.chain.getFees()
 
     return fromClient.swap.claimSwap(
+      {
+        value: BN(this.fromAmount),
+        recipientAddress: this.fromCounterPartyAddress,
+        refundAddress: this.fromAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
       this.fromFundHash,
-      this.fromAmount,
-      this.fromCounterPartyAddress,
-      this.fromAddress,
-      this.secretHash,
-      this.swapExpiration,
       this.secret,
       fees[defaultFee].fee
     )
@@ -453,12 +456,14 @@ OrderSchema.methods.refundSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     const refundTx = await toClient.swap.refundSwap(
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.nodeSwapExpiration
+      },
       this.toFundHash,
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.nodeSwapExpiration,
       fees[defaultFee].fee
     )
 
@@ -474,11 +479,13 @@ OrderSchema.methods.initiateSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.initiateSwap(
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.nodeSwapExpiration,
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.nodeSwapExpiration
+      },
       fees[defaultFee].fee
     )
   })
@@ -492,12 +499,14 @@ OrderSchema.methods.fundSwap = async function () {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.fundSwap(
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.nodeSwapExpiration
+      },
       this.toFundHash,
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.nodeSwapExpiration,
       fees[defaultFee].fee
     )
   })
@@ -508,12 +517,14 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
 
   try {
     const verified = await fromClient.swap.verifyInitiateSwapTransaction(
-      this.fromFundHash,
-      this.fromAmount,
-      this.fromCounterPartyAddress,
-      this.fromAddress,
-      this.secretHash,
-      this.swapExpiration
+      {
+        value: BN(this.fromAmount),
+        recipientAddress: this.fromCounterPartyAddress,
+        refundAddress: this.fromAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
+      this.fromFundHash
     )
 
     if (!verified) {
@@ -533,12 +544,14 @@ OrderSchema.methods.findFromFundSwapTransaction = async function () {
 
   try {
     const fromSecondaryFundTx = await fromClient.swap.findFundSwapTransaction(
-      this.fromFundHash,
-      this.fromAmount,
-      this.fromCounterPartyAddress,
-      this.fromAddress,
-      this.secretHash,
-      this.swapExpiration
+      {
+        value: BN(this.fromAmount),
+        recipientAddress: this.fromCounterPartyAddress,
+        refundAddress: this.fromAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
+      this.fromFundHash
     )
 
     return fromSecondaryFundTx
@@ -556,12 +569,14 @@ OrderSchema.methods.findToFundSwapTransaction = async function () {
 
   try {
     const toSecondaryFundTx = await toClient.swap.findFundSwapTransaction(
-      this.toFundHash,
-      this.toAmount,
-      this.toAddress,
-      this.toCounterPartyAddress,
-      this.secretHash,
-      this.swapExpiration
+      {
+        value: BN(this.toAmount),
+        recipientAddress: this.toAddress,
+        refundAddress: this.toCounterPartyAddress,
+        secretHash: this.secretHash,
+        expiration: this.swapExpiration
+      },
+      this.toFundHash
     )
 
     return toSecondaryFundTx
@@ -584,12 +599,14 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
   return blockScanOrFind(fromClient, async blockNumber => {
     try {
       const tx = await fromClient.swap.findRefundSwapTransaction(
+        {
+          value: BN(this.fromAmount),
+          recipientAddress: this.fromCounterPartyAddress,
+          refundAddress: this.fromAddress,
+          secretHash: this.secretHash,
+          expiration: this.swapExpiration
+        },
         this.fromFundHash,
-        this.fromAmount,
-        this.fromCounterPartyAddress,
-        this.fromAddress,
-        this.secretHash,
-        this.swapExpiration,
         blockNumber
       )
 
@@ -614,12 +631,14 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
   return blockScanOrFind(toClient, async blockNumber => {
     try {
       const tx = await toClient.swap.findClaimSwapTransaction(
+        {
+          value: BN(this.toAmount),
+          recipientAddress: this.toAddress,
+          refundAddress: this.toCounterPartyAddress,
+          secretHash: this.secretHash,
+          expiration: this.nodeSwapExpiration
+        },
         this.toFundHash,
-        this.toAmount,
-        this.toAddress,
-        this.toCounterPartyAddress,
-        this.secretHash,
-        this.nodeSwapExpiration,
         blockNumber
       )
 
@@ -659,6 +678,11 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     status: 'QUOTE'
   })
 })
+
+function formatHash (hash, asset) {
+  return chains[assets[asset].chain]
+    .formatTransactionHash(hash)
+}
 
 const Order = mongoose.model('Order', OrderSchema)
 module.exports = Order
