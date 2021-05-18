@@ -80,7 +80,10 @@ function createEthClient (asset) {
     }
   }
 
+  console.log('before client')
+  console.log(Client)
   const ethClient = new Client()
+  console.log('after client')
   ethClient.addProvider(new EthereumRpcProvider({ uri: assetConfig.rpc.url }))
   ethClient.addProvider(new EthereumJsWalletProvider({ network, mnemonic: assetConfig.wallet.mnemonic, derivationPath: `m/44'/${network.coinType}'/0'/0/0` }))
 
@@ -126,6 +129,7 @@ function createClient (asset) {
   if (assetData.chain === 'bitcoin') return createBtcClient()
   if (assetData.chain === 'rsk') return createEthClient(asset)
   if (assetData.chain === 'bsc') return createEthClient(asset)
+  if (assetData.chain === 'polygon') return createEthClient(asset)
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
 

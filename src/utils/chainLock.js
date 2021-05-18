@@ -80,7 +80,7 @@ const getLockForAsset = async (asset, id) => {
 }
 
 const isEthereumChain = chain => {
-  return ['ethereum', 'rsk', 'bsc'].includes(chain)
+  return ['ethereum', 'rsk', 'bsc', 'polygon'].includes(chain)
 }
 
 const withLock = async (asset, func) => {
