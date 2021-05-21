@@ -2,7 +2,7 @@ const debug = require('debug')('liquality:agent:chain-lock')
 
 const EventEmitter = require('events')
 const _ = require('lodash')
-const { assets } = require('@liquality/cryptoassets')
+const { isEthereumChain, assets } = require('@liquality/cryptoassets')
 
 const { RescheduleError, PossibleTimelockError } = require('./errors')
 
@@ -77,10 +77,6 @@ const getLockForAsset = async (asset, id) => {
   CHAIN_LOCK_TIMESTAMP[chain] = Date.now()
 
   return chain
-}
-
-const isEthereumChain = chain => {
-  return ['ethereum', 'rsk', 'bsc', 'polygon'].includes(chain)
 }
 
 const withLock = async (asset, func) => {
