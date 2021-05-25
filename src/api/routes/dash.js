@@ -126,7 +126,7 @@ router.get('/orders', asyncHandler(async (req, res) => {
     sort,
     skip: limit * (page - 1),
     limit
-  }).exec()
+  }).lean().exec()
 
   res.json({
     page,
@@ -236,7 +236,7 @@ router.get('/stats', asyncHandler(async (req, res) => {
     ...req.query,
     status: ['AGENT_CLAIMED']
   })
-  const markets = (await Market.find({}, 'from to').exec()).map(market => `${market.from}-${market.to}`)
+  const markets = (await Market.find({}, 'from to').lean().exec()).map(market => `${market.from}-${market.to}`)
 
   const $group = markets.reduce((acc, market) => {
     acc[`market:${market}:sum:fromAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] } }
