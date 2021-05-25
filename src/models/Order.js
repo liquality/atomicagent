@@ -150,14 +150,14 @@ const OrderSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     lowercase: false,
-    set: function (hash) { return formatHash(hash, this.from) }
+    set: function (hash) { return formatHash(hash, this.to) }
   },
   toRefundHash: {
     type: String,
     unique: true,
     sparse: true,
     lowercase: false,
-    set: function (hash) { return formatHash(hash, this.from) }
+    set: function (hash) { return formatHash(hash, this.to) }
   },
   secretHash: {
     type: String,
@@ -680,6 +680,7 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
 })
 
 function formatHash (hash, asset) {
+  if (!asset) return
   return chains[assets[asset].chain]
     .formatTransactionHash(hash)
 }
