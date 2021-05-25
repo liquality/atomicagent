@@ -680,7 +680,8 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
 })
 
 function formatHash (hash, asset) {
-  if (!asset) return
+  // when querying documents, to/from are not set
+  if (!asset) return hash
   return chains[assets[asset].chain]
     .formatTransactionHash(hash)
 }
