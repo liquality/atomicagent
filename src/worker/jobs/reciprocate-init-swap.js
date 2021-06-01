@@ -79,6 +79,7 @@ module.exports = async job => {
     const query = await Order.aggregate([
       {
         $match: {
+          from: order.from,
           status: { $nin: ['QUOTE', 'QUOTE_EXPIRED'] },
           createdAt: { $gte: new Date(yesterday) }
         }
