@@ -80,6 +80,13 @@ function createEthClient (asset) {
     }
   }
 
+  if (network.name.includes('polygon')) { // Remove when CAL >= 1.3.0
+    network = {
+      ...network,
+      coinType: '60'
+    }
+  }
+
   const ethClient = new Client()
   ethClient.addProvider(new EthereumRpcProvider({ uri: assetConfig.rpc.url }))
   ethClient.addProvider(new EthereumJsWalletProvider({ network, mnemonic: assetConfig.wallet.mnemonic, derivationPath: `m/44'/${network.coinType}'/0'/0/0` }))
