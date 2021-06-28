@@ -69,6 +69,9 @@ function createBtcClient () {
 function createEthClient (asset) {
   const assetData = assets[asset]
   const assetConfig = config.assets[asset]
+  // console.log(asset);
+  // console.log(assetData);
+  // console.log(assetConfig)
 
   let network = EthereumNetworks[assetConfig.network]
   if (network.name === 'local') {
@@ -127,6 +130,7 @@ function createClient (asset) {
   if (assetData.chain === 'rsk') return createEthClient(asset)
   if (assetData.chain === 'bsc') return createEthClient(asset)
   if (assetData.chain === 'polygon') return createEthClient(asset)
+  if (assetData.chain === 'arbitrum') return createEthClient(asset)
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
 
