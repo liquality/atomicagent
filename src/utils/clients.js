@@ -69,9 +69,6 @@ function createBtcClient () {
 function createEthClient (asset) {
   const assetData = assets[asset]
   const assetConfig = config.assets[asset]
-  // console.log(asset);
-  // console.log(assetData);
-  // console.log(assetConfig)
 
   let network = EthereumNetworks[assetConfig.network]
   if (network.name === 'local') {
