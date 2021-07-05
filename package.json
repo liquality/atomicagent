@@ -43,7 +43,7 @@
     "@liquality/ethereum-erc20-swap-provider": "1.1.8",
     "@liquality/ethereum-gas-now-fee-provider": "1.1.8",
     "@liquality/ethereum-js-wallet-provider": "1.1.8",
-    "@liquality/ethereum-networks": "1.4.2",
+    "@liquality/ethereum-networks": "1.4.3",
     "@liquality/ethereum-rpc-fee-provider": "1.1.8",
     "@liquality/ethereum-rpc-provider": "1.1.8",
     "@liquality/ethereum-scraper-swap-find-provider": "1.1.8",
