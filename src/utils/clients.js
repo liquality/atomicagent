@@ -29,6 +29,12 @@ const { NearRpcProvider } = require('@liquality/near-rpc-provider')
 const { NearSwapFindProvider } = require('@liquality/near-swap-find-provider')
 const { NearNetworks } = require('@liquality/near-networks')
 
+const { SolanaNetworks } = require('@liquality/solana-network')
+const { SolanaRpcProvider } = require('@liquality/solana-rpc-provider')
+const { SolanaWalletProvider } = require('@liquality/solana-wallet-provider')
+const { SolanaSwapProvider } = require('@liquality/solana-swap-provider')
+const { SolanaSwapFindProvider } = require('@liquality/solana-swap-find-provider');
+
 function createBtcClient () {
   const btcConfig = config.assets.BTC
   const network = BitcoinNetworks[btcConfig.network]
@@ -118,6 +124,26 @@ function createNearClient () {
   return nearClient
 }
 
+function createSolClient() {
+  const solanaConfig = config.assets.SOLANA
+  const solanaNetwork = ChainNetworks.solana[solanaConfig.network]
+
+  const solanaClient = new Client()
+  const derivationPath = `m/44'/501'/${solanaNetwork.walletIndex}'/0'`
+  solanaClient.addProvider(new SolanaRpcProvider(solanaNetwork))
+  solanaClient.addProvider(new SolanaWalletProvider(
+    {
+      network: solanaNetwork,
+      mnemonic: solanaConfig.wallet.mnemonic,
+      derivationPath
+    }
+  ))
+  solanaClient.addProvider(new SolanaSwapProvider())
+  solanaClient.addProvider(new SolanaSwapFindProvider(solanaNetwork.helperUrl))
+
+  return solanaClient
+}
+
 const clients = {}
 
 function createClient (asset) {
@@ -130,6 +156,7 @@ function createClient (asset) {
   if (assetData.chain === 'arbitrum') return createEthClient(asset)
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
+  if (assetData.chain === 'solana') return createSolClient()
 
   throw new Error(`Could not create client for asset ${asset}`)
 }
