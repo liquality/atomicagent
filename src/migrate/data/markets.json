@@ -62,7 +62,7 @@
   {
     "from": "SOL",
     "to": "ETH",
-    "rate": 2,
+    "rate": 0.02,
     "spread": 0,
     "orderExpiresIn": 7200000,
     "status": "ACTIVE",
@@ -72,7 +72,7 @@
   {
     "from": "ETH",
     "to": "SOL",
-    "rate": 1,
+    "rate": 50,
     "spread": 0,
     "orderExpiresIn": 7200000,
     "status": "ACTIVE",

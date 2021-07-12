@@ -125,8 +125,8 @@ function createNearClient () {
 }
 
 function createSolClient() {
-  const solanaConfig = config.assets.SOLANA
-  const solanaNetwork = ChainNetworks.solana[solanaConfig.network]
+  const solanaConfig = config.assets.SOL
+  const solanaNetwork = SolanaNetworks[solanaConfig.network]
 
   const solanaClient = new Client()
   const derivationPath = `m/44'/501'/${solanaNetwork.walletIndex}'/0'`
