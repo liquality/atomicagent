@@ -29,7 +29,7 @@ const { NearRpcProvider } = require('@liquality/near-rpc-provider')
 const { NearSwapFindProvider } = require('@liquality/near-swap-find-provider')
 const { NearNetworks } = require('@liquality/near-networks')
 
-const { SolanaNetworks } = require('@liquality/solana-network')
+const { SolanaNetworks } = require('@liquality/solana-networks')
 const { SolanaRpcProvider } = require('@liquality/solana-rpc-provider')
 const { SolanaWalletProvider } = require('@liquality/solana-wallet-provider')
 const { SolanaSwapProvider } = require('@liquality/solana-swap-provider')
