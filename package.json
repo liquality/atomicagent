@@ -1,6 +1,6 @@
 {
   "name": "atomicagent",
-  "version": "0.4.5-next.6",
+  "version": "0.4.5-next.7",
   "description": "Atomic Swap Agent",
   "main": "src/index.js",
   "bin": {
@@ -37,7 +37,7 @@
     "@liquality/client": "1.4.3",
     "@liquality/client-factory": "1.1.8",
     "@liquality/crypto": "1.1.8",
-    "@liquality/cryptoassets": "^1.2.3",
+    "@liquality/cryptoassets": "^1.2.6",
     "@liquality/ethereum-erc20-provider": "1.1.8",
     "@liquality/ethereum-erc20-scraper-swap-find-provider": "1.1.8",
     "@liquality/ethereum-erc20-swap-provider": "1.1.8",
