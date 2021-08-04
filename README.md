@@ -25,10 +25,12 @@ npm run migrate                     # prepare agent with assets & markets
 
 ## Liquality Hosted Agents
 
-| Network | Endpoint                                               |
-|---------|--------------------------------------------------------|
-| Testnet | https://liquality.io/swap-testnet/agent                |
-| Mainnet | https://liquality.io/swap/agent                        |
+|Environment| Network | Endpoint                                               |
+|-|---------|--------------------------------------------------------|
+|Production| Testnet | https://liquality.io/swap-testnet/agent                |
+|Production| Mainnet | https://liquality.io/swap/agent                        |
+|Development| Testnet | https://liquality.io/swap-testnet-dev/agent                |
+|Development| Mainnet | https://liquality.io/swap-dev/agent                        |
 
 
 ## Liquality Nodes
