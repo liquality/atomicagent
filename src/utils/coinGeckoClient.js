@@ -34,6 +34,12 @@ class CoinGecko {
     const coinIds = [...all].map(currency => assets[currency].coinGeckoId)
     const rates = await this.getPrices(coinIds, ['USD', ...all])
 
+    for (const symbol of [...all]) {
+      if (!rates[symbol] && assets[symbol].matchingAsset) {
+        rates[symbol] = rates[assets[symbol].matchingAsset]
+      }
+    }
+
     Object
       .entries(fixedUsdRates)
       .forEach(([asset, usdRate]) => {
