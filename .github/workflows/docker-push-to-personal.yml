@@ -1,0 +1,55 @@
+name: 'deploy-to-personal'
+
+on:
+  push:
+    branches:
+      # - dev
+      - dockerized
+    paths:
+      - 'env/personal/**'
+      - 'src/**'
+
+env:
+  ENV_ALIAS: 'personal'
+  AWS_REGION: 'us-east-2'
+  DOCKER_IMAGE_NAME: 'atomicagent-personal'
+
+jobs:
+  docker-deploy:
+    name: 'Building and Deploying Image'
+    runs-on: ubuntu-latest
+    environment: personal
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the repository to the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # Load AWS credentials (this is the ecs-service service account)
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Login to ECR
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Build, tag, and push Docker image to ECR
+      - name: Build, tag, and push image to AWS ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
+          # IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: 'latest'
+        run: |
+          source ./bin/docker-deploy.sh "$ENV_ALIAS" "$ECR_REGISTRY" "$ECR_REPOSITORY" "$IMAGE_TAG"
