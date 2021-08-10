@@ -13,6 +13,7 @@ on:
 env:
   ENV_ALIAS: 'personal'
   AWS_REGION: 'us-east-2'
+  AWS_ECR_REGISTRY: '465533514173.dkr.ecr.us-east-2.amazonaws.com'
   DOCKER_IMAGE_NAME: 'atomicagent-personal'
 
 jobs:
@@ -33,11 +34,10 @@ jobs:
       - name: Login to ECR
         id: login-ecr
         run: |
-          echo 'yo'
           export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
           export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws ecr get-login-password | docker login --username AWS --password-stdin 465533514173.dkr.ecr.us-east-2.amazonaws.com/atomicagent-personal
+          aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY/$DOCKER_IMAGE_NAME
 
       # # Load AWS credentials (this is the ecs-service service account)
       # - name: Configure AWS credentials
@@ -55,12 +55,12 @@ jobs:
       #   uses: aws-actions/amazon-ecr-login@v1
 
       # Build, tag, and push Docker image to ECR
-      # - name: Build, tag, and push image to AWS ECR
-      #   id: build-image
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
-      #     # IMAGE_TAG: ${{ github.sha }}
-      #     IMAGE_TAG: 'latest'
-      #   run: |
-      #     source ./bin/docker-deploy.sh "$ENV_ALIAS" "$ECR_REGISTRY" "$ECR_REPOSITORY" "$IMAGE_TAG"
+      - name: Build, tag, and push image to AWS ECR
+        id: build-image
+        env:
+          # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
+          # IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: 'latest'
+        run: |
+          source ./bin/docker-deploy.sh "$ENV_ALIAS" "$AWS_ECR_REGISTRY" "$ECR_REPOSITORY" "$IMAGE_TAG"
