@@ -1,0 +1,41 @@
+name: Test
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'refs/tags/') != true
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 8
+      - uses: actions/cache@v1
+        env:
+          node-version: 8
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
+      - run: cp sample.config.toml test.config.toml
+      - run: chmod -R 777 test/docker/config
+      - run: npm run docker:start
+      - run: sleep 30
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: Collect docker logs on failure
+        if: ${{ failure() }}
+        uses: jwalton/gh-docker-logs@v1
+        with:
+          dest: './docker-logs'
+      - name: Tar logs
+        if: ${{ failure() }}
+        run: tar cvzf ./docker-logs.tgz ./docker-logs
+      - name: Upload logs to GitHub
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@master
+        with:
+          name: docker-logs.tgz
+          path: ./docker-logs.tgz
