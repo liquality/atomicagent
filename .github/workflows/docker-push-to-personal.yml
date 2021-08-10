@@ -15,6 +15,7 @@ env:
   AWS_REGION: 'us-east-2'
   AWS_ECR_REGISTRY: '465533514173.dkr.ecr.us-east-2.amazonaws.com'
   DOCKER_IMAGE_NAME: 'atomicagent-personal'
+  DOCKERFILE_PATH: 'api.dockerfile'
 
 jobs:
   docker-deploy:
@@ -59,8 +60,8 @@ jobs:
         id: build-image
         env:
           # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
+          # ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
           # IMAGE_TAG: ${{ github.sha }}
-          IMAGE_TAG: 'latest'
+          DOCKER_IMAGE_TAG: 'latest'
         run: |
-          source ./bin/docker-deploy.sh "$ENV_ALIAS" "$AWS_ECR_REGISTRY" "$ECR_REPOSITORY" "$IMAGE_TAG"
+          source ./bin/docker-deploy.sh "$ENV_ALIAS" "$AWS_ECR_REGISTRY" "$DOCKER_IMAGE_NAME" "$DOCKER_IMAGE_TAG" "$DOCKERFILE_PATH"
