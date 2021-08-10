@@ -30,28 +30,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      # Load AWS credentials (this is the ecs-service service account)
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-skip-session-tagging: true
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      # Login to ECR
-      - name: Login to AWS ECR
+      - name: Login to ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        run: |
+        aws --version
+        echo "------------"
+        export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
+        export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+        export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws ecr get-login-password | docker login --username AWS --password-stdin 465533514173.dkr.ecr.us-east-2.amazonaws.com/atomicagent-personal
+
+      # # Load AWS credentials (this is the ecs-service service account)
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     role-skip-session-tagging: true
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      #     aws-region: ${{ env.AWS_REGION }}
+      #
+      # # Login to ECR
+      # - name: Login to AWS ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v1
 
       # Build, tag, and push Docker image to ECR
-      - name: Build, tag, and push image to AWS ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
-          # IMAGE_TAG: ${{ github.sha }}
-          IMAGE_TAG: 'latest'
-        run: |
-          source ./bin/docker-deploy.sh "$ENV_ALIAS" "$ECR_REGISTRY" "$ECR_REPOSITORY" "$IMAGE_TAG"
+      # - name: Build, tag, and push image to AWS ECR
+      #   id: build-image
+      #   env:
+      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
+      #     # IMAGE_TAG: ${{ github.sha }}
+      #     IMAGE_TAG: 'latest'
+      #   run: |
+      #     source ./bin/docker-deploy.sh "$ENV_ALIAS" "$ECR_REGISTRY" "$ECR_REPOSITORY" "$IMAGE_TAG"
