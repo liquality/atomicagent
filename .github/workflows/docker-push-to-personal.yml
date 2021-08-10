@@ -5,6 +5,7 @@ on:
     branches:
       # - dev
       - dockerized
+      - other
     paths:
       - 'env/personal/**'
       - 'src/**'
