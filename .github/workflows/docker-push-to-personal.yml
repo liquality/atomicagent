@@ -8,6 +8,7 @@ on:
     paths:
       - 'env/personal/**'
       - 'src/**'
+      - '.github/workflows/docker-push-to-personal.yml'
 
 env:
   ENV_ALIAS: 'personal'
