@@ -1,5 +1,6 @@
 [database]
-uri = "mongodb://rick:rick-password@10.0.1.5:27017/rickandmorty?authSource=test"
+# uri = "mongodb://rick:rick-password@10.0.1.5:27017/rickandmorty?authSource=test"
+uri = "mongodb://root:password@10.0.1.5:27017"
 debug = true
 
 [application]
