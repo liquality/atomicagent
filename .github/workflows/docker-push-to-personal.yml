@@ -56,7 +56,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       # Build, tag, and push Docker image to ECR
-      - name: Build/tag/push image to ECR
+      - name: Build, tag, push image to ECR
         id: build-image
         env:
           # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
