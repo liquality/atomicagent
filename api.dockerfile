@@ -3,8 +3,8 @@ FROM node:15.7.0-alpine
 # -----------------
 # Export env config
 # -----------------
-ARG MONGO_CONNECT_URI
-ENV MONGO_CONNECT_URI ${MONGO_CONNECT_URI}
+#ARG MONGO_CONNECT_URI
+#ENV MONGO_CONNECT_URI ${MONGO_CONNECT_URI}
 
 # -------------------
 # Build app directory

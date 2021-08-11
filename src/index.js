@@ -9,6 +9,12 @@ if (process.env.NODE_ENV === 'production') {
 const mongoose = require('mongoose')
 const config = require('./config')
 
+console.log('[DEVING] process.env.TEST_ME:', process.env.TEST_ME)
+console.log('[DEVING] process.env.NODE_ENV:', process.env.NODE_ENV)
+console.log('[DEVING] process.env.PROCESS_TYPE:', process.env.PROCESS_TYPE)
+console.log('[DEVING] process.env.CONFIG_PATH:', process.env.CONFIG_PATH)
+console.log('[DEVING] config:', config)
+
 if (config.database.debug) {
   mongoose.set('debug', true)
 }
