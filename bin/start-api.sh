@@ -10,4 +10,6 @@ echo ""
 
 echo "Starting Atomic Agent API..."
 
-npm run api
+# npm run api
+
+echo "I am fake running :)"
