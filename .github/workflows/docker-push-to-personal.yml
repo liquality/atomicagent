@@ -56,19 +56,31 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       # Build, tag, and push Docker image to ECR
+      # - name: Build, tag, push image to ECR
+      #   id: build-image
+      #   env:
+      #     # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     # ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
+      #     # IMAGE_TAG: ${{ github.sha }}
+      #     DOCKER_IMAGE_TAG: 'latest'
+      #   run: |
+      #     echo "Working Dir !!!"
+      #     pwd
+      #     export CONFIG_PATH=env/$ENV_ALIAS/config.$ENV_ALIAS.toml
+      #     echo $CONFIG_PATH
+      #     source ./bin/docker-deploy.sh "$ENV_ALIAS" "$AWS_ECR_REGISTRY" "$DOCKER_IMAGE_NAME" "$DOCKER_IMAGE_TAG" "$DOCKERFILE_PATH"
       - name: Build, tag, push image to ECR
         id: build-image
         env:
-          # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           # ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
           # IMAGE_TAG: ${{ github.sha }}
           DOCKER_IMAGE_TAG: 'latest'
         run: |
-          echo "Working Dir !!!"
-          pwd
-          export CONFIG_PATH=env/$ENV_ALIAS/config.$ENV_ALIAS.toml
-          echo $CONFIG_PATH
-          source ./bin/docker-deploy.sh "$ENV_ALIAS" "$AWS_ECR_REGISTRY" "$DOCKER_IMAGE_NAME" "$DOCKER_IMAGE_TAG" "$DOCKERFILE_PATH"
+          echo "Building and tagging Docker image ($DOCKER_IMAGE_NAME)"
+          docker build -f $DOCKERFILE_PATH -t $DOCKER_IMAGE_NAME . --no-cache
+          docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $ECR_REGISTRY/${DOCKER_IMAGE_NAME}:$DOCKER_IMAGE_TAG
+
 
       # Trigger update to ECS cluster
       - name: Update ECS
