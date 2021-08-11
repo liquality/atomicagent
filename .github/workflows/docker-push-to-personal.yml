@@ -13,8 +13,8 @@ on:
 env:
   ENV_ALIAS: 'personal'
   AWS_REGION: 'us-east-2'
-  AWS_ECR_REGISTRY: '465533514173.dkr.ecr.us-east-2.amazonaws.com'
-  DOCKER_IMAGE_NAME: 'atomicagent-personal'
+  IMAGE_NAME: 'atomicagent-personal'
+  IMAGE_TAG: 'latest'
   DOCKERFILE_PATH: 'api.dockerfile'
 
 jobs:
@@ -53,14 +53,14 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           # IMAGE_TAG: ${{ github.sha }}
-          DOCKER_IMAGE_TAG: 'latest'
         run: |
-          echo "Building and tagging Docker image ($DOCKER_IMAGE_NAME)"
-          docker build -f $DOCKERFILE_PATH -t $DOCKER_IMAGE_NAME . --no-cache
-          docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $ECR_REGISTRY/${DOCKER_IMAGE_NAME}:$DOCKER_IMAGE_TAG
-
+          echo "Building and tagging Docker image ($IMAGE_NAME)"
+          docker build -f $DOCKERFILE_PATH -t $IMAGE_NAME . --no-cache
+          docker tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+          echo "Pushing image to registry: $REGISTRY_URI/$IMAGE_NAME"
+          docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
       # Trigger update to ECS cluster
       # - name: Update ECS
       #   id: update-ecs
       #   run: |
-      #     aws ecs update-service --cluster "${DOCKER_IMAGE_NAME}" --service "${DOCKER_IMAGE_NAME}" --force-new-deployment
+      #     aws ecs update-service --cluster "${IMAGE_NAME}" --service "${IMAGE_NAME}" --force-new-deployment
