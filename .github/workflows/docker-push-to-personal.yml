@@ -32,14 +32,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      # - name: Login to ECR
-      #   id: login-ecr
-      #   run: |
-      #     export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
-      #     export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
-
       # Load AWS credentials (this is the ecs-service service account)
       - name: Load AWS creds
         uses: aws-actions/configure-aws-credentials@v1
@@ -56,24 +48,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       # Build, tag, and push Docker image to ECR
-      # - name: Build, tag, push image to ECR
-      #   id: build-image
-      #   env:
-      #     # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     # ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
-      #     # IMAGE_TAG: ${{ github.sha }}
-      #     DOCKER_IMAGE_TAG: 'latest'
-      #   run: |
-      #     echo "Working Dir !!!"
-      #     pwd
-      #     export CONFIG_PATH=env/$ENV_ALIAS/config.$ENV_ALIAS.toml
-      #     echo $CONFIG_PATH
-      #     source ./bin/docker-deploy.sh "$ENV_ALIAS" "$AWS_ECR_REGISTRY" "$DOCKER_IMAGE_NAME" "$DOCKER_IMAGE_TAG" "$DOCKERFILE_PATH"
       - name: Build, tag, push image to ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          # ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
           # IMAGE_TAG: ${{ github.sha }}
           DOCKER_IMAGE_TAG: 'latest'
         run: |
@@ -81,9 +59,8 @@ jobs:
           docker build -f $DOCKERFILE_PATH -t $DOCKER_IMAGE_NAME . --no-cache
           docker tag $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG $ECR_REGISTRY/${DOCKER_IMAGE_NAME}:$DOCKER_IMAGE_TAG
 
-
       # Trigger update to ECS cluster
-      - name: Update ECS
-        id: update-ecs
-        run: |
-          aws ecs update-service --cluster "${DOCKER_IMAGE_NAME}" --service "${DOCKER_IMAGE_NAME}" --force-new-deployment
+      # - name: Update ECS
+      #   id: update-ecs
+      #   run: |
+      #     aws ecs update-service --cluster "${DOCKER_IMAGE_NAME}" --service "${DOCKER_IMAGE_NAME}" --force-new-deployment

@@ -40,31 +40,14 @@ jobs:
           export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ECR_REGISTRY
 
-      # # Load AWS credentials (this is the ecs-service service account)
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v1
-      #   with:
-      #     role-skip-session-tagging: true
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-      #     aws-region: ${{ env.AWS_REGION }}
-      #
-      # # Login to ECR
-      # - name: Login to AWS ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v1
-
       # Build, tag, and push Docker image to ECR
       - name: Build/tag/push image to ECR
         id: build-image
         env:
-          # ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          # ECR_REPOSITORY: ${{ env.DOCKER_IMAGE_NAME }}
           # IMAGE_TAG: ${{ github.sha }}
           DOCKER_IMAGE_TAG: 'latest'
         run: |
-          echo "Working Dir !!!"
+          echo "Testing where I'm at:"
           pwd
           export CONFIG_PATH=env/$ENV_ALIAS/config.$ENV_ALIAS.toml
           echo $CONFIG_PATH
