@@ -13,6 +13,7 @@ on:
 env:
   ENV_ALIAS: 'personal'
   AWS_REGION: 'us-east-2'
+  # AWS_ECR_REGISTRY: '465533514173.dkr.ecr.us-east-2.amazonaws.com'
   IMAGE_NAME: 'atomicagent-personal'
   IMAGE_TAG: 'latest'
   DOCKERFILE_PATH: 'api.dockerfile'
@@ -36,10 +37,10 @@ jobs:
       - name: Load AWS creds
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          # role-skip-session-tagging: true
+          role-skip-session-tagging: true
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          # role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
       # Login to ECR
