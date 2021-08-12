@@ -63,7 +63,9 @@ jobs:
           docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
       # Trigger update to ECS cluster
-      # - name: Update ECS
-      #   id: update-ecs
-      #   run: |
-      #     aws ecs update-service --cluster "${IMAGE_NAME}" --service "${IMAGE_NAME}" --force-new-deployment
+      - name: Update ECS
+        id: update-ecs
+        run: |
+          echo "Assuming deployment role for ECS update"
+          source ./bin/aws-assume-role.sh "${AWS_REGION}" "${{ github.sha }}" "${{ secrets.AWS_ROLE_TO_ASSUME }}"
+          aws ecs update-service --cluster ${IMAGE_NAME} --service ${IMAGE_NAME} --force-new-deployment
