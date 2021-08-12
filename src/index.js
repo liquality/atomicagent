@@ -35,8 +35,7 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    // require('./migrate').run()
-    console.log('I am here.')
+    require('./migrate').run()
     break
 
   default:

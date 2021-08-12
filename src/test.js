@@ -3,6 +3,7 @@ const config = require('./config')
 
 console.log('[DEVING] process.env.CONFIG_PATH:', process.env.CONFIG_PATH)
 // console.log('[DEVING] config:', config)
+console.log('[DEVING] PROCESS_TYPE:', process.env.PROCESS_TYPE)
 
 // Load options
 const mongoUri = config.database.uri
@@ -36,4 +37,24 @@ async function runTest () {
   const data = await Character.find({}).exec()
   console.log('Rick and Morty characters:')
   console.log(data)
+}
+
+switch (process.env.PROCESS_TYPE) {
+  case 'api':
+    // require('./api').start()
+    console.log('Start API')
+    break
+
+  case 'worker':
+    // require('./worker').start()
+    console.log('Start Worker')
+    break
+
+  case 'migrate':
+    require('./migrate').run()
+    break
+
+  default:
+    // throw new Error('Unknown PROCESS_TYPE')
+    console.log('No process defined')
 }

@@ -13,5 +13,5 @@ module.exports.run = async () => {
   const newMarkets = await Market.insertMany(markets, { ordered: false })
   console.log(`${newMarkets.length} markets have been set`)
 
-  process.exit()
+  // process.exit()
 }
