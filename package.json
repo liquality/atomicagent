@@ -10,11 +10,13 @@
     "atomicagent-worker": "./bin/atomicagent-worker"
   },
   "scripts": {
-    "serve-local": "PROCESS_TYPE=api nodemon src/index.js",
-    "api": "PROCESS_TYPE=api node src/index.js",
-    "apit": "nodemon src/test.js",
-    "worker": "PROCESS_TYPE=worker nodemon src/index.js",
-    "migrate": "PROCESS_TYPE=migrate node src/index.js",
+    "api": "PROCESS_TYPE=api nodemon ./src/index.js",
+    "worker": "PROCESS_TYPE=worker nodemon ./src/index.js",
+    "migrate": "PROCESS_TYPE=migrate node ./src/index.js",
+    "api-test": "node ./src/test.js",
+    "docker:build-local": "docker build -f api.dockerfile --build-arg ENV_ALIAS=personal -t atomicagent-personal . --no-cache",
+    "docker:run-local": "docker run --rm --name atomicagent -d -it atomicagent-personal:latest",
+    "docker:stop-local": "docker stop atomicagent",
     "docker:start": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
     "docker:stop": "docker-compose -f test/docker/docker-compose.yml down",
     "lint": "standard",
