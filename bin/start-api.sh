@@ -5,11 +5,11 @@ echo "ENV_ALIAS: ${ENV_ALIAS}"
 echo "--------------------------------"
 echo ""
 
-# echo "Running migrator..."
+echo "Running migrator..."
 
-# npm run migrate
+npm run migrate
 
-echo "Starting Atomic Agent API..."
+# echo "Starting Atomic Agent API..."
 
 # npm run api
-npm run api-test
+# npm run api-test

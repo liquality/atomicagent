@@ -4,6 +4,7 @@ const assets = require('./data/assets.json')
 const markets = require('./data/markets.json')
 
 module.exports.run = async () => {
+  console.log('[DEVING] Running migrate...')
   await Asset.deleteMany({})
   const newAssets = await Asset.insertMany(assets, { ordered: false })
   console.log(`${newAssets.length} assets have been set`)
