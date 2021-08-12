@@ -9,6 +9,8 @@ if (process.env.NODE_ENV === 'production') {
 const mongoose = require('mongoose')
 const config = require('./config')
 
+const forceMigrate = config.database.forceMigrate
+
 if (config.database.debug) {
   mongoose.set('debug', true)
 }
@@ -35,7 +37,7 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    require('./migrate').run()
+    require('./migrate').run({ force: forceMigrate })
     break
 
   default:
