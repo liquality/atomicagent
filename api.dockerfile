@@ -19,10 +19,12 @@ RUN npm ci
 COPY bin/ ./bin
 COPY src/ ./src
 COPY LICENSE.md ./
+
+# Load environment config
 COPY env/${ENV_ALIAS}/config.${ENV_ALIAS}.toml ./config.toml
 
 # ---------
-# Start app
+# Start API
 # ---------
 EXPOSE 3030
 

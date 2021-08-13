@@ -1,32 +1,38 @@
+const mongoose = require('mongoose')
 const Sentry = require('@sentry/node')
+const config = require('./config')
 
+// Enable Sentry (for production only)
 if (process.env.NODE_ENV === 'production') {
   Sentry.init({
     dsn: process.env.SENTRY_DSN
   })
 }
 
-const mongoose = require('mongoose')
-const config = require('./config')
-
-const forceMigrate = config.database.forceMigrate
-
+// Load DB settings
+const migrateOpts = config.database.migrate || {}
 if (config.database.debug) {
   mongoose.set('debug', true)
 }
 
+// Connect to DB
 const mongooseOnError = err => {
   console.error(err)
   process.exit(1)
 }
 
 mongoose
-  .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+  .connect(config.database.uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+  })
   .catch(mongooseOnError)
 
 mongoose
   .connection.on('error', mongooseOnError)
 
+// Run service
 switch (process.env.PROCESS_TYPE) {
   case 'api':
     require('./api').start()
@@ -37,7 +43,11 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    require('./migrate').run({ force: forceMigrate })
+    require('./migrate').run({
+      force: migrateOpts.force,
+      log: migrateOpts.log,
+      verbose: migrateOpts.verbose
+    })
     break
 
   default:

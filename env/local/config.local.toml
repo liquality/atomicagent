@@ -1,7 +1,6 @@
 [database]
 # uri = "mongodb://demo:demo-password@docker.for.mac.host.internal:27017/rickandmorty?authSource=test"
 uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
-# uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality"
 debug = false
 [database.migrate]
 log = true
