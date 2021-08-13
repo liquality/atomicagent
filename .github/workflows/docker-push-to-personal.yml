@@ -3,7 +3,6 @@ name: 'deploy-to-personal'
 on:
   push:
     branches:
-      # - dev
       - dockerized
     paths:
       - 'env/personal/**'
@@ -13,7 +12,6 @@ on:
 env:
   ENV_ALIAS: 'personal'
   AWS_REGION: 'us-east-2'
-  # AWS_ECR_REGISTRY: '465533514173.dkr.ecr.us-east-2.amazonaws.com'
   IMAGE_NAME: 'atomicagent-personal'
   IMAGE_TAG: 'latest'
   DOCKERFILE_PATH: 'api.dockerfile'
