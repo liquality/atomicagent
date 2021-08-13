@@ -20,8 +20,14 @@
     "docker:start": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
     "docker:stop": "docker-compose -f test/docker/docker-compose.yml down",
     "lint": "standard",
+    "flint": "standard --fix",
+    "precommit-message-lint": "printf '\nPre-commit checks (linting)...\n' && exit 0",
     "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js"
   },
+  "pre-commit": [
+    "precommit-message-lint",
+    "lint"
+  ],
   "author": "Liquality <info@liquality.io>",
   "repository": {
     "type": "git",
@@ -94,6 +100,7 @@
     "human-interval": "^2.0.0",
     "mocha": "^6.2.2",
     "nodemon": "^2.0.6",
+    "pre-commit": "1.2.2",
     "standard": "^16.0.1"
   }
 }
