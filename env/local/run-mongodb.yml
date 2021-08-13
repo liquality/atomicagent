@@ -1,0 +1,19 @@
+# This is the copy being used locally (~/mongodb)
+# Run with: docker-compose up -d
+# docker exec -it mongodb bash
+version: "3.8"
+
+services:
+  mongodb:
+    image : mongo
+    container_name: mongodb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - /Users/wmccraw/mongodb/db:/data/db
+    ports:
+      - 27017:27017
+    restart: unless-stopped

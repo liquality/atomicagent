@@ -2,9 +2,11 @@
 # uri = "mongodb://demo:demo-password@docker.for.mac.host.internal:27017/rickandmorty?authSource=test"
 uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
 # uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality"
-# uri = "mongodb://root:password@127.0.0.1:27017"
-forceMigrate = false
-debug = true
+debug = false
+[database.migrate]
+log = true
+verbose = false
+force = false
 
 [application]
 apiPort = 3030
