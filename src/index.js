@@ -10,9 +10,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Load DB settings
-const forceMigrate = config.database.migrate.force
-const logMigrate = config.database.migrate.log
-const verboseMigrate = config.database.migrate.verbose
+const migrateOpts = config.database.migrate || {}
 if (config.database.debug) {
   mongoose.set('debug', true)
 }
@@ -46,9 +44,9 @@ switch (process.env.PROCESS_TYPE) {
 
   case 'migrate':
     require('./migrate').run({
-      force: forceMigrate,
-      log: logMigrate,
-      verbose: verboseMigrate
+      force: migrateOpts.force,
+      log: migrateOpts.log,
+      verbose: migrateOpts.verbose
     })
     break
 
