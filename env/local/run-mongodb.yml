@@ -1,6 +1,5 @@
-# This is the copy being used locally (~/mongodb)
-# Run with: docker-compose up -d
-# docker exec -it mongodb bash
+# Run with: docker-compose -f run-mongodb.yml up -d
+# Look inside with: docker exec -it mongodb bash
 version: "3.8"
 
 services:
@@ -13,7 +12,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=password
     volumes:
-      - /Users/wmccraw/mongodb/db:/data/db
+      - ~/mongodb/db:/data/db
     ports:
       - 27017:27017
     restart: unless-stopped
