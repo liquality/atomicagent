@@ -33,7 +33,7 @@ const { SolanaNetworks } = require('@liquality/solana-networks')
 const { SolanaRpcProvider } = require('@liquality/solana-rpc-provider')
 const { SolanaWalletProvider } = require('@liquality/solana-wallet-provider')
 const { SolanaSwapProvider } = require('@liquality/solana-swap-provider')
-const { SolanaSwapFindProvider } = require('@liquality/solana-swap-find-provider');
+const { SolanaSwapFindProvider } = require('@liquality/solana-swap-find-provider')
 
 function createBtcClient () {
   const btcConfig = config.assets.BTC
@@ -124,7 +124,7 @@ function createNearClient () {
   return nearClient
 }
 
-function createSolClient() {
+function createSolClient () {
   const solanaConfig = config.assets.SOL
   const solanaNetwork = SolanaNetworks[solanaConfig.network]
 
