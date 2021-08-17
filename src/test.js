@@ -1,24 +1,15 @@
 const mongoose = require('mongoose')
+const mongoConnect = require('./utils/mongoConnect')
 const config = require('./config')
 
 console.log('[DEVING] process.env.CONFIG_PATH:', process.env.CONFIG_PATH)
 // console.log('[DEVING] config:', config)
 console.log('[DEVING] PROCESS_TYPE:', process.env.PROCESS_TYPE)
 
-// Load options
-const mongoUri = config.database.uri
-const mongoDebug = config.database.debug
-
-// Build connection to Mongo
-if (mongoDebug) mongoose.set('debug', true)
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useCreateIndex: true
-})
-mongoose.connection
-  .on('error', console.error.bind(console, 'connection error:'))
-  .once('open', () => console.info('Connected to MongoDB.'))
+// Load db settings and establish connection
+const dbConfig = config.database || {}
+// const migrateOpts = dbConfig.migrate || {}
+mongoConnect.connect(dbConfig)
 
 // Create schema/model for testing
 const CharacterSchema = new mongoose.Schema({
@@ -51,7 +42,8 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    require('./migrate').run()
+    // require('./migrate').run()
+    console.log('Run Migrate')
     break
 
   default:

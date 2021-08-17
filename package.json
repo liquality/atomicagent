@@ -13,6 +13,7 @@
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
+    "tester": "CONFIG_PATH=env/local/config.local.toml PROCESS_TYPE=migrate node src/index.js",
     "docker:build-local": "docker build -f api.dockerfile --build-arg ENV_ALIAS=local -t atomicagent-local . --no-cache",
     "docker:run-local": "docker run --rm --name atomicagent -d -it atomicagent-local:latest",
     "docker:stop-local": "docker stop atomicagent",
@@ -22,12 +23,16 @@
     "lint": "standard",
     "flint": "standard --fix",
     "precommit-message-lint": "printf '\nPre-commit checks (linting)...\n' && exit 0",
-    "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js"
+    "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js",
+    "test:unit": "NODE_ENV=test mocha test/unit/**"
   },
   "pre-commit": [
     "precommit-message-lint",
     "lint"
   ],
+  "standard": {
+    "env": [ "mocha" ]
+  },
   "author": "Liquality <info@liquality.io>",
   "repository": {
     "type": "git",

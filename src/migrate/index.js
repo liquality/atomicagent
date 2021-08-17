@@ -15,6 +15,9 @@ module.exports.run = async (options = {}) => {
   const verbose = objectUtils.get(options, 'verbose', defaultVerbose)
   const force = objectUtils.get(options, 'force', defaultForce)
 
+  const keepAlive = process.env.MIGRATE_KEEP_ALIVE || false
+  console.log(`${logHeader} keep alive?`, keepAlive)
+
   if (!force && await hasData({ verbose })) {
     if (log) console.log(`${logHeader} Data is already seeded.`)
   } else {
@@ -27,6 +30,8 @@ module.exports.run = async (options = {}) => {
     const newMarkets = await Market.insertMany(markets, { ordered: false })
     if (log) console.log(`${logHeader} ${newMarkets.length} markets have been set`)
   }
+
+  if (!keepAlive) process.exit()
 }
 
 async function hasData (options = {}) {

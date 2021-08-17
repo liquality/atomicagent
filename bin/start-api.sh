@@ -7,6 +7,7 @@ echo ""
 
 echo "Running migrator..."
 
+export MIGRATE_KEEP_ALIVE=true
 npm run migrate
 
 # echo "Starting Atomic Agent API..."
