@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
 const Sentry = require('@sentry/node')
+const mongoConnect = require('./utils/mongoConnect')
 const config = require('./config')
 
 // Enable Sentry (for production only)
@@ -9,28 +9,10 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-// Load DB settings
-const migrateOpts = config.database.migrate || {}
-if (config.database.debug) {
-  mongoose.set('debug', true)
-}
-
-// Connect to DB
-const mongooseOnError = err => {
-  console.error(err)
-  process.exit(1)
-}
-
-mongoose
-  .connect(config.database.uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useCreateIndex: true
-  })
-  .catch(mongooseOnError)
-
-mongoose
-  .connection.on('error', mongooseOnError)
+// Load db settings and establish connection
+const dbConfig = config.database || {}
+const migrateOpts = dbConfig.migrate || {}
+mongoConnect.connect(dbConfig)
 
 // Run service
 switch (process.env.PROCESS_TYPE) {
