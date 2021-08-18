@@ -1,10 +1,12 @@
 FROM node:15.7.0-alpine
 
 # ---------------
-# Load active env
+# Load env params
 # ---------------
 ARG ENV_ALIAS
 ENV ENV_ALIAS ${ENV_ALIAS}
+ARG DB_PASSWORD
+ENV DB_PASSWORD ${DB_PASSWORD}
 
 # -------------------
 # Build app directory
