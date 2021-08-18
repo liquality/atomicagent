@@ -15,8 +15,5 @@ module.exports.run = async (options = {}) => {
   const newMarkets = await Market.insertMany(markets, { ordered: false })
   console.log(`${logHeader} ${newMarkets.length} markets have been set`)
 
-  const keepAlive = process.env.MIGRATE_KEEP_ALIVE || false
-  console.log(`${logHeader} keep alive?`, keepAlive)
-
-  if (!keepAlive) process.exit()
+  process.exit()
 }
