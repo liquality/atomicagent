@@ -19,7 +19,7 @@ const connect = async (options = {}) => {
   mongoose
     .connect(connectUri, {
       useNewUrlParser: true,
-      useUnifiedTopology: true,
+      useUnifiedTopology: false,
       useCreateIndex: true
     })
     .catch(mongooseOnError)

@@ -1,13 +1,6 @@
 [database]
 uri = "mongodb://localhost/liqualitytest"
 debug = true
-  [database.migrate]
-  # log        - true|false (Enables migrator logging, for short messages, default: true)
-  # verbose    - true|false (Enables verbose migrator logging, for debugging, default: false)
-  # force      - true|false (Forces refresh of assets/markets data, default: false)
-  log = true
-  verbose = false
-  force = true
 
 [application]
 apiPort = 3030

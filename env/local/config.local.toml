@@ -16,18 +16,14 @@
 # authdbname - The auth db name (optional with auth, leave blank if no auth)
 # ------------------------------------------------------------------------------
 # Other options:
-# debug      - true|false (Enables mongodb debug)
 #
-# [database.migrate]
-# log        - true|false (Enables migrator logging, for short messages, default: true)
-# verbose    - true|false (Enables verbose migrator logging, for debugging, default: false)
-# force      - true|false (Forces refresh of assets/markets data, default: false)
+# debug      - true|false (Enables mongodb debug)
 # ------------------------------------------------------------------------------
 debug = false
 #uri = "mongodb://demo:demo-password@docker.for.mac.host.internal:27017/rickandmorty?authSource=test"
 #uri = "mongodb://demo:demo-password@127.0.0.1:27017/rickandmorty?authSource=test"
-#uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
-uri = "mongodb://admin:admin-password@127.0.0.1:27017/liquality?authSource=admin"
+uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
+# uri = "mongodb://admin:admin-password@127.0.0.1:27017/liquality?authSource=admin"
 #host = "docker.for.mac.host.internal"
 host = "127.0.0.1"
 port = "27017"
@@ -35,10 +31,6 @@ dbname = "rickandmorty"
 username = "demo"
 password = "demo-password"
 authdbname = "test"
-  [database.migrate]
-  log = true
-  verbose = true
-  force = false
 
 [application]
 apiPort = 3030
