@@ -35,7 +35,7 @@ const buildConnectUri = (options = {}) => {
   const dbPort = options.port
   const dbName = options.dbname
   const dbUser = options.username
-  const dbPass = options.password
+  const dbPass = options.password || process.env.DB_PASSWORD
   const authDbName = options.authdbname
 
   // Handle error scenarios
