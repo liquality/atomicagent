@@ -7,7 +7,7 @@
     "bitcoinjs-lib": "^5.1.2",
     "eip55": "^1.0.3",
     "jsonschema": "^1.2.4",
-    "url-parse": "^1.4.7"
+    "url-parse": "^1.5.2"
   },
   "devDependencies": {},
   "scripts": {
