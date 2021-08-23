@@ -1,30 +1,20 @@
 const Sentry = require('@sentry/node')
 
+// Enable Sentry (for production only)
 if (process.env.NODE_ENV === 'production') {
   Sentry.init({
     dsn: process.env.SENTRY_DSN
   })
 }
 
-const mongoose = require('mongoose')
+const mongoConnect = require('./utils/mongoConnect')
 const config = require('./config')
 
-if (config.database.debug) {
-  mongoose.set('debug', true)
-}
+// Load db settings and establish connection
+const dbConfig = config.database || {}
+mongoConnect.connect(dbConfig)
 
-const mongooseOnError = err => {
-  console.error(err)
-  process.exit(1)
-}
-
-mongoose
-  .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
-  .catch(mongooseOnError)
-
-mongoose
-  .connection.on('error', mongooseOnError)
-
+// Run service
 switch (process.env.PROCESS_TYPE) {
   case 'api':
     require('./api').start()
