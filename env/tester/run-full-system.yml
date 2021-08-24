@@ -10,7 +10,17 @@ services:
         ENV_ALIAS: tester
     container_name: atomicagent-full-system
     environment:
-      - MONGO_URI=mongodb://127.0.0.1:27017/liquality
+      - MONGO_URI=mongodb://10.10.0.8:27017/liquality
     ports:
       - 3030:3030
     restart: unless-stopped
+    networks:
+      local:
+        ipv4_address: 10.10.0.6
+
+networks:
+  local:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24

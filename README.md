@@ -1,6 +1,23 @@
 # 💥 Atomic Agent ![Build status](https://github.com/liquality/agent/workflows/Test,%20publish%20&%20deploy/badge.svg)
 
 
+## Table of Contents
+
+* [Introduction][section-introduction]
+* [Prerequisites][section-prerequisites]
+* [Installation][section-installation]
+* [Liquality Hosted Agents][section-liquality-hosted-agents]
+* [Liquality Nodes][section-liquality-nodes]
+* [Test][section-test]
+* [Docker Setup Variations][section-docker-setup-variations]
+* [License][section-license]
+
+
+## Introduction
+
+The atomicagent service contains three utilities: `migrate`, `api`, `worker`. Each can be run separately, or as a full service.
+
+
 ## Prerequisites
 
 1. Linux VM
@@ -9,28 +26,47 @@
 4. [RPC/API endpoints for the chains you want to support](#liquality-nodes)
 
 
-## Setup
+## Installation
+
+These instructions outline the standard installation process for the atomic agent:
 
 ```bash
 git clone git@github.com:liquality/atomicagent.git
 cd atomicagent
-npm ci
+npm install
 cp sample.config.toml config.toml   # copy sample config
-nano config.toml                    # configure your agent
+nano config.toml                    # configure your agent settings
 nano src/migrate/data/assets.json   # add/remove assets
 nano src/migrate/data/markets.json  # add/remove markets
 npm run migrate                     # prepare agent with assets & markets
 ```
 
+### Run Each Utility Separately
+
+```bash
+npm run api     # runs agent market maker api
+npm run worker  # runs the background process
+```
+
+### Run as a Unified Service
+
+``` bash
+npm run api-service
+```
+
+> These methods utilize the `config.toml` you created at the root of the repo.
+
+> For Docker options, see: [Docker Setup Variations](#docker-setup-variations)
+
 
 ## Liquality Hosted Agents
 
-|Environment| Network | Endpoint                                               |
+|Environment| Network | Endpoint                                     |
 |-|---------|--------------------------------------------------------|
-|Production| Testnet | https://liquality.io/swap-testnet/agent                |
-|Production| Mainnet | https://liquality.io/swap/agent                        |
-|Development| Testnet | https://liquality.io/swap-testnet-dev/agent                |
-|Development| Mainnet | https://liquality.io/swap-dev/agent                        |
+|Production| Testnet | https://liquality.io/swap-testnet/agent       |
+|Production| Mainnet | https://liquality.io/swap/agent               |
+|Development| Testnet | https://liquality.io/swap-testnet-dev/agent  |
+|Development| Mainnet | https://liquality.io/swap-dev/agent          |
 
 
 ## Liquality Nodes
@@ -49,16 +85,7 @@ npm run migrate                     # prepare agent with assets & markets
 | BSC Scraper           | Mainnet | https://liquality.io/bsc-mainnet-api                   |
 
 
-## Run!
-
-```bash
-npm run api     # runs agent market maker api
-npm run worker  # runs the background process
-```
-
-
 ## Test
-
 
 ### Configure
 
@@ -67,8 +94,7 @@ cp sample.config.toml test.config.toml  # copy sample config
 nano config.toml                        # configure your agent as per your test environment
 ```
 
-
-### Test!
+### Run Automated Tests
 
 ```bash
 chmod -R 777 test/docker/config
@@ -78,6 +104,52 @@ npm run test
 ```
 
 
+## Docker Setup Variations
+
+The atomicagent service (which contains three utilities: migrate, api, worker) can be dockerized for portability and convenience.
+
+### Run the Atomic Agent Service Locally
+
+To run the service (all three utilities) as a single container locally:
+
+| Command               | Description                           |
+| --------------------- | ------------------------------------- |
+| `docker:build-local`  | Builds the "atomicagent-local" image. |
+| `docker:run-local`    | Runs the "atomicagent-local" image as a container. |
+| `docker:log-local`    | Prints the standard out of the running "atomicagent-local" container. |
+| `docker:stop-local`   | Stops the running "atomicagent-local" container. |
+
+The config file used for these commands: `env/local/config.local.toml`
+
+> **NOTE:** This configuration requires you to have your own MongoDB running.
+> **TIP:** You can use the `env/local/run-mongodb.yml` config to run a simple MongoDB locally.
+
+### Run the Full Swap System
+
+The atomicagent service operates on multiple dependencies (for various chains/networks), as well as requiring a MongoDB to read/write data.
+
+To run the full swap system in a contained environment (for testing purposes):
+
+| Command                     | Description                           |
+| --------------------------- | ------------------------------------- |
+| `docker:start-full-system`  | Builds and runs the "atomicagent-full-system" image and runs a local simulation of the supported agent services. |
+| `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container. |
+| `docker:stop-full-system`   | Stops the running "atomicagent-full-system" container and the agent services. |
+
+The config file used for these commands: `env/tester/config.tester.toml`
+
+
 ## License
 
 [MIT](./LICENSE.md)
+
+
+
+[section-introduction]: #introduction
+[section-prerequisites]: #prerequisites
+[section-installation]: #installation
+[section-liquality-hosted-agents]: #liquality-hosted-agents
+[section-liquality-nodes]: #liquality-nodes
+[section-test]: #test
+[section-docker-setup-variations]: #docker-setup-variations
+[section-license]: #license
