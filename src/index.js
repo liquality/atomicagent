@@ -12,6 +12,7 @@ const config = require('./config')
 
 // Load db settings and establish connection
 const dbConfig = config.database || {}
+if (process.env.MONGO_URI) dbConfig.uri = process.env.MONGO_URI // override with env var
 const migrateOpts = dbConfig.migrate || {}
 mongoConnect.connect(dbConfig)
 
