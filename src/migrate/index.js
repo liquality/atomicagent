@@ -15,7 +15,7 @@ module.exports.run = async (options = {}) => {
   const verbose = objectUtils.get(options, 'verbose', defaultVerbose)
   const force = objectUtils.get(options, 'force', defaultForce)
 
-  const keepAlive = process.env.MIGRATE_KEEP_ALIVE || false
+  const keepAlive = process.env.KEEP_ALIVE || false
   console.log(`${logHeader} keep alive?`, keepAlive)
 
   if (!force && await hasData({ verbose })) {
