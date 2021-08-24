@@ -6,9 +6,9 @@
 * [Introduction][section-introduction]
 * [Prerequisites][section-prerequisites]
 * [Installation][section-installation]
+* [Test][section-test]
 * [Liquality Hosted Agents][section-liquality-hosted-agents]
 * [Liquality Nodes][section-liquality-nodes]
-* [Test][section-test]
 * [Docker Setup Variations][section-docker-setup-variations]
 * [License][section-license]
 
@@ -59,6 +59,25 @@ npm run api-service
 > For Docker options, see: [Docker Setup Variations](#docker-setup-variations)
 
 
+## Test
+
+### Configure
+
+```bash
+cp sample.config.toml test.config.toml  # copy sample config
+nano config.toml                        # configure your agent as per your test environment
+```
+
+### Run Automated Tests
+
+```bash
+chmod -R 777 test/docker/config
+npm run docker:start
+sleep 30                          # let bitcoind[regtest] mine first 100 blocks
+npm run test
+```
+
+
 ## Liquality Hosted Agents
 
 |Environment| Network | Endpoint                                     |
@@ -83,25 +102,6 @@ npm run api-service
 | RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
 | BSC Scraper           | Testnet | https://liquality.io/bsc-testnet-api                   |
 | BSC Scraper           | Mainnet | https://liquality.io/bsc-mainnet-api                   |
-
-
-## Test
-
-### Configure
-
-```bash
-cp sample.config.toml test.config.toml  # copy sample config
-nano config.toml                        # configure your agent as per your test environment
-```
-
-### Run Automated Tests
-
-```bash
-chmod -R 777 test/docker/config
-npm run docker:start
-sleep 30                          # let bitcoind[regtest] mine first 100 blocks
-npm run test
-```
 
 
 ## Docker Setup Variations
@@ -149,8 +149,8 @@ The config file used for these commands: `env/tester/config.tester.toml`
 [section-introduction]: #introduction
 [section-prerequisites]: #prerequisites
 [section-installation]: #installation
+[section-test]: #test
 [section-liquality-hosted-agents]: #liquality-hosted-agents
 [section-liquality-nodes]: #liquality-nodes
-[section-test]: #test
 [section-docker-setup-variations]: #docker-setup-variations
 [section-license]: #license
