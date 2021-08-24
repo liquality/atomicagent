@@ -26,11 +26,7 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    require('./migrate').run({
-      force: migrateOpts.force,
-      log: migrateOpts.log,
-      verbose: migrateOpts.verbose
-    })
+    require('./migrate').run(migrateOpts)
     break
 
   default:
@@ -38,11 +34,7 @@ switch (process.env.PROCESS_TYPE) {
 }
 
 async function runService () {
-  await require('./migrate').run({
-    force: migrateOpts.force,
-    log: migrateOpts.log,
-    verbose: migrateOpts.verbose
-  })
+  await require('./migrate').run(migrateOpts)
   require('./api').start()
   require('./worker').start()
 }
