@@ -10,6 +10,7 @@
     "atomicagent-worker": "./bin/atomicagent-worker"
   },
   "scripts": {
+    "api-test": "node src/test.js",
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
@@ -31,7 +32,9 @@
     "lint"
   ],
   "standard": {
-    "env": [ "mocha" ]
+    "env": [
+      "mocha"
+    ]
   },
   "author": "Liquality <info@liquality.io>",
   "repository": {

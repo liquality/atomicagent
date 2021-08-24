@@ -12,6 +12,7 @@ const config = require('./config')
 
 // Load db settings and establish connection
 const dbConfig = config.database || {}
+const migrateOpts = dbConfig.migrate || {}
 mongoConnect.connect(dbConfig)
 
 // Run service
@@ -25,7 +26,11 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    require('./migrate').run()
+    require('./migrate').run({
+      force: migrateOpts.force,
+      log: migrateOpts.log,
+      verbose: migrateOpts.verbose
+    })
     break
 
   default:
