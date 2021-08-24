@@ -1,8 +1,7 @@
 [database]
-debug = true
-# YOYO
-# uri = "mongodb://127.0.0.1:27017/liquality"
-uri = "mongodb://docker.for.mac.host.internal:27017/liquality"
+debug = false
+uri = "mongodb://localhost/liquality"
+# uri = "mongodb://docker.for.mac.host.internal:27017/liquality"
 # uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
   [database.migrate]
   log = true
