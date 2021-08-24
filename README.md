@@ -122,6 +122,7 @@ To run the service (all three utilities) as a single container locally:
 The config file used for these commands: `env/local/config.local.toml`
 
 > **NOTE:** This configuration requires you to have your own MongoDB running.
+
 > **TIP:** You can use the `env/local/run-mongodb.yml` config to run a simple MongoDB locally.
 
 ### Run the Full Swap System
