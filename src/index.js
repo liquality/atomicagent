@@ -34,5 +34,15 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   default:
-    throw new Error('Unknown PROCESS_TYPE')
+    runService()
+}
+
+async function runService () {
+  await require('./migrate').run({
+    force: migrateOpts.force,
+    log: migrateOpts.log,
+    verbose: migrateOpts.verbose
+  })
+  require('./api').start()
+  require('./worker').start()
 }
