@@ -31,9 +31,7 @@
     "lint"
   ],
   "standard": {
-    "env": [
-      "mocha"
-    ]
+    "env": [ "mocha" ]
   },
   "author": "Liquality <info@liquality.io>",
   "repository": {
