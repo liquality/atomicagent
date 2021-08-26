@@ -25,9 +25,9 @@ COPY LICENSE.md ./
 # Load environment config
 COPY env/${ENV_ALIAS}/config.${ENV_ALIAS}.toml ./config.toml
 
-# ---------
-# Start API
-# ---------
+# -------------
+# Start Service
+# -------------
 EXPOSE 3030
 
-CMD ["./bin/start-api.sh"]
+CMD ["./bin/start-service.sh"]
