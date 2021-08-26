@@ -1,8 +1,8 @@
 [database]
 debug = false
-uri = "mongodb://localhost/liquality"
-# uri = "mongodb://docker.for.mac.host.internal:27017/liquality"
-# uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
+uri = "mongodb://localhost/liqualitytest"
+# uri = "mongodb://docker.for.mac.host.internal:27017/liqualitytest"
+# uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liqualitytest?authSource=admin"
   [database.migrate]
   log = true
   verbose = false
@@ -41,11 +41,11 @@ killswitch = 'pm2 stop "Worker"'
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.BTC.api]
-    url = "http://localhost:3002/" # vulpemventures/electrs:latest (3rd party)
+    url = "http://10.10.0.12:3002/" # vulpemventures/electrs:latest (3rd party)
     [assets.BTC.batchApi]
-    url = "http://localhost:9090/" # electrs-batch-server.dockerfile (inside docker dir)
+    url = "http://10.10.0.14:9090/" # electrs-batch-server.dockerfile (inside docker dir)
     [assets.BTC.rpc]
-    url = "http://localhost:18443/" # vulpemventures/bitcoin:latest (3rd party)
+    url = "http://10.10.0.10:18443/" # vulpemventures/bitcoin:latest (3rd party)
     user = "admin1"
     password = "123"
 
@@ -57,9 +57,9 @@ killswitch = 'pm2 stop "Worker"'
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.ETH.scraper]
-    url = "http://localhost:8080" # ethereum-scraper
+    url = "http://10.10.0.20:8080" # ethereum-scraper
     [assets.ETH.rpc]
-    url = "http://localhost:8545" # Infura (3rd party)
+    url = "http://10.10.0.16:8545" # Infura (3rd party)
 
   [assets.DAI]
   network="local"
@@ -71,9 +71,9 @@ killswitch = 'pm2 stop "Worker"'
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.DAI.scraper]
-    url = "http://localhost:8080" # ethereum-scraper
+    url = "http://10.10.0.20:8080" # ethereum-scraper
     [assets.DAI.rpc]
-    url = "http://localhost:8545" # Infura (3rd party)
+    url = "http://10.10.0.16:8545" # Infura (3rd party)
 
   [assets.RBTC]
   blockTime = "20 seconds"
