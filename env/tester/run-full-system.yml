@@ -1,0 +1,26 @@
+# Run with: docker-compose -f run-full-system.yml up -d --build
+version: "3.8"
+
+services:
+  atomicagent-full-system:
+    build:
+      context: ../../
+      dockerfile: service.dockerfile
+      args:
+        ENV_ALIAS: tester
+    container_name: atomicagent-full-system
+    environment:
+      - MONGO_URI=mongodb://10.10.0.8:27017/liquality
+    ports:
+      - 3030:3030
+    restart: unless-stopped
+    networks:
+      local:
+        ipv4_address: 10.10.0.6
+
+networks:
+  local:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24

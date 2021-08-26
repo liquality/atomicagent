@@ -5,6 +5,6 @@ echo "ENV_ALIAS: ${ENV_ALIAS}"
 echo "--------------------------------"
 echo ""
 
-echo "Starting Atomic Agent API..."
+echo "Starting the Atomic Agent service..."
 
-npm run api
+npm run api-service

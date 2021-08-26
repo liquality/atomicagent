@@ -1,12 +1,7 @@
 [database]
 debug = false
-# uri = "mongodb://127.0.0.1:27017/liquality"
-# uri = "mongodb://docker.for.mac.host.internal:27017/liquality"
-uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
-  [database.migrate]
-  log = true
-  verbose = false
-  force = true
+# uri = "mongodb://docker.for.mac.host.internal:27017/swapOrders"
+uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/swapOrders?authSource=admin"
 
 [application]
 apiPort = 3030
