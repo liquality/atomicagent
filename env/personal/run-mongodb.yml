@@ -9,6 +9,10 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ~/mongodb/db:/data/db
     ports:
       - 27017:27017
     restart: unless-stopped

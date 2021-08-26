@@ -1,6 +1,13 @@
 name: Test
 
-on: push
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'sample.config.toml'
+      - 'package.json'
+      - '.github/workflows/test.yml'
 
 jobs:
   test:

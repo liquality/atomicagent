@@ -1,13 +1,41 @@
 [database]
+# ---------------------------------------------- Connection settings for MongoDB
+# Provide either (uri will take precedence):
+#
+# uri        - A full mongodb connection uri (see: https://docs.mongodb.com/manual/reference/connection-string/)
+#              e.g.
+#              mongodb://admin:password@127.0.0.1:27017/liquality?authSource=admin
+#
+#    -or-
+#
+# host       - The db hostname/IP
+# port       - The db port (optional)
+# dbname     - The db name (optional)
+# username   - The username for auth (optional, leave blank if no auth)
+# password   - The password for auth (optional, leave blank if no auth)
+# authdbname - The auth db name (optional with auth, leave blank if no auth)
+# ------------------------------------------------------------------------------
+# Other options:
+#
+# debug      - true|false (Enables mongodb debug)
+#
+# [database.migrate]
+# log        - true|false (Enables migrator logging, for short messages, default: true)
+# verbose    - true|false (Enables verbose migrator logging, for debugging, default: false)
+# force      - true|false (Forces refresh of assets/markets data, default: false)
+# ------------------------------------------------------------------------------
 debug = false
 # uri = "mongodb://demo:demo-password@docker.for.mac.host.internal:27017/rickandmorty?authSource=test"
 # uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality?authSource=admin"
-# uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liquality"
 host = "10.0.1.5"
 port = "27017"
 dbname = "liquality"
 username = "liquality"
 authdbname = "admin"
+  [database.migrate]
+  log = true
+  verbose = false
+  force = false
 
 [application]
 apiPort = 3030

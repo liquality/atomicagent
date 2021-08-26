@@ -1,4 +1,4 @@
-name: 'deploy-to-personal'
+name: 'Docker build, tag, push to ECR (personal)'
 
 on:
   push:
@@ -14,7 +14,7 @@ env:
   AWS_REGION: 'us-east-2'
   IMAGE_NAME: 'atomicagent-personal'
   IMAGE_TAG: 'latest'
-  DOCKERFILE_PATH: 'api.dockerfile'
+  DOCKERFILE_PATH: 'service.dockerfile'
 
 jobs:
   docker-deploy:
