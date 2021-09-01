@@ -84,12 +84,12 @@ npm run test
 
 ## Liquality Hosted Agents
 
-|Environment| Network | Endpoint                                     |
-|-|---------|--------------------------------------------------------|
-|Production| Testnet | https://liquality.io/swap-testnet/agent       |
-|Production| Mainnet | https://liquality.io/swap/agent               |
-|Development| Testnet | https://liquality.io/swap-testnet-dev/agent  |
-|Development| Mainnet | https://liquality.io/swap-dev/agent          |
+|Environment | Network | Endpoint                                    |
+|------------|---------|---------------------------------------------|
+|Production  | Testnet | https://liquality.io/swap-testnet/agent     |
+|Production  | Mainnet | https://liquality.io/swap/agent             |
+|Development | Testnet | https://liquality.io/swap-testnet-dev/agent |
+|Development | Mainnet | https://liquality.io/swap-dev/agent         |
 
 
 ## Liquality Testnet Nodes
@@ -128,7 +128,7 @@ To run the service (all three utilities) as a single container locally:
 | --------------------- | ------------------------------------- |
 | `docker:build-local`  | Builds the "atomicagent-local" image. |
 | `docker:run-local`    | Runs the "atomicagent-local" image as a container. |
-| `docker:log-local`    | Prints the standard out of the running "atomicagent-local" container. |
+| `docker:log-local`    | Prints the standard out of the running "atomicagent-local" container (for quick validation). |
 | `docker:stop-local`   | Stops the running "atomicagent-local" container. |
 
 The config file used for these commands: `env/local/config.local.toml`
@@ -146,7 +146,7 @@ To run the full swap system in a contained environment (for testing purposes):
 | Command                     | Description                           |
 | --------------------------- | ------------------------------------- |
 | `docker:start-full-system`  | Builds and runs the "atomicagent-full-system" image and runs a local simulation of the supported agent services. |
-| `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container. |
+| `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container (for quick validation). |
 | `docker:stop-full-system`   | Stops the running "atomicagent-full-system" container and the agent services. |
 
 The config file used for these commands: `env/tester/config.tester.toml`
