@@ -13,7 +13,7 @@ module.exports.run = async (options = {}) => {
   console.log(`${logHeader} Running migrate with options:`, options)
   const log = objectUtils.get(options, 'log', defaultLog)
   const verbose = objectUtils.get(options, 'verbose', defaultVerbose)
-  const force = objectUtils.get(options, 'force', defaultForce)
+  const force = process.env.FORCE_MIGRATE || objectUtils.get(options, 'force', defaultForce)
 
   const keepAlive = process.env.KEEP_ALIVE || false
   console.log(`${logHeader} keep alive?`, keepAlive)
