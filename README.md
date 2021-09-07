@@ -1,5 +1,9 @@
 # 💥 Atomic Agent ![Build status](https://github.com/liquality/agent/workflows/Test,%20publish%20&%20deploy/badge.svg)
 
+## User <-> Agent Swap Workflow
+
+![Workflow](diagram.png "Workflow")
+
 
 ## Prerequisites
 
