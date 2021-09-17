@@ -58,5 +58,45 @@
     "status": "ACTIVE",
     "max": 2e+21,
     "min": 5000000000000000000
+  },
+  {
+    "from": "ULUNA",
+    "to": "ETH",
+    "rate": 0.02,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 10000
+  },
+  {
+    "from": "ETH",
+    "to": "ULUNA",
+    "rate": 50,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 10000
+  },
+  {
+    "from": "UST",
+    "to": "ETH",
+    "rate": 0.02,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 10000
+  },
+  {
+    "from": "ETH",
+    "to": "UST",
+    "rate": 50,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 10000
   }
 ]

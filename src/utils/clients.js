@@ -35,6 +35,12 @@ const { SolanaWalletProvider } = require('@liquality/solana-wallet-provider')
 const { SolanaSwapProvider } = require('@liquality/solana-swap-provider')
 const { SolanaSwapFindProvider } = require('@liquality/solana-swap-find-provider')
 
+const { TerraNetworks } = require('@liquality/terra-networks')
+const { TerraRpcProvider } = require('@liquality/terra-rpc-provider')
+const { TerraWalletProvider } = require('@liquality/terra-wallet-provider')
+const { TerraSwapProvider } = require('@liquality/terra-swap-provider')
+const { TerraSwapFindProvider } = require('@liquality/terra-swap-find-provider');
+
 function createBtcClient () {
   const btcConfig = config.assets.BTC
   const network = BitcoinNetworks[btcConfig.network]
@@ -144,6 +150,32 @@ function createSolClient () {
   return solanaClient
 }
 
+function createTerraClient(asset){
+  console.log(asset)
+  const terraConfig = config.assets[asset]
+  const terraNetwork = TerraNetworks[terraConfig.network]
+  console.log(terraConfig)
+  const terraClient = new Client()
+  
+  if (asset === 'UST') {
+    terraClient.addProvider(new TerraRpcProvider({ ...terraNetwork, asset: 'uusd' }))
+  } else {
+    terraClient.addProvider(new TerraRpcProvider(terraNetwork))
+  }
+
+  terraClient.addProvider(new TerraWalletProvider(
+    {
+      network: terraNetwork,
+      mnemonic,
+      derivationPath
+    }
+  ))
+  terraClient.addProvider(new TerraSwapProvider(terraNetwork))
+  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork))
+  
+  return terraClient
+}
+
 const clients = {}
 
 function createClient (asset) {
@@ -157,6 +189,7 @@ function createClient (asset) {
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
   if (assetData.chain === 'solana') return createSolClient()
+  if (assetData.chain === 'terra') return createTerraClient(asset)
 
   throw new Error(`Could not create client for asset ${asset}`)
 }
