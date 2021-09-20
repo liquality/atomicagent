@@ -81,7 +81,6 @@ function createBtcClient () {
 function createEthClient (asset) {
   const assetData = assets[asset]
   const assetConfig = config.assets[asset]
-
   let network = EthereumNetworks[assetConfig.network]
   if (network.name === 'local') {
     network = {
@@ -151,23 +150,17 @@ function createSolClient () {
 }
 
 function createTerraClient(asset){
-  console.log(asset)
   const terraConfig = config.assets[asset]
   const terraNetwork = TerraNetworks[terraConfig.network]
-  console.log(terraConfig)
-  const terraClient = new Client()
   
-  if (asset === 'UST') {
-    terraClient.addProvider(new TerraRpcProvider({ ...terraNetwork, asset: 'uusd' }))
-  } else {
-    terraClient.addProvider(new TerraRpcProvider(terraNetwork))
-  }
+  const terraClient = new Client()
 
+  terraClient.addProvider(new TerraRpcProvider(terraNetwork))
   terraClient.addProvider(new TerraWalletProvider(
     {
       network: terraNetwork,
-      mnemonic,
-      derivationPath
+      mnemonic: terraConfig.wallet.mnemonic,
+      derivationPath: ''
     }
   ))
   terraClient.addProvider(new TerraSwapProvider(terraNetwork))
@@ -180,7 +173,7 @@ const clients = {}
 
 function createClient (asset) {
   const assetData = assets[asset]
-
+  console.log(asset)
   if (assetData.chain === 'bitcoin') return createBtcClient()
   if (assetData.chain === 'rsk') return createEthClient(asset)
   if (assetData.chain === 'bsc') return createEthClient(asset)
@@ -189,7 +182,7 @@ function createClient (asset) {
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
   if (assetData.chain === 'solana') return createSolClient()
-  if (assetData.chain === 'terra') return createTerraClient(asset)
+  if (assetData.chain === 'terra') return createTerraClient()
 
   throw new Error(`Could not create client for asset ${asset}`)
 }
