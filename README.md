@@ -1,9 +1,5 @@
 # 💥 Atomic Agent ![Build status](https://github.com/liquality/agent/workflows/Test,%20publish%20&%20deploy/badge.svg)
 
-## User <-> Agent Swap Workflow
-
-![Workflow](diagram.png "Workflow")
-
 
 ## Table of Contents
 
@@ -14,6 +10,7 @@
 * [Liquality Hosted Agents][section-liquality-hosted-agents]
 * [Liquality Nodes][section-liquality-nodes]
 * [Docker Setup Variations][section-docker-setup-variations]
+* [User to Agent Swap Workflow][section-swap-workflow]
 * [License][section-license]
 
 
@@ -128,7 +125,7 @@ To run the service (all three utilities) as a single container locally:
 | --------------------- | ------------------------------------- |
 | `docker:build-local`  | Builds the "atomicagent-local" image. |
 | `docker:run-local`    | Runs the "atomicagent-local" image as a container. |
-| `docker:log-local`    | Prints the standard out of the running "atomicagent-local" container (for quick validation). |
+| `docker:log-local`    | Prints the standard out of the running "atomicagent-local" container. |
 | `docker:stop-local`   | Stops the running "atomicagent-local" container. |
 
 The config file used for these commands: `env/local/config.local.toml`
@@ -146,10 +143,15 @@ To run the full swap system in a contained environment (for testing purposes):
 | Command                     | Description                           |
 | --------------------------- | ------------------------------------- |
 | `docker:start-full-system`  | Builds and runs the "atomicagent-full-system" image and runs a local simulation of the supported agent services. |
-| `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container (for quick validation). |
+| `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container. |
 | `docker:stop-full-system`   | Stops the running "atomicagent-full-system" container and the agent services. |
 
 The config file used for these commands: `env/tester/config.tester.toml`
+
+
+## User to Agent Swap Workflow
+
+![Workflow](diagram.png "Workflow")
 
 
 ## License
@@ -165,4 +167,5 @@ The config file used for these commands: `env/tester/config.tester.toml`
 [section-liquality-hosted-agents]: #liquality-hosted-agents
 [section-liquality-nodes]: #liquality-nodes
 [section-docker-setup-variations]: #docker-setup-variations
+[section-swap-workflow]: #user-to-agent-swap-workflow
 [section-license]: #license
