@@ -28,4 +28,4 @@ COPY env/${ENV_ALIAS}/config.${ENV_ALIAS}.toml ./config.toml
 # -------------
 EXPOSE 3030
 
-CMD ["./bin/start-service.sh"]
+CMD ["./bin/start-api.sh"]

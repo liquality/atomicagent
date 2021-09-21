@@ -31,11 +31,10 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   default:
-    runService()
+    runApiService()
 }
 
-async function runService () {
+async function runApiService () {
   await require('./migrate').run(migrateOpts)
   require('./api').start()
-  require('./worker').start()
 }
