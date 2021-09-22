@@ -1,10 +1,9 @@
 # ------------------------------------------------------------------------------
 # Local env and config files
 # ------------------------------------------------------------------------------
-*config.toml
+/*config.toml
 !sample.config.toml
 !heroku.config.toml
-.env.docker.local
 test/docker/config/*
 !test/docker/config/bitcoin.conf
 

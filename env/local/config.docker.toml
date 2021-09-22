@@ -5,8 +5,9 @@ debug = false
 uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/swapOrders?authSource=admin"
   [database.migrate]
   log = true
-  verbose = false
+  verbose = true
   force = true
+  fake = 'foshofodocker!'
 
 [application]
 apiPort = 3030
