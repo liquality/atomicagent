@@ -9,14 +9,14 @@
 * [Test][section-test]
 * [Liquality Hosted Agents][section-liquality-hosted-agents]
 * [Liquality Nodes][section-liquality-nodes]
-* [Docker Setup Variations][section-docker-setup-variations]
+* [Run with Docker][section-run-with-docker]
 * [User to Agent Swap Workflow][section-swap-workflow]
 * [License][section-license]
 
 
 ## Introduction
 
-The atomicagent service contains three utilities: `migrate`, `api`, `worker`. Each can be run separately, or as a full service.
+The Atomic Agent service contains three utilities: `migrate`, `api`, `worker`. The API and worker utilities work together to provide the running service, while the migrate utility is utilized to initialize the database with market data.
 
 
 ## Prerequisites
@@ -103,22 +103,31 @@ npm run test
 | Polygon Scraper       | Mainnet | https://liquality.io/polygon-mainnet-api/              |
 
 
-## Docker Setup Variations
+## Run with Docker
 
-The atomicagent service (which contains three utilities: migrate, api, worker) can be dockerized for portability and convenience.
+The atomicagent service (which contains two utilities: api, worker) can each be dockerized for portability and convenience.
 
-### Run the Atomic Agent Service Locally
+### Run the Atomic Agent Utilities Locally
 
-To run the service (all three utilities) as a single container locally:
+To run the utilities locally as Docker containers, make a copy of the `sample.config.toml` at the root of the repo and name it: `config.docker.toml`. The Docker run commands provided will use this file for its configuration.
 
-| Command               | Description                           |
-| --------------------- | ------------------------------------- |
-| `docker:build-local`  | Builds the "atomicagent-local" image. |
-| `docker:run-local`    | Runs the "atomicagent-local" image as a container. |
-| `docker:log-local`    | Prints the standard out of the running "atomicagent-local" container. |
-| `docker:stop-local`   | Stops the running "atomicagent-local" container. |
+To run the API as a container locally:
 
-The config file used for these commands: `env/local/config.local.toml`
+| Command                   | Description                           |
+| ------------------------- | ------------------------------------- |
+| `docker:build-api-local`  | Builds the "atomicagent-api-local" image. |
+| `docker:run-api-local`    | Runs the "atomicagent-api-local" image as a container. |
+| `docker:log-api-local`    | Prints the standard out of the running "atomicagent-api-local" container. |
+| `docker:stop-api-local`   | Stops the running "atomicagent-api-local" container. |
+
+To run the worker as a container locally:
+
+| Command                      | Description                           |
+| ---------------------------- | ------------------------------------- |
+| `docker:build-worker-local`  | Builds the "atomicagent-worker-local" image. |
+| `docker:run-worker-local`    | Runs the "atomicagent-worker-local" image as a container. |
+| `docker:log-worker-local`    | Prints the standard out of the running "atomicagent-worker-local" container. |
+| `docker:stop-worker-local`   | Stops the running "atomicagent-worker-local" container. |
 
 > **NOTE:** This configuration requires you to have your own MongoDB running.
 
@@ -136,7 +145,7 @@ To run the full swap system in a contained environment (for testing purposes):
 | `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container. |
 | `docker:stop-full-system`   | Stops the running "atomicagent-full-system" container and the agent services. |
 
-The config file used for these commands: `env/tester/config.tester.toml`
+The config file is pre-configured for this scenario and is located at: `config/tester/config.tester.toml`
 
 
 ## User to Agent Swap Workflow
@@ -156,6 +165,6 @@ The config file used for these commands: `env/tester/config.tester.toml`
 [section-test]: #test
 [section-liquality-hosted-agents]: #liquality-hosted-agents
 [section-liquality-nodes]: #liquality-nodes
-[section-docker-setup-variations]: #docker-setup-variations
+[section-run-with-docker]: #run-with-docker
 [section-swap-workflow]: #user-to-agent-swap-workflow
 [section-license]: #license

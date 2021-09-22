@@ -11,6 +11,4 @@ console.log(`Config file: ${process.env.CONFIG_PATH}`)
 const configRaw = fs.readFileSync(process.env.CONFIG_PATH)
 const config = toml.parse(configRaw)
 
-console.log('[DEVING] Loaded config:', config)
-
 module.exports = config

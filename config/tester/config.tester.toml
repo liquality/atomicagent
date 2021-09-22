@@ -1,9 +1,5 @@
 [database]
 debug = false
-  [database.migrate]
-  log = true
-  verbose = false
-  force = true
 
 [application]
 apiPort = 3030
