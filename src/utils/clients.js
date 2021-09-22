@@ -165,9 +165,6 @@ function createTerraClient(){
   ))
   terraClient.addProvider(new TerraSwapProvider(terraNetwork))
   terraClient.addProvider(new TerraSwapFindProvider(terraNetwork))
-  
-    terraClient.wallet.getAddresses()
-      .then(console.log)
 
   return terraClient
 }
@@ -176,7 +173,7 @@ const clients = {}
 
 function createClient (asset) {
   const assetData = assets[asset]
-  console.log(asset)
+
   if (assetData.chain === 'bitcoin') return createBtcClient()
   if (assetData.chain === 'rsk') return createEthClient(asset)
   if (assetData.chain === 'bsc') return createEthClient(asset)
