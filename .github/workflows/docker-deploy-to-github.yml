@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dockerized
+    paths:
+      - 'src/**'
+      - '.github/workflows/docker-deploy-to-github.yml'
 
 env:
   # GitHub settings

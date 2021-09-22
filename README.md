@@ -6,6 +6,7 @@
 * [Introduction][section-introduction]
 * [Prerequisites][section-prerequisites]
 * [Installation][section-installation]
+* [Usage][section-usage]
 * [Test][section-test]
 * [Liquality Hosted Agents][section-liquality-hosted-agents]
 * [Liquality Nodes][section-liquality-nodes]
@@ -42,7 +43,11 @@ nano src/migrate/data/markets.json  # add/remove markets
 npm run migrate                     # prepare agent with assets & markets
 ```
 
-### Run Each Utility Separately
+## Usage
+
+Ensure you have configured all settings for your scenario within the `config.toml` file you created at the root of the repo.
+
+To run the utilities:
 
 ```bash
 npm run api     # runs agent market maker api
@@ -162,6 +167,7 @@ The config file is pre-configured for this scenario and is located at: `config/t
 [section-introduction]: #introduction
 [section-prerequisites]: #prerequisites
 [section-installation]: #installation
+[section-usage]: #usage
 [section-test]: #test
 [section-liquality-hosted-agents]: #liquality-hosted-agents
 [section-liquality-nodes]: #liquality-nodes
