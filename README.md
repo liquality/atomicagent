@@ -49,16 +49,6 @@ npm run api     # runs agent market maker api
 npm run worker  # runs the background process
 ```
 
-### Run as a Unified Service
-
-``` bash
-npm run api-service
-```
-
-> These methods utilize the `config.toml` you created at the root of the repo.
-
-> For Docker options, see: [Docker Setup Variations](#docker-setup-variations)
-
 
 ## Test
 

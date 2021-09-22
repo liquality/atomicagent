@@ -1,8 +1,5 @@
 [database]
 debug = false
-uri = "mongodb://localhost/liqualitytest"
-# uri = "mongodb://docker.for.mac.host.internal:27017/liqualitytest"
-# uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/liqualitytest?authSource=admin"
   [database.migrate]
   log = true
   verbose = false

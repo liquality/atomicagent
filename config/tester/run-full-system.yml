@@ -5,12 +5,13 @@ services:
   atomicagent-full-system:
     build:
       context: ../../
-      dockerfile: service.dockerfile
-      args:
-        ENV_ALIAS: tester
+      dockerfile: api.dockerfile
     container_name: atomicagent-full-system
     environment:
       - MONGO_URI=mongodb://10.10.0.8:27017/liquality
+      - CONFIG_PATH=/config/config.tester.toml
+    volumes:
+      - ./config/tester:/config
     ports:
       - 3030:3030
     restart: unless-stopped

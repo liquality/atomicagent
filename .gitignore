@@ -2,6 +2,7 @@
 # Local env and config files
 # ------------------------------------------------------------------------------
 /*config.toml
+/*config.docker.toml
 !sample.config.toml
 !heroku.config.toml
 test/docker/config/*
