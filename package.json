@@ -31,7 +31,9 @@
     "lint"
   ],
   "standard": {
-    "env": [ "mocha" ]
+    "env": [
+      "mocha"
+    ]
   },
   "author": "Liquality <info@liquality.io>",
   "repository": {
@@ -73,6 +75,11 @@
     "@liquality/solana-swap-find-provider": "^1.4.5",
     "@liquality/solana-swap-provider": "^1.4.5",
     "@liquality/solana-wallet-provider": "^1.6.0",
+    "@liquality/terra-networks": "^1.6.4",
+    "@liquality/terra-rpc-provider": "^1.6.4",
+    "@liquality/terra-swap-find-provider": "^1.6.4",
+    "@liquality/terra-swap-provider": "^1.6.4",
+    "@liquality/terra-wallet-provider": "^1.6.4",
     "@sentry/node": "^5.27.3",
     "agenda": "^3.1.0",
     "agendash": "^1.0.0",
