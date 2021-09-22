@@ -39,7 +39,7 @@ const { TerraNetworks } = require('@liquality/terra-networks')
 const { TerraRpcProvider } = require('@liquality/terra-rpc-provider')
 const { TerraWalletProvider } = require('@liquality/terra-wallet-provider')
 const { TerraSwapProvider } = require('@liquality/terra-swap-provider')
-const { TerraSwapFindProvider } = require('@liquality/terra-swap-find-provider');
+const { TerraSwapFindProvider } = require('@liquality/terra-swap-find-provider')
 
 function createBtcClient () {
   const btcConfig = config.assets.BTC
@@ -149,10 +149,10 @@ function createSolClient () {
   return solanaClient
 }
 
-function createTerraClient(){
+function createTerraClient () {
   const lunaConfig = config.assets.LUNA
   const terraNetwork = TerraNetworks[lunaConfig.network]
-  
+
   const terraClient = new Client()
 
   terraClient.addProvider(new TerraRpcProvider(terraNetwork))
