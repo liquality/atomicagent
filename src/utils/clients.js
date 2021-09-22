@@ -149,9 +149,9 @@ function createSolClient () {
   return solanaClient
 }
 
-function createTerraClient(asset){
-  const terraConfig = config.assets[asset]
-  const terraNetwork = TerraNetworks[terraConfig.network]
+function createTerraClient(){
+  const lunaConfig = config.assets.LUNA
+  const terraNetwork = TerraNetworks[lunaConfig.network]
   
   const terraClient = new Client()
 
@@ -159,13 +159,16 @@ function createTerraClient(asset){
   terraClient.addProvider(new TerraWalletProvider(
     {
       network: terraNetwork,
-      mnemonic: terraConfig.wallet.mnemonic,
+      mnemonic: lunaConfig.wallet.mnemonic,
       derivationPath: ''
     }
   ))
   terraClient.addProvider(new TerraSwapProvider(terraNetwork))
   terraClient.addProvider(new TerraSwapFindProvider(terraNetwork))
   
+    terraClient.wallet.getAddresses()
+      .then(console.log)
+
   return terraClient
 }
 

@@ -19,19 +19,5 @@
     "min": 5000000000000000000,
     "max": 2e+21,
     "minConf": 1
-  },
-  {
-    "code": "ULUNA",
-    "actualBalance": 0,
-    "min": 10000,
-    "max": 2e+21,
-    "minConf": 1
-  },
-  {
-    "code": "UST",
-    "actualBalance": 0,
-    "min": 10000,
-    "max": 2e+21,
-    "minConf": 1
   }
 ]
