@@ -160,7 +160,7 @@ function createTerraClient(){
     {
       network: terraNetwork,
       mnemonic: lunaConfig.wallet.mnemonic,
-      derivationPath: ''
+      baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`
     }
   ))
   terraClient.addProvider(new TerraSwapProvider(terraNetwork))
