@@ -116,6 +116,10 @@ The atomicagent service (which contains two utilities: api, worker) can each be 
 
 To run the utilities locally as Docker containers, make a copy of the `sample.config.toml` at the root of the repo and name it: `config.docker.toml`. The Docker run commands provided will use this file for its configuration.
 
+> **NOTE:** This configuration requires you to have your own MongoDB running.
+
+> **TIP:** You can use the `config/local/run-mongodb.yml` config to run a simple MongoDB locally.
+
 To run the API as a container locally:
 
 | Command                   | Description                           |
@@ -134,9 +138,6 @@ To run the worker as a container locally:
 | `docker:log-worker-local`    | Prints the standard out of the running "atomicagent-worker-local" container. |
 | `docker:stop-worker-local`   | Stops the running "atomicagent-worker-local" container. |
 
-> **NOTE:** This configuration requires you to have your own MongoDB running.
-
-> **TIP:** You can use the `env/local/run-mongodb.yml` config to run a simple MongoDB locally.
 
 ### Run the Full Swap System
 
@@ -144,11 +145,11 @@ The atomicagent service operates on multiple dependencies (for various chains/ne
 
 To run the full swap system in a contained environment (for testing purposes):
 
-| Command                     | Description                           |
-| --------------------------- | ------------------------------------- |
-| `docker:start-full-system`  | Builds and runs the "atomicagent-full-system" image and runs a local simulation of the supported agent services. |
-| `docker:log-full-system`    | Prints the standard out of the running "atomicagent-full-system" container. |
-| `docker:stop-full-system`   | Stops the running "atomicagent-full-system" container and the agent services. |
+| Command                       | Description                           |
+| ----------------------------- | ------------------------------------- |
+| `docker:start-full-system`    | Builds and runs the "atomicagent-full-system" image and runs a local simulation of the supported agent services. |
+| `docker:log-full-system`      | Prints the standard out of the running "atomicagent-full-system" container. |
+| `docker:stop-full-system`     | Stops the running "atomicagent-full-system" container and the agent services. |
 
 The config file is pre-configured for this scenario and is located at: `config/tester/config.tester.toml`
 
@@ -161,6 +162,8 @@ The config file is pre-configured for this scenario and is located at: `config/t
 ## License
 
 [MIT](./LICENSE.md)
+
+
 
 
 
