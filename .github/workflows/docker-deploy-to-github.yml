@@ -1,0 +1,61 @@
+name: 'Docker deploy to GitHub'
+
+on:
+  push:
+    branches:
+      - dockerized
+
+env:
+  # GitHub settings
+  REGISTRY: ghcr.io/liquality
+
+  # AWS settings
+  AWS_REGION: 'us-east-1'
+
+  # atomicagent-api
+  AGENT_API_IMAGE_NAME: 'atomicagent-api'
+  AGENT_API_IMAGE_TAG: 'latest'
+  AGENT_API_DOCKERFILE_PATH: 'api.dockerfile'
+
+  # atomicagent-worker
+  AGENT_WORKER_IMAGE_NAME: 'atomicagent-worker'
+  AGENT_WORKER_IMAGE_TAG: 'latest'
+  AGENT_WORKER_DOCKERFILE_PATH: 'worker.dockerfile'
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build, tag, and push Docker image (agent api)
+      - name: Build, tag, push image to GitHub (agent api)
+        id: build-api-image
+        run: |
+          echo "Building and tagging Docker image ($AGENT_API_IMAGE_NAME)"
+          docker build -f $AGENT_API_DOCKERFILE_PATH -t $AGENT_API_IMAGE_NAME . --no-cache
+          docker tag $AGENT_API_IMAGE_NAME:$AGENT_API_IMAGE_TAG $REGISTRY/$AGENT_API_IMAGE_NAME:$AGENT_API_IMAGE_TAG
+          echo "Pushing image to registry as: $REGISTRY/$AGENT_API_IMAGE_NAME"
+          docker push $REGISTRY/$AGENT_API_IMAGE_NAME:$AGENT_API_IMAGE_TAG
+
+      # Build, tag, and push Docker image (agent worker)
+      - name: Build, tag, push image to GitHub (agent worker)
+        id: build-worker-image
+        run: |
+          echo "Building and tagging Docker image ($AGENT_WORKER_IMAGE_NAME)"
+          docker build -f $AGENT_WORKER_DOCKERFILE_PATH -t $AGENT_WORKER_IMAGE_NAME . --no-cache
+          docker tag $AGENT_WORKER_IMAGE_NAME:$AGENT_WORKER_IMAGE_TAG $REGISTRY/$AGENT_WORKER_IMAGE_NAME:$AGENT_WORKER_IMAGE_TAG
+          echo "Pushing image to registry as: $REGISTRY/$AGENT_WORKER_IMAGE_NAME"
+          docker push $REGISTRY/$AGENT_WORKER_IMAGE_NAME:$AGENT_WORKER_IMAGE_TAG

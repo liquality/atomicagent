@@ -13,7 +13,6 @@ const config = require('./config')
 // Load db settings and establish connection
 const dbConfig = config.database || {}
 if (process.env.MONGO_URI) dbConfig.uri = process.env.MONGO_URI // override with env var
-const migrateOpts = dbConfig.migrate || {}
 mongoConnect.connect(dbConfig)
 
 // Run service
@@ -27,7 +26,7 @@ switch (process.env.PROCESS_TYPE) {
     break
 
   case 'migrate':
-    require('./migrate').run(migrateOpts)
+    require('./migrate').run()
     break
 
   default:
@@ -35,6 +34,6 @@ switch (process.env.PROCESS_TYPE) {
 }
 
 async function runApiService () {
-  await require('./migrate').run(migrateOpts)
+  await require('./migrate').run()
   require('./api').start()
 }

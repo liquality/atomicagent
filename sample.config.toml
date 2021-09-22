@@ -1,5 +1,6 @@
 [database]
-uri = "mongodb://localhost/liqualitytest"
+# uri = "mongodb://docker.for.mac.host.internal:27017/swapOrders"
+uri = "mongodb://localhost/swapOrders"
 debug = true
 
 [application]
