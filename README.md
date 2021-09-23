@@ -19,6 +19,12 @@
 
 The Atomic Agent service contains three utilities: `migrate`, `api`, `worker`. The API and worker utilities work together to provide the running service, while the migrate utility is utilized to initialize the database with market data.
 
+The API and worker utilities are also distributed as Docker images:
+* `atomicagent-api`
+* `atomicagent-worker`
+
+> Found here: https://github.com/orgs/liquality/packages?repo_name=atomicagent
+
 
 ## Prerequisites
 
@@ -120,6 +126,15 @@ To run the utilities locally as Docker containers, make a copy of the `sample.co
 
 > **TIP:** You can use the `config/local/run-mongodb.yml` config to run a simple MongoDB locally.
 
+Ensure you have configured your desired markets and assets to run. The migrate utility will run automatically when the container starts, if the database is empty.
+
+You can configure the markets and assets in the following files:
+
+```
+src/migrate/data/markets.json
+src/migrate/data/assets.json
+```
+
 To run the API as a container locally:
 
 | Command                   | Description                           |
@@ -138,6 +153,10 @@ To run the worker as a container locally:
 | `docker:log-worker-local`    | Prints the standard out of the running "atomicagent-worker-local" container. |
 | `docker:stop-worker-local`   | Stops the running "atomicagent-worker-local" container. |
 
+
+### Docker Image Settings
+
+[TBC]
 
 ### Run the Full Swap System
 
