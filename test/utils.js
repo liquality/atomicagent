@@ -40,7 +40,7 @@ const presets = {
   DAI: erc20Preset
 }
 
-const getClient = function (asset) {
+const getClient = async function (asset) {
   const preset = presets[asset]
 
   const client = ClientFactory.createFrom(preset, {
@@ -144,8 +144,8 @@ module.exports.approveOrder = async (context) => {
 }
 
 module.exports.initiate = async (context, request) => {
-  const fromClient = getClient(context.from)
-  const toClient = getClient(context.to)
+  const fromClient = await getClient(context.from)
+  const toClient = await getClient(context.to)
 
   context.fromAddress = (await fromClient.wallet.getUnusedAddress()).address
   context.toAddress = (await toClient.wallet.getUnusedAddress()).address
@@ -174,7 +174,7 @@ module.exports.initiate = async (context, request) => {
 }
 
 module.exports.fund = async (context, request) => {
-  const fromClient = getClient(context.from)
+  const fromClient = await getClient(context.from)
   const { defaultFee } = config.assets[context.from]
 
   const tx = await withLock(context.from, async () => {
@@ -264,7 +264,7 @@ module.exports.verifyAgentFunding = async (context, request) => {
 }
 
 module.exports.findAgentFundingTx = async context => {
-  const toClient = getClient(context.to)
+  const toClient = await getClient(context.to)
 
   const findInitSwapTx = async lastScannedBlock => {
     const currentBlock = await toClient.chain.getBlockHeight()
@@ -289,7 +289,7 @@ module.exports.findAgentFundingTx = async context => {
 }
 
 module.exports.claim = async context => {
-  const toClient = getClient(context.to)
+  const toClient = await getClient(context.to)
 
   const { defaultFee } = config.assets[context.to]
 
@@ -312,7 +312,7 @@ module.exports.claim = async context => {
 }
 
 module.exports.refundSwap = async context => {
-  const fromClient = getClient(context.from)
+  const fromClient = await getClient(context.from)
 
   const { defaultFee } = config.assets[context.from]
 
@@ -387,7 +387,7 @@ module.exports.verifyClaimOrRefund = async (context, request, expectedStatus) =>
 }
 
 module.exports.deployAndMintMidman = async () => {
-  const eth = getClient('ETH')
+  const eth = await getClient('ETH')
 
   const code = await eth.getMethod('getCode')(config.assets.DAI.contractAddress, 'latest')
   if (code) return debug('MIDMAN ERC-20 contract already exists')
