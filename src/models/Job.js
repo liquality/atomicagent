@@ -6,7 +6,7 @@ const JobSchema = new mongoose.Schema({}, {
 })
 
 JobSchema.static('findByOrderId', function (orderId) {
-  return Job.find({ 'data.orderId': orderId }).select('-_id').exec()
+  return Job.find({ 'data.orderId': orderId }).exec()
 })
 
 JobSchema.index({ 'data.orderId': 1 })
