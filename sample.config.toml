@@ -15,6 +15,10 @@ simplePassword = '25ec02267950f537347b4a7c02b00ced'
 [threshold]
 manualAboveFromAmountUsd = 5000
 
+# [vault]
+# endpoint = "http://127.0.0.1:8200"
+# mnemonicsBasePath = "secret/data/agent/mainnet/production/mnemonics"
+
 [worker]
 maxJobRetry = 5
 jobRetryDelay = "5 seconds"
@@ -33,7 +37,6 @@ killswitch = 'pm2 stop "Worker"'
   defaultFee = "average"
     [assets.BTC.wallet]
     type = "js"
-    mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.BTC.api]
     url = "http://localhost:3002/"
     [assets.BTC.batchApi]
