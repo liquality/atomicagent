@@ -37,6 +37,7 @@ killswitch = 'pm2 stop "Worker"'
   defaultFee = "average"
     [assets.BTC.wallet]
     type = "js"
+    mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.BTC.api]
     url = "http://localhost:3002/"
     [assets.BTC.batchApi]
