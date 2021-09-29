@@ -78,9 +78,10 @@ router.post('/order', asyncHandler(async (req, res) => {
   }
 
   const order = Order.fromMarket(market, body.fromAmount)
+  const toClient = await order.toClient()
 
-  const addresses = await order.toClient().wallet.getUsedAddresses()
-  const balance = await order.toClient().chain.getBalance(addresses)
+  const addresses = await toClient.wallet.getUsedAddresses()
+  const balance = await toClient.chain.getBalance(addresses)
 
   if (BigNumber(balance).isLessThan(BigNumber(order.toAmount))) {
     Sentry.captureException(

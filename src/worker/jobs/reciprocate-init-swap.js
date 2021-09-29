@@ -14,8 +14,8 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'USER_FUNDED') return
 
-  const fromClient = order.fromClient()
-  const toClient = order.toClient()
+  const fromClient = await order.fromClient()
+  const toClient = await order.toClient()
 
   const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
   let fromCurrentBlock
@@ -125,7 +125,7 @@ module.exports = async job => {
   order.status = 'AGENT_CONTRACT_CREATED'
   await order.save()
 
-  await agenda.now('verify-tx', { orderId: order.orderId, type: 'toFundHash' })
+  await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toFundHash' })
 
   await order.log('RECIPROCATE_INIT_SWAP', null, {
     toLastScannedBlock: toLastScannedBlock,

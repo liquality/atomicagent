@@ -40,8 +40,8 @@ async function main () {
     const idx = ++index
     const log = (...message) => console.log(`[${idx}/${total}]\t[${order.from}-${order.to}]\t${order.orderId}\t`, ...message)
 
-    const fromClient = order.fromClient()
-    const toClient = order.toClient()
+    const fromClient = await order.fromClient()
+    const toClient = await order.toClient()
 
     order.fromRateUsd = BN(order.fromUsdValue).div(unitToCurrency(assets[order.from], order.fromAmount)).dp(2).toNumber()
     order.toRateUsd = BN(order.toUsdValue).div(unitToCurrency(assets[order.to], order.toAmount)).dp(2).toNumber()

@@ -28,7 +28,7 @@ async function main () {
 
   await Bluebird.map(orders, async order => {
     const log = message => console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
-    const fromClient = order.fromClient()
+    const fromClient = await order.fromClient()
 
     const fromClaimTx = await fromClient.swap.findClaimSwapTransaction(
       {
