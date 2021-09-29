@@ -26,7 +26,7 @@ const configSecretProvider = async asset => {
 }
 
 const getMnemonic = async asset => {
-  if (config.vault?.endpoint) {
+  if (config.vault && config.vault.endpoint) {
     return vaultSecretProvider(asset)
   }
 
