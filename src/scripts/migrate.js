@@ -11,8 +11,7 @@ const mongooseOnError = err => {
 
 mongoose
   .connect(config.database.uri, {
-    useNewUrlParser: true,
-    useCreateIndex: true
+    useNewUrlParser: true
   })
   .catch(mongooseOnError)
 

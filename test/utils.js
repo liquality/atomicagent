@@ -77,7 +77,7 @@ const clear = () => clearJobs()
   .then(() => debug('Updated marketdata'))
 
 module.exports.prepare = () => mongoose
-  .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+  .connect(config.database.uri, { useNewUrlParser: true })
   .then(() => module.exports.deployAndMintMidman())
   .then(() => clear())
   .then(() => api.start())
