@@ -11,8 +11,7 @@ const mongoConnect = require('./utils/mongoConnect')
 const config = require('./config')
 
 // Load db settings and establish connection
-const dbConfig = config.database || {}
-mongoConnect.connect(dbConfig)
+mongoConnect.connect(config.database)
 
 // Run service
 switch (process.env.PROCESS_TYPE) {
