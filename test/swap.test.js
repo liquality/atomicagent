@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 const _ = require('lodash')
 
-const swap = require('./swap')
-const { prepare, clearJobs } = require('./utils')
+const swap = require('./lib/swap')
+const { prepare, clearJobs } = require('./lib/utils')
 const config = require('../src/config')
 
 const NUM_CONCURRENT_SWAPS_PER_MARKET = 3

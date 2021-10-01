@@ -8,7 +8,7 @@
 ## Prerequisites
 
 1. Linux VM
-2. node 8
+2. node 14
 3. mongoDB 4.2+
 4. [RPC/API endpoints for the chains you want to support](#liquality-nodes)
 

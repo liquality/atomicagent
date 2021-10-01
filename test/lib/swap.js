@@ -6,9 +6,9 @@ const humanInterval = require('human-interval')
 chai.should()
 chai.use(chaiHttp)
 
-const { app } = require('../src/api')
-const { wait } = require('../src/utils/chainLock')
-const config = require('../src/config')
+const { app } = require('../../src/api')
+const { wait } = require('../../src/utils/chainLock')
+const config = require('../../src/config')
 
 const {
   requestQuote,

@@ -6,7 +6,7 @@ chai.use(chaiHttp)
 
 const Job = require('../src/models/Job')
 const { app } = require('../src/api')
-const { prepare } = require('./utils')
+const { prepare } = require('./lib/utils')
 
 describe('Market Info', () => {
   before(async function () {

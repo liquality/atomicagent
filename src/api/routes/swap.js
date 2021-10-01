@@ -182,7 +182,7 @@ router.post('/order/:orderId', asyncHandler(async (req, res) => {
   try {
     await order.save()
   } catch (e) {
-    if (e.name === 'MongoError' && e.code === 11000) {
+    if (e.name === 'MongoServerError' && e.code === 11000) {
       Sentry.captureException(
         new DuplicateOrderError(`Duplicate order: ${params.orderId}`)
       )

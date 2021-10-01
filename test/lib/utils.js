@@ -13,26 +13,26 @@ const mongoose = require('mongoose')
 const { ClientFactory } = require('@liquality/client-factory')
 const { sha256 } = require('@liquality/crypto')
 
-const api = require('../src/api')
-const worker = require('../src/worker')
-const config = require('../src/config')
+const api = require('../../src/api')
+const worker = require('../../src/worker')
+const config = require('../../src/config')
 
-const Asset = require('../src/models/Asset')
-const Market = require('../src/models/Market')
-const MarketHistory = require('../src/models/MarketHistory')
-const Job = require('../src/models/Job')
-const Order = require('../src/models/Order')
-const Check = require('../src/models/Check')
+const Asset = require('../../src/models/Asset')
+const Market = require('../../src/models/Market')
+const MarketHistory = require('../../src/models/MarketHistory')
+const Job = require('../../src/models/Job')
+const Order = require('../../src/models/Order')
+const Check = require('../../src/models/Check')
 
-const assets = require('../src/migrate/data/assets.json')
-const markets = require('../src/migrate/data/markets.json')
+const assets = require('../../src/migrate/data/assets.json')
+const markets = require('../../src/migrate/data/markets.json')
 
-const blockScanOrFind = require('../src/utils/blockScanOrFind')
-const { wait, waitForRandom, withLock } = require('../src/utils/chainLock')
+const blockScanOrFind = require('../../src/utils/blockScanOrFind')
+const { wait, waitForRandom, withLock } = require('../../src/utils/chainLock')
 
-const btcPreset = require('./client-presets/btc')
-const ethPreset = require('./client-presets/eth')
-const erc20Preset = require('./client-presets/erc20')
+const btcPreset = require('../client-presets/btc')
+const ethPreset = require('../client-presets/eth')
+const erc20Preset = require('../client-presets/erc20')
 
 const presets = {
   BTC: btcPreset,
