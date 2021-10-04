@@ -8,7 +8,7 @@ services:
       dockerfile: api.dockerfile
     container_name: atomicagent-full-system
     environment:
-      - MONGO_URI=mongodb://10.10.0.8:27017/liquality
+      - MONGO_URI=mongodb://10.10.0.8:27017/swapOrders
       - CONFIG_PATH=/config/config.tester.toml
     volumes:
       - ./config/tester:/config

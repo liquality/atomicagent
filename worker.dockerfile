@@ -3,7 +3,7 @@ FROM node:15.7.0-alpine
 # -------------------
 # Build app directory
 # -------------------
-WORKDIR /
+WORKDIR /app
 
 # Build dependencies
 COPY package*.json ./
