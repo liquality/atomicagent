@@ -5,6 +5,8 @@ on:
     branches:
       - dockerized
     paths:
+      - 'api.dockerfile'
+      - 'worker.dockerfile'
       - 'src/**'
       - '.github/workflows/docker-deploy-to-github.yml'
 
