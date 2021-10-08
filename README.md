@@ -37,20 +37,28 @@ npm run migrate                     # prepare agent with assets & markets
 |Development| Mainnet | https://liquality.io/swap-dev/agent                        |
 
 
-## Liquality Nodes
+## Liquality Testnet Nodes
 
 | Node                  | Network | Endpoint                                               |
 |-----------------------|---------|--------------------------------------------------------|
 | Bitcoin Electrs       | Testnet | https://liquality.io/testnet/electrs                   |
-| Bitcoin Electrs       | Mainnet | https://api-mainnet-bitcoin-electrs.liquality.io       |
 | Bitcoin Batch Electrs | Testnet | https://liquality.io/electrs-testnet-batch             |
-| Bitcoin Batch Electrs | Mainnet | https://api-mainnet-bitcoin-electrs-batch.liquality.io |
-| Ethereum Scraper      | Testnet | https://liquality.io/eth-rinkeby-api                   |
-| Ethereum Scraper      | Mainnet | https://liquality.io/eth-mainnet-api                   |
+| Ethereum Scraper      | Testnet | https://liquality.io/eth-ropsten-api                   |
 | RSK Scraper           | Testnet | https://liquality.io/rsk-testnet-api                   |
-| RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
 | BSC Scraper           | Testnet | https://liquality.io/bsc-testnet-api                   |
+| Polygon Scraper       | Testnet | https://liquality.io/polygon-testnet-api/              |
+
+
+## Liquality Mainnet Nodes
+
+| Node                  | Network | Endpoint                                               |
+|-----------------------|---------|--------------------------------------------------------|
+| Bitcoin Electrs       | Mainnet | https://api-mainnet-bitcoin-electrs.liquality.io       |
+| Bitcoin Batch Electrs | Mainnet | https://api-mainnet-bitcoin-electrs-batch.liquality.io |
+| Ethereum Scraper      | Mainnet | https://liquality.io/eth-mainnet-api                   |
+| RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
 | BSC Scraper           | Mainnet | https://liquality.io/bsc-mainnet-api                   |
+| Polygon Scraper       | Mainnet | https://liquality.io/polygon-mainnet-api/              |
 
 
 ## Run!
