@@ -45,6 +45,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@amplitude/node": "^1.8.4",
     "@liquality/bitcoin-esplora-batch-api-provider": "1.1.8",
     "@liquality/bitcoin-esplora-swap-find-provider": "1.1.8",
     "@liquality/bitcoin-fee-api-provider": "1.1.8",

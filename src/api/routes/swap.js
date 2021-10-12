@@ -1,4 +1,5 @@
 const Sentry = require('@sentry/node')
+const Amplitude = require('@amplitude/node')
 const _ = require('lodash')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
@@ -24,6 +25,8 @@ const {
   InvalidHTTPBodyError,
   DuplicateOrderError
 } = require('../../utils/errors')
+
+const client = Amplitude.init(process.env.VUE_APP_AMPLITUDE_API_KEY)
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
@@ -107,6 +110,20 @@ router.post('/order', asyncHandler(async (req, res) => {
 
   await order.save()
   await order.log('NEW_SWAP')
+
+  await client.logEvent({
+    event_type: 'New Swap from Agent',
+    user_id: 'agent',
+    platform: 'Atomic Agent',
+    event_properties: {
+      category: 'Swaps',
+      action: 'Swap Initiated from AGENT',
+      from: `${body.from}`,
+      to: `${body.to}`,
+      fromAmount: `${body.fromAmount}`
+    }
+  })
+  await client.flush()
 
   res.json(order.json())
 }))
