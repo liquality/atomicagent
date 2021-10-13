@@ -7,15 +7,14 @@ on:
       - v*
 
 jobs:
-  test_publish:
+  # Build & lint & test
+  Build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions/setup-node@v1
         with:
           node-version: 14
-
       - uses: actions/cache@v1
         env:
           node-version: 14
@@ -23,22 +22,6 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
-
-      # Git secrets set for Dev tag
-      - name: Set secrets for DEV
-        if: contains(github.ref, '-next.')
-        env:
-          VUE_APP_AMPLITUDE_API_KEY: ${{ secrets.VUE_APP_AMPLITUDE_API_KEY_DEV }}
-        run: |
-          echo VUE_APP_AMPLITUDE_API_KEY =${{ secrets.VUE_APP_AMPLITUDE_API_KEY_DEV }} >> .env
-
-      # Git secrets set for Prod tag
-      - name: Set secrets for PROD
-        if: contains(github.ref, '-next.') != true
-        env:
-          VUE_APP_AMPLITUDE_API_KEY: ${{ secrets.VUE_APP_AMPLITUDE_API_KEY }}
-        run: |
-          echo VUE_APP_AMPLITUDE_API_KEY =${{ secrets.VUE_APP_AMPLITUDE_API_KEY }} >> .env
 
       # Run Docker start, node starts
       - name: Build project & docker start
@@ -61,23 +44,42 @@ jobs:
       - run: npm publish --access public
         if: contains(github.ref, '-next.') != true
 
-  deploy:
-    needs: test_publish
+  # Dev Deployment
+  DeployDev:
+    needs: [Build]
     runs-on: ubuntu-latest
+    environment:
+      name: development
     steps:
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.')
+        env:
+          AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+        run: |
+          echo AMPLITUDE_API_KEY =${{ secrets.AMPLITUDE_API_KEY }} >> .env
         with:
           host: ${{secrets.SSH_NEXT_HOST}}
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: ./update_reload_next
+  # Prod Deployment
+  ProdDeploy:
+    needs: [Build]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.') != true
+        env:
+          AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+        run: |
+          echo AMPLITUDE_API_KEY =${{ secrets.AMPLITUDE_API_KEY }} >> .env
         with:
           host: ${{secrets.SSH_NEXT_HOST}}
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: ./update_reload
+

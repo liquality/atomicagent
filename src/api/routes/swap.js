@@ -26,7 +26,7 @@ const {
   DuplicateOrderError
 } = require('../../utils/errors')
 
-const client = Amplitude.init(process.env.VUE_APP_AMPLITUDE_API_KEY)
+const client = Amplitude.init(process.env.AMPLITUDE_API_KEY)
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
