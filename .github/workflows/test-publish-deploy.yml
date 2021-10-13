@@ -52,7 +52,6 @@ jobs:
     environment:
       name: development
     steps:
-      - run: echo AMPLITUDE_API_KEY =${{ secrets.AMPLITUDE_API_KEY }} >> .env
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.')
         env:
@@ -71,7 +70,6 @@ jobs:
     environment:
       name: production
     steps:
-      - run: echo AMPLITUDE_API_KEY =${{ secrets.AMPLITUDE_API_KEY }} >> .env
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.') != true
         env:
