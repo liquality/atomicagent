@@ -7,7 +7,7 @@
     "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 28163916,
-    "min": 80000
+    "min": 40000
   },
   {
     "from": "ETH",
