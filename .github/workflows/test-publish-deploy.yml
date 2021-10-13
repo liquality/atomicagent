@@ -46,6 +46,7 @@ jobs:
 
   # Dev Deployment
   DeployDev:
+    name: Deploy to Dev
     needs: [Build_Publish]
     runs-on: ubuntu-latest
     environment:
@@ -65,6 +66,7 @@ jobs:
           script: ./update_reload_next
   # Prod Deployment
   ProdDeploy:
+    name: Deploy to Production
     needs: [Build_Publish]
     runs-on: ubuntu-latest
     environment:
