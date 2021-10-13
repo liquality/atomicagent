@@ -111,19 +111,22 @@ router.post('/order', asyncHandler(async (req, res) => {
   await order.save()
   await order.log('NEW_SWAP')
 
-  await client.logEvent({
-    event_type: 'New Swap from Agent',
-    user_id: 'agent',
-    platform: 'Atomic Agent',
-    event_properties: {
-      category: 'Swaps',
-      action: 'Swap Initiated from AGENT',
-      from: `${body.from}`,
-      to: `${body.to}`,
-      fromAmount: `${body.fromAmount}`
-    }
-  })
-  await client.flush()
+  try {
+    client.logEvent({
+      event_type: 'New Swap from Agent',
+      user_id: 'agent',
+      platform: 'Atomic Agent',
+      event_properties: {
+        category: 'Swaps',
+        action: 'Swap Initiated from AGENT',
+        from: `${body.from}`,
+        to: `${body.to}`,
+        fromAmount: `${body.fromAmount}`
+      }
+    })
+  } catch (err) {
+    Sentry.captureException(err)
+  }
 
   res.json(order.json())
 }))
