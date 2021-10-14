@@ -1,3 +1,4 @@
+# This actions runs against every Tag to Prod (or) next tag(Ex:v0.4.6-next.3) to dev
 name: Test, publish & deploy
 
 on:
@@ -6,7 +7,8 @@ on:
       - v*
 
 jobs:
-  test_publish:
+  # Build & lint & test & publish
+  Build_Publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,36 +22,62 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-build-${{ env.cache-name }}-node${{ env.node-version }}-${{ hashFiles('**/package-lock.json') }}
-      - run: cp sample.config.toml test.config.toml
-      - run: chmod -R 777 test/docker/config
-      - run: npm run docker:start
-      - run: sleep 30
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test
-      - run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
+
+      # Run Docker start, node starts
+      - name: Build project & docker start
+        run: |
+          cp sample.config.toml test.config.toml
+          chmod -R 777 test/docker/config
+          npm run docker:start
+          sleep 30
+
+      # Run npm scripts
+      - name: npm ci & lint & test
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
+
       - run: npm publish --access public --tag next
         if: contains(github.ref, '-next.')
       - run: npm publish --access public
         if: contains(github.ref, '-next.') != true
 
-  deploy:
-    needs: test_publish
+  # Dev Deployment
+  DeployDev:
+    name: Deploy to Dev
+    needs: [Build_Publish]
     runs-on: ubuntu-latest
+    environment:
+      name: development
     steps:
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.')
+        env:
+          AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
         with:
           host: ${{secrets.SSH_NEXT_HOST}}
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: ./update_reload_next
+  # Prod Deployment
+  ProdDeploy:
+    name: Deploy to Production
+    needs: [Build_Publish]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
       - uses: appleboy/ssh-action@master
         if: contains(github.ref, '-next.') != true
+        env:
+          AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
         with:
           host: ${{secrets.SSH_NEXT_HOST}}
           username: ${{secrets.SSH_USER}}
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: ./update_reload
+
