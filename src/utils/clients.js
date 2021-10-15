@@ -137,10 +137,10 @@ async function createEthClient (asset) {
     ethClient.addProvider(new EthereumScraperSwapFindProvider(assetConfig.scraper.url))
   }
 
-  const FeeProvider = assetData.chain === 'ethereum' && !network.isTestnet
-    ? EthereumGasNowFeeProvider
-    : EthereumRpcFeeProvider
-  ethClient.addProvider(new FeeProvider())
+  const feeProvider = assetData.chain === 'ethereum' && !network.isTestnet
+    ? new EthereumGasNowFeeProvider('https://gasoracle.liquality.io/')
+    : new EthereumRpcFeeProvider()
+  ethClient.addProvider(feeProvider)
 
   return ethClient
 }
