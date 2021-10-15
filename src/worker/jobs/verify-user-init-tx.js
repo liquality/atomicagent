@@ -11,7 +11,7 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'USER_FUNDED_UNVERIFIED') return
 
-  const fromClient = order.fromClient()
+  const fromClient = await order.fromClient()
 
   if (order.isQuoteExpired()) {
     debug(`Order ${order.orderId} expired due to expiresAt`)

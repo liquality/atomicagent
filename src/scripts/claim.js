@@ -9,8 +9,7 @@ const mongooseOnError = err => {
 
 mongoose
   .connect(config.database.uri, {
-    useNewUrlParser: true,
-    useCreateIndex: true
+    useNewUrlParser: true
   })
   .catch(mongooseOnError)
 
@@ -21,8 +20,8 @@ async function main () {
     orderId: process.env.ORDER_ID
   }).exec()
 
-  const fromClient = order.fromClient()
-  const toClient = order.toClient()
+  const fromClient = await order.fromClient()
+  const toClient = await order.toClient()
 
   const toClaimTx = await toClient.swap.findClaimSwapTransaction(
     {

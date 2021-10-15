@@ -11,7 +11,7 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'AGENT_CONTRACT_CREATED') return
 
-  const fromClient = order.fromClient()
+  const fromClient = await order.fromClient()
 
   const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
   let fromCurrentBlock
@@ -63,12 +63,12 @@ module.exports = async job => {
   await order.save()
 
   if (toSecondaryFundTx) {
-    await agenda.now('verify-tx', { orderId: order.orderId, type: 'toSecondaryFundHash' })
+    await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toSecondaryFundHash' })
   }
 
   await order.log('FUND_SWAP', null, {
     toSecondaryFundHash: order.toSecondaryFundHash
   })
 
-  return agenda.now('find-claim-tx-or-refund', { orderId: order.orderId, toLastScannedBlock: data.toLastScannedBlock })
+  return agenda.schedule('in 15 seconds', 'find-claim-tx-or-refund', { orderId: order.orderId, toLastScannedBlock: data.toLastScannedBlock })
 }

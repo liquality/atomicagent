@@ -4,7 +4,7 @@ const chaiHttp = require('chai-http')
 chai.use(chaiHttp)
 
 const { app } = require('../src/api')
-const { prepare } = require('./utils')
+const { prepare } = require('./lib/utils')
 
 describe('Asset Info', () => {
   before(async function () {

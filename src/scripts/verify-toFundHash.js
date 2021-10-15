@@ -8,8 +8,7 @@ const mongooseOnError = err => {
 
 mongoose
   .connect(config.database.uri, {
-    useNewUrlParser: true,
-    useCreateIndex: true
+    useNewUrlParser: true
   })
   .catch(mongooseOnError)
 
@@ -27,7 +26,7 @@ async function main () {
 
   await Bluebird.map(orders, async order => {
     const log = message => console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
-    const toClient = order.toClient()
+    const toClient = await order.toClient()
 
     try {
       const toFundTx = await toClient.chain.getTransactionByHash(order.toFundHash)

@@ -11,7 +11,7 @@ module.exports = async job => {
   if (!order) return
   if (order.status !== 'AGENT_FUNDED') return
 
-  const toClient = order.toClient()
+  const toClient = await order.toClient()
   const toCurrentBlockNumber = await toClient.chain.getBlockHeight()
 
   const toClaimTx = await order.findToClaimSwapTransaction(data.toLastScannedBlock, toCurrentBlockNumber)
@@ -48,7 +48,7 @@ module.exports = async job => {
         toBlockTimestamp: toCurrentBlock.timestamp
       })
 
-      await agenda.now('verify-tx', { orderId: order.orderId, type: 'toRefundHash' })
+      await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toRefundHash' })
 
       return agenda.now('find-refund-tx', { orderId: order.orderId })
     }
@@ -72,7 +72,7 @@ module.exports = async job => {
     secret: toClaimTx.secret
   })
 
-  await agenda.now('verify-tx', { orderId: order.orderId, type: 'toClaimHash' })
+  await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toClaimHash' })
 
   return agenda.now('agent-claim', { orderId: order.orderId })
 }

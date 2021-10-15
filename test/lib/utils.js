@@ -13,26 +13,26 @@ const mongoose = require('mongoose')
 const { ClientFactory } = require('@liquality/client-factory')
 const { sha256 } = require('@liquality/crypto')
 
-const api = require('../src/api')
-const worker = require('../src/worker')
-const config = require('../src/config')
+const api = require('../../src/api')
+const worker = require('../../src/worker')
+const config = require('../../src/config')
 
-const Asset = require('../src/models/Asset')
-const Market = require('../src/models/Market')
-const MarketHistory = require('../src/models/MarketHistory')
-const Job = require('../src/models/Job')
-const Order = require('../src/models/Order')
-const Check = require('../src/models/Check')
+const Asset = require('../../src/models/Asset')
+const Market = require('../../src/models/Market')
+const MarketHistory = require('../../src/models/MarketHistory')
+const Job = require('../../src/models/Job')
+const Order = require('../../src/models/Order')
+const Check = require('../../src/models/Check')
 
-const assets = require('../src/migrate/data/assets.json')
-const markets = require('../src/migrate/data/markets.json')
+const assets = require('../../src/migrate/data/assets.json')
+const markets = require('../../src/migrate/data/markets.json')
 
-const blockScanOrFind = require('../src/utils/blockScanOrFind')
-const { wait, waitForRandom, withLock } = require('../src/utils/chainLock')
+const blockScanOrFind = require('../../src/utils/blockScanOrFind')
+const { wait, waitForRandom, withLock } = require('../../src/utils/chainLock')
 
-const btcPreset = require('./client-presets/btc')
-const ethPreset = require('./client-presets/eth')
-const erc20Preset = require('./client-presets/erc20')
+const btcPreset = require('../client-presets/btc')
+const ethPreset = require('../client-presets/eth')
+const erc20Preset = require('../client-presets/erc20')
 
 const presets = {
   BTC: btcPreset,
@@ -40,7 +40,7 @@ const presets = {
   DAI: erc20Preset
 }
 
-const getClient = function (asset) {
+const getClient = async function (asset) {
   const preset = presets[asset]
 
   const client = ClientFactory.createFrom(preset, {
@@ -77,7 +77,7 @@ const clear = () => clearJobs()
   .then(() => debug('Updated marketdata'))
 
 module.exports.prepare = () => mongoose
-  .connect(config.database.uri, { useNewUrlParser: true, useCreateIndex: true })
+  .connect(config.database.uri, { useNewUrlParser: true })
   .then(() => module.exports.deployAndMintMidman())
   .then(() => clear())
   .then(() => api.start())
@@ -144,8 +144,8 @@ module.exports.approveOrder = async (context) => {
 }
 
 module.exports.initiate = async (context, request) => {
-  const fromClient = getClient(context.from)
-  const toClient = getClient(context.to)
+  const fromClient = await getClient(context.from)
+  const toClient = await getClient(context.to)
 
   context.fromAddress = (await fromClient.wallet.getUnusedAddress()).address
   context.toAddress = (await toClient.wallet.getUnusedAddress()).address
@@ -174,7 +174,7 @@ module.exports.initiate = async (context, request) => {
 }
 
 module.exports.fund = async (context, request) => {
-  const fromClient = getClient(context.from)
+  const fromClient = await getClient(context.from)
   const { defaultFee } = config.assets[context.from]
 
   const tx = await withLock(context.from, async () => {
@@ -264,7 +264,7 @@ module.exports.verifyAgentFunding = async (context, request) => {
 }
 
 module.exports.findAgentFundingTx = async context => {
-  const toClient = getClient(context.to)
+  const toClient = await getClient(context.to)
 
   const findInitSwapTx = async lastScannedBlock => {
     const currentBlock = await toClient.chain.getBlockHeight()
@@ -289,7 +289,7 @@ module.exports.findAgentFundingTx = async context => {
 }
 
 module.exports.claim = async context => {
-  const toClient = getClient(context.to)
+  const toClient = await getClient(context.to)
 
   const { defaultFee } = config.assets[context.to]
 
@@ -312,7 +312,7 @@ module.exports.claim = async context => {
 }
 
 module.exports.refundSwap = async context => {
-  const fromClient = getClient(context.from)
+  const fromClient = await getClient(context.from)
 
   const { defaultFee } = config.assets[context.from]
 
@@ -387,7 +387,7 @@ module.exports.verifyClaimOrRefund = async (context, request, expectedStatus) =>
 }
 
 module.exports.deployAndMintMidman = async () => {
-  const eth = getClient('ETH')
+  const eth = await getClient('ETH')
 
   const code = await eth.getMethod('getCode')(config.assets.DAI.contractAddress, 'latest')
   if (code) return debug('MIDMAN ERC-20 contract already exists')

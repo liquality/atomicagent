@@ -86,7 +86,7 @@ MarketSchema.static('updateAllMarketData', async function () {
 
   const ASSET_MAP = {}
   await Bluebird.map(assets, async asset => {
-    const client = asset.getClient()
+    const client = await asset.getClient()
 
     const addresses = await client.wallet.getUsedAddresses()
     asset.actualBalance = await client.chain.getBalance(addresses)

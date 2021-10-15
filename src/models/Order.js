@@ -282,8 +282,11 @@ OrderSchema.methods.verifyPassphrase = function (passphrase) {
 OrderSchema.methods.setAgentAddresses = async function () {
   if (this.fromCounterPartyAddress) throw new Error('Address exists')
 
-  const fromAddresses = await this.fromClient().wallet.getUnusedAddress()
-  const toAddresses = await this.toClient().wallet.getUnusedAddress()
+  const fromClient = await this.fromClient()
+  const toClient = await this.toClient()
+
+  const fromAddresses = await await fromClient.wallet.getUnusedAddress()
+  const toAddresses = await toClient.wallet.getUnusedAddress()
 
   this.fromCounterPartyAddress = chains[assets[this.from].chain].formatAddress(fromAddresses.address)
   this.toCounterPartyAddress = chains[assets[this.to].chain].formatAddress(toAddresses.address)
@@ -427,7 +430,7 @@ OrderSchema.methods.addTx = function (type, tx) {
 }
 
 OrderSchema.methods.claimSwap = async function () {
-  const fromClient = this.fromClient()
+  const fromClient = await await this.fromClient()
   const { defaultFee } = config.assets[this.from]
 
   return withLock(this.from, async () => {
@@ -449,7 +452,7 @@ OrderSchema.methods.claimSwap = async function () {
 }
 
 OrderSchema.methods.refundSwap = async function () {
-  const toClient = this.toClient()
+  const toClient = await this.toClient()
   const { defaultFee } = config.assets[this.to]
 
   return withLock(this.to, async () => {
@@ -472,7 +475,7 @@ OrderSchema.methods.refundSwap = async function () {
 }
 
 OrderSchema.methods.initiateSwap = async function () {
-  const toClient = this.toClient()
+  const toClient = await this.toClient()
   const { defaultFee } = config.assets[this.to]
 
   return withLock(this.to, async () => {
@@ -492,7 +495,7 @@ OrderSchema.methods.initiateSwap = async function () {
 }
 
 OrderSchema.methods.fundSwap = async function () {
-  const toClient = this.toClient()
+  const toClient = await this.toClient()
   const { defaultFee } = config.assets[this.to]
 
   return withLock(this.to, async () => {
@@ -513,7 +516,7 @@ OrderSchema.methods.fundSwap = async function () {
 }
 
 OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
-  const fromClient = this.fromClient()
+  const fromClient = await this.fromClient()
 
   try {
     const verified = await fromClient.swap.verifyInitiateSwapTransaction(
@@ -540,7 +543,7 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
 }
 
 OrderSchema.methods.findFromFundSwapTransaction = async function () {
-  const fromClient = this.fromClient()
+  const fromClient = await this.fromClient()
 
   try {
     const fromSecondaryFundTx = await fromClient.swap.findFundSwapTransaction(
@@ -565,7 +568,7 @@ OrderSchema.methods.findFromFundSwapTransaction = async function () {
 }
 
 OrderSchema.methods.findToFundSwapTransaction = async function () {
-  const toClient = this.toClient()
+  const toClient = await this.toClient()
 
   try {
     const toSecondaryFundTx = await toClient.swap.findFundSwapTransaction(
@@ -590,7 +593,7 @@ OrderSchema.methods.findToFundSwapTransaction = async function () {
 }
 
 OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedBlock, fromCurrentBlockNumber) {
-  const fromClient = this.fromClient()
+  const fromClient = await this.fromClient()
 
   if (!fromCurrentBlockNumber) {
     fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
@@ -622,7 +625,7 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
 }
 
 OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBlock, toCurrentBlockNumber) {
-  const toClient = this.toClient()
+  const toClient = await this.toClient()
 
   if (!toCurrentBlockNumber) {
     toCurrentBlockNumber = await toClient.chain.getBlockHeight()

@@ -1,6 +1,5 @@
 const Sentry = require('@sentry/node')
 
-const mongoose = require('mongoose')
 const express = require('express')
 const helmet = require('helmet')
 const compression = require('compression')
@@ -8,7 +7,8 @@ const bodyParser = require('body-parser')
 const Agenda = require('agenda')
 const cors = require('cors')
 const session = require('express-session')
-const MongoStore = require('connect-mongo')(session)
+const MongoStore = require('connect-mongo')
+const Agendash = require('agendash')
 
 const config = require('../config')
 const httpHelpers = require('../middlewares/httpHelpers')
@@ -19,7 +19,7 @@ let listen
 const sessionConfig = {
   name: 'liquality',
   secret: config.auth.cookieSecret,
-  store: new MongoStore({ mongooseConnection: mongoose.connection }),
+  store: MongoStore.create({ mongoUrl: config.database.uri }),
   resave: false,
   saveUninitialized: false,
   unset: 'destroy',
@@ -33,7 +33,7 @@ const sessionConfig = {
 
 module.exports.start = () => {
   const app = express()
-  const agenda = new Agenda().database(config.database.uri, null, { useNewUrlParser: true })
+  const agenda = new Agenda({ db: { address: config.database.uri } })
 
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1)
@@ -59,7 +59,7 @@ module.exports.start = () => {
 
   // TODO: guard this route
   if (process.env.NODE_ENV !== 'test') {
-    app.use('/queue', require('agendash')(agenda, {
+    app.use('/queue', Agendash(agenda, {
       title: 'Agent Queues'
     }))
   }
@@ -70,7 +70,7 @@ module.exports.start = () => {
 
   app.use(handleHttpError())
 
-  listen = app.listen(config.application.apiPort || process.env.PORT)
+  listen = app.listen(process.env.PORT || config.application.apiPort)
 
   return listen
 }

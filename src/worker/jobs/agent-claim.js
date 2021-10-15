@@ -22,5 +22,5 @@ module.exports = async job => {
     fromClaimHash: fromClaimTx.hash
   })
 
-  return agenda.now('verify-tx', { orderId: order.orderId, type: 'fromClaimHash' })
+  return agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'fromClaimHash' })
 }

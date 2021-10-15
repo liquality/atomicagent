@@ -1,6 +1,6 @@
 {
   "name": "atomicagent",
-  "version": "0.4.5",
+  "version": "0.4.6-next.4",
   "description": "Atomic Swap Agent",
   "main": "src/index.js",
   "bin": {
@@ -9,14 +9,34 @@
     "atomicagent-wallet": "./bin/atomicagent-wallet",
     "atomicagent-worker": "./bin/atomicagent-worker"
   },
+  "engines": {
+    "node": ">=14.15.0"
+  },
   "scripts": {
     "api": "PROCESS_TYPE=api nodemon src/index.js",
     "worker": "PROCESS_TYPE=worker nodemon src/index.js",
     "migrate": "PROCESS_TYPE=migrate node src/index.js",
+    "migrate-local": "CONFIG_PATH=env/local/config.local.toml PROCESS_TYPE=migrate node src/index.js",
+    "docker:build-local": "docker build -f api.dockerfile --build-arg ENV_ALIAS=local -t atomicagent-local . --no-cache",
+    "docker:run-local": "docker run --rm --name atomicagent -d -it atomicagent-local:latest",
+    "docker:stop-local": "docker stop atomicagent",
+    "docker:log-local": "docker container logs -t atomicagent",
     "docker:start": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
     "docker:stop": "docker-compose -f test/docker/docker-compose.yml down",
     "lint": "standard",
-    "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js"
+    "flint": "standard --fix",
+    "precommit-message-lint": "printf '\nPre-commit checks (linting)...\n' && exit 0",
+    "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js",
+    "test:unit": "NODE_ENV=test mocha test/unit/**"
+  },
+  "pre-commit": [
+    "precommit-message-lint",
+    "lint"
+  ],
+  "standard": {
+    "env": [
+      "mocha"
+    ]
   },
   "author": "Liquality <info@liquality.io>",
   "repository": {
@@ -25,6 +45,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@amplitude/node": "^1.8.4",
     "@liquality/bitcoin-esplora-batch-api-provider": "1.1.8",
     "@liquality/bitcoin-esplora-swap-find-provider": "1.1.8",
     "@liquality/bitcoin-fee-api-provider": "1.1.8",
@@ -37,7 +58,7 @@
     "@liquality/client": "1.4.3",
     "@liquality/client-factory": "1.1.8",
     "@liquality/crypto": "1.1.8",
-    "@liquality/cryptoassets": "^1.2.6",
+    "@liquality/cryptoassets": "^1.3.2",
     "@liquality/ethereum-erc20-provider": "1.1.8",
     "@liquality/ethereum-erc20-scraper-swap-find-provider": "1.1.8",
     "@liquality/ethereum-erc20-swap-provider": "1.1.8",
@@ -48,48 +69,55 @@
     "@liquality/ethereum-rpc-provider": "1.1.8",
     "@liquality/ethereum-scraper-swap-find-provider": "1.1.8",
     "@liquality/ethereum-swap-provider": "1.4.3",
-    "@liquality/near-js-wallet-provider": "1.1.8",
+    "@liquality/near-js-wallet-provider": "1.6.0",
     "@liquality/near-networks": "1.1.8",
-    "@liquality/near-rpc-provider": "1.1.8",
+    "@liquality/near-rpc-provider": "1.6.0",
     "@liquality/near-swap-find-provider": "1.1.8",
-    "@liquality/near-swap-provider": "1.1.8",
+    "@liquality/near-swap-provider": "1.6.0",
     "@liquality/solana-networks": "^1.4.5",
-    "@liquality/solana-rpc-provider": "^1.4.5",
+    "@liquality/solana-rpc-provider": "^1.6.0",
     "@liquality/solana-swap-find-provider": "^1.4.5",
     "@liquality/solana-swap-provider": "^1.4.5",
-    "@liquality/solana-wallet-provider": "^1.4.5",
-    "@sentry/node": "^5.27.3",
-    "agenda": "^3.1.0",
-    "agendash": "^1.0.0",
-    "axios": "^0.21.0",
+    "@liquality/solana-wallet-provider": "^1.6.0",
+    "@liquality/terra-networks": "^1.6.7",
+    "@liquality/terra-rpc-provider": "^1.6.7",
+    "@liquality/terra-swap-find-provider": "^1.6.7",
+    "@liquality/terra-swap-provider": "^1.6.7",
+    "@liquality/terra-wallet-provider": "^1.6.7",
+    "@sentry/node": "^6.13.2",
+    "agenda": "^4.2.1",
+    "agendash": "^2.1.1",
+    "axios": "^0.22.0",
     "bignumber.js": "^9.0.1",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.0",
     "commander": "^6.2.0",
     "compression": "^1.7.4",
-    "connect-mongo": "^3.2.0",
+    "connect-mongo": "^4.6.0",
     "cors": "^2.8.5",
     "date-fns": "^2.16.1",
     "debug": "^4.2.0",
     "express": "^4.17.1",
     "express-async-handler": "^1.1.4",
-    "express-session": "^1.17.1",
+    "express-session": "^1.17.2",
     "helmet": "^4.2.0",
     "http-errors": "^1.8.0",
-    "lodash": "^4.17.20",
-    "mongoose": "^5.11.11",
-    "semver": "^7.3.4",
+    "lodash": "^4.17.21",
+    "mongoose": "^6.0.8",
+    "node-vault": "^0.9.22",
+    "semver": "^7.3.5",
     "standard-error": "^1.1.0",
     "string-argv": "^0.3.1",
     "toml": "^3.0.0",
-    "uuid": "^8.3.1"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
+    "chai": "^4.3.4",
     "chai-http": "^4.3.0",
     "human-interval": "^2.0.0",
     "mocha": "^6.2.2",
-    "nodemon": "^2.0.6",
-    "standard": "^16.0.1"
+    "nodemon": "^2.0.13",
+    "pre-commit": "1.2.2",
+    "standard": "^16.0.3"
   }
 }

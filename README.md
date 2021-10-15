@@ -1,10 +1,14 @@
 # 💥 Atomic Agent ![Build status](https://github.com/liquality/agent/workflows/Test,%20publish%20&%20deploy/badge.svg)
 
+## User <-> Agent Swap Workflow
+
+![Workflow](diagram.png "Workflow")
+
 
 ## Prerequisites
 
 1. Linux VM
-2. node 8
+2. node 14
 3. mongoDB 4.2+
 4. [RPC/API endpoints for the chains you want to support](#liquality-nodes)
 
@@ -33,20 +37,29 @@ npm run migrate                     # prepare agent with assets & markets
 |Development| Mainnet | https://liquality.io/swap-dev/agent                        |
 
 
-## Liquality Nodes
+## Liquality Testnet Nodes
 
 | Node                  | Network | Endpoint                                               |
 |-----------------------|---------|--------------------------------------------------------|
 | Bitcoin Electrs       | Testnet | https://liquality.io/testnet/electrs                   |
-| Bitcoin Electrs       | Mainnet | https://api-mainnet-bitcoin-electrs.liquality.io       |
 | Bitcoin Batch Electrs | Testnet | https://liquality.io/electrs-testnet-batch             |
-| Bitcoin Batch Electrs | Mainnet | https://api-mainnet-bitcoin-electrs-batch.liquality.io |
-| Ethereum Scraper      | Testnet | https://liquality.io/eth-rinkeby-api                   |
-| Ethereum Scraper      | Mainnet | https://liquality.io/eth-mainnet-api                   |
+| Ethereum Scraper      | Testnet | https://liquality.io/eth-ropsten-api                   |
 | RSK Scraper           | Testnet | https://liquality.io/rsk-testnet-api                   |
-| RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
 | BSC Scraper           | Testnet | https://liquality.io/bsc-testnet-api                   |
+| Polygon Scraper       | Testnet | https://liquality.io/polygon-testnet-api/              |
+
+
+## Liquality Mainnet Nodes
+
+| Node                  | Network | Endpoint                                               |
+|-----------------------|---------|--------------------------------------------------------|
+| Bitcoin Electrs       | Mainnet | https://api-mainnet-bitcoin-electrs.liquality.io       |
+| Bitcoin Batch Electrs | Mainnet | https://api-mainnet-bitcoin-electrs-batch.liquality.io |
+| Ethereum Scraper      | Mainnet | https://liquality.io/eth-mainnet-api                   |
+| RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
 | BSC Scraper           | Mainnet | https://liquality.io/bsc-mainnet-api                   |
+| Polygon Scraper       | Mainnet | https://liquality.io/polygon-mainnet-api/              |
+
 
 
 ## Run!

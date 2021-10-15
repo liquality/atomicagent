@@ -30,7 +30,7 @@ module.exports = async job => {
     asset = order[side]
   }
 
-  const client = getClient(asset)
+  const client = await getClient(asset)
   const tx = await client.chain.getTransactionByHash(hash)
 
   if (tx.blockHash) {

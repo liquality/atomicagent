@@ -15,7 +15,8 @@ module.exports = async job => {
     throw new RescheduleError(`Waiting for user's swap to expire ${order.orderId}`, order.from, { waitFor })
   }
 
-  const fromCurrentBlockNumber = await order.fromClient().chain.getBlockHeight()
+  const fromClient = await order.fromClient()
+  const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
   const fromRefundTx = await order.findRefundSwapTransaction(data.fromLastScannedBlock, fromCurrentBlockNumber)
 
   if (!fromRefundTx) {
@@ -34,5 +35,5 @@ module.exports = async job => {
     fromRefundHash: fromRefundTx.hash
   })
 
-  return agenda.now('verify-tx', { orderId: order.orderId, type: 'fromRefundHash' })
+  return agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'fromRefundHash' })
 }
