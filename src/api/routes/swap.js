@@ -26,7 +26,7 @@ const {
   DuplicateOrderError
 } = require('../../utils/errors')
 
-const client = Amplitude.init(process.env.AMPLITUDE_API_KEY)
+const amplitude = Amplitude.init(process.env.AMPLITUDE_API_KEY)
 
 router.get('/assetinfo', asyncHandler(async (req, res) => {
   const { query } = req
@@ -112,10 +112,11 @@ router.post('/order', asyncHandler(async (req, res) => {
   await order.log('NEW_SWAP')
 
   try {
-    client.logEvent({
+    amplitude.logEvent({
       event_type: 'New Swap from Agent',
       user_id: 'agent',
       platform: 'Atomic Agent',
+      network: process.env.AMPLITUDE_AGENT_NETWORK,
       event_properties: {
         category: 'Swaps',
         action: 'Swap Initiated from AGENT',
