@@ -116,10 +116,10 @@ router.post('/order', asyncHandler(async (req, res) => {
       event_type: 'New Swap from Agent',
       user_id: 'agent',
       platform: 'Atomic Agent',
-      network: process.env.AMPLITUDE_AGENT_NETWORK,
       event_properties: {
         category: 'Swaps',
         action: 'Swap Initiated from AGENT',
+        network: process.env.AMPLITUDE_AGENT_NETWORK,
         from: `${body.from}`,
         to: `${body.to}`,
         fromAmount: `${body.fromAmount}`
