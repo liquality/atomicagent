@@ -188,7 +188,7 @@ async function createSolClient () {
 async function createTerraClient (asset) {
   const terraConfig = asset === 'UST' ? config.assets.UST : config.assets.LUNA
 
-  const terraNetwork = TerraNetworks[terraConfig.network]
+  const terraNetwork = asset === 'UST' ? { ...TerraNetworks[terraConfig.network], asset: 'uusd' } : TerraNetworks[terraConfig.network]
 
   const terraClient = new Client()
   const mnemonic = await secretManager.getMnemonic('LUNA')
