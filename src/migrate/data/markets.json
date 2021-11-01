@@ -58,5 +58,45 @@
     "status": "ACTIVE",
     "max": 2e+21,
     "min": 5000000000000000000
+  },
+  {
+    "from": "ETH",
+    "to": "UST",
+    "rate": 170.87362322,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 11704560000000000000,
+    "min": 40000000000000000
+  },
+  {
+    "from": "UST",
+    "to": "ETH",
+    "rate": 0.00585228,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 80000
+  },
+  {
+    "from": "LUNA",
+    "to": "UST",
+    "rate": 170.87362322,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 11704560000000000000,
+    "min": 40000000000000000
+  },
+  {
+    "from": "UST",
+    "to": "LUNA",
+    "rate": 0.00585228,
+    "spread": 0,
+    "orderExpiresIn": 7200000,
+    "status": "ACTIVE",
+    "max": 2e+21,
+    "min": 80000
   }
 ]
