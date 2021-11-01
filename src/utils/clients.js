@@ -185,9 +185,10 @@ async function createSolClient () {
   return solanaClient
 }
 
-async function createTerraClient () {
-  const lunaConfig = config.assets.LUNA
-  const terraNetwork = TerraNetworks[lunaConfig.network]
+async function createTerraClient (asset) {
+  const terraConfig = config.assets[asset]
+
+  const terraNetwork = { ...TerraNetworks[terraConfig.network], asset: terraConfig.asset }
 
   const terraClient = new Client()
   const mnemonic = await secretManager.getMnemonic('LUNA')
@@ -217,7 +218,7 @@ async function createClient (asset) {
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
   if (assetData.chain === 'solana') return createSolClient()
-  if (assetData.chain === 'terra') return createTerraClient()
+  if (assetData.chain === 'terra') return createTerraClient(asset)
 
   throw new Error(`Could not create client for asset ${asset}`)
 }
