@@ -43,7 +43,7 @@ const { TerraWalletProvider } = require('@liquality/terra-wallet-provider')
 const { TerraSwapProvider } = require('@liquality/terra-swap-provider')
 const { TerraSwapFindProvider } = require('@liquality/terra-swap-find-provider')
 
-async function createBtcClient () {
+async function createBtcClient() {
   const btcConfig = config.assets.BTC
   const network = BitcoinNetworks[btcConfig.network]
 
@@ -102,7 +102,7 @@ async function createBtcClient () {
   return btcClient
 }
 
-async function createEthClient (asset) {
+async function createEthClient(asset) {
   const assetData = assets[asset]
   const assetConfig = config.assets[asset]
   let network = EthereumNetworks[assetConfig.network]
@@ -145,7 +145,7 @@ async function createEthClient (asset) {
   return ethClient
 }
 
-async function createNearClient () {
+async function createNearClient() {
   const nearConfig = config.assets.NEAR
   const network = NearNetworks[nearConfig.network]
 
@@ -166,7 +166,7 @@ async function createNearClient () {
   return nearClient
 }
 
-async function createSolClient () {
+async function createSolClient() {
   const solanaConfig = config.assets.SOL
   const solanaNetwork = SolanaNetworks[solanaConfig.network]
 
@@ -185,29 +185,29 @@ async function createSolClient () {
   return solanaClient
 }
 
-async function createTerraClient (asset) {
+async function createTerraClient(asset) {
   const terraConfig = config.assets[asset]
 
-  const terraNetwork = { ...TerraNetworks[terraConfig.network], asset: terraConfig.asset }
+  const terraNetwork = TerraNetworks[terraConfig.network]
 
   const terraClient = new Client()
   const mnemonic = await secretManager.getMnemonic('LUNA')
 
-  terraClient.addProvider(new TerraRpcProvider(terraNetwork))
+  terraClient.addProvider(new TerraRpcProvider(terraNetwork), terraConfig.asset)
   terraClient.addProvider(new TerraWalletProvider({
     network: terraNetwork,
     mnemonic,
     baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`
-  }))
-  terraClient.addProvider(new TerraSwapProvider(terraNetwork))
-  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork))
+  }), terraConfig.asset)
+  terraClient.addProvider(new TerraSwapProvider(terraNetwork), terraConfig.asset)
+  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork), terraConfig.asset)
 
   return terraClient
 }
 
 const clients = {}
 
-async function createClient (asset) {
+async function createClient(asset) {
   const assetData = assets[asset]
 
   if (assetData.chain === 'bitcoin') return createBtcClient()
@@ -223,7 +223,7 @@ async function createClient (asset) {
   throw new Error(`Could not create client for asset ${asset}`)
 }
 
-async function getClient (asset) {
+async function getClient(asset) {
   if (asset in clients) return clients[asset]
   const client = await createClient(asset)
   clients[asset] = client
