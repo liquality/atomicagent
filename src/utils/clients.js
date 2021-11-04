@@ -193,7 +193,7 @@ async function createTerraClient (asset) {
   const terraClient = new Client()
   const mnemonic = await secretManager.getMnemonic('LUNA')
 
-  terraClient.addProvider(new TerraRpcProvider(terraNetwork), terraConfig.asset, terraConfig.feeAsset)
+  terraClient.addProvider(new TerraRpcProvider(terraNetwork, terraConfig.asset, terraConfig.feeAsset))
   terraClient.addProvider(new TerraWalletProvider({
     network: terraNetwork,
     mnemonic,
@@ -202,8 +202,8 @@ async function createTerraClient (asset) {
     feeAsset: terraConfig.feeAsset,
     tokenAddress: ''
   }))
-  terraClient.addProvider(new TerraSwapProvider(terraNetwork), terraConfig.asset)
-  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork), terraConfig.asset)
+  terraClient.addProvider(new TerraSwapProvider(terraNetwork,  terraConfig.asset))
+  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork, terraConfig.asset))
 
   return terraClient
 }
