@@ -188,19 +188,21 @@ async function createSolClient () {
 async function createTerraClient (asset) {
   const terraConfig = config.assets[asset]
 
-  const terraNetwork = { ...TerraNetworks[terraConfig.network], asset: terraConfig.asset }
+  const terraNetwork = TerraNetworks[terraConfig.network]
 
   const terraClient = new Client()
   const mnemonic = await secretManager.getMnemonic('LUNA')
 
-  terraClient.addProvider(new TerraRpcProvider(terraNetwork))
+  terraClient.addProvider(new TerraRpcProvider(terraNetwork, terraConfig.asset, terraConfig.feeAsset))
   terraClient.addProvider(new TerraWalletProvider({
     network: terraNetwork,
     mnemonic,
-    baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`
+    baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`,
+    asset: terraConfig.asset,
+    feeAsset: terraConfig.feeAsset
   }))
-  terraClient.addProvider(new TerraSwapProvider(terraNetwork))
-  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork))
+  terraClient.addProvider(new TerraSwapProvider(terraNetwork,  terraConfig.asset))
+  terraClient.addProvider(new TerraSwapFindProvider(terraNetwork, terraConfig.asset))
 
   return terraClient
 }
