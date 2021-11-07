@@ -11,8 +11,9 @@ let agenda
 module.exports.start = async () => {
   agenda = new Agenda({
     mongo: mongoose.connection,
-    defaultConcurrency: 1,
-    defaultLockLifetime: config.worker.defaultLockLifetimeInMs
+    defaultConcurrency: 1, // only process one job of a type at a time
+    defaultLockLimit: 1, // only one job of a type can be locked at a time
+    defaultLockLifetime: 600000 // a job can run for maximum 10 min before it is timedout
   })
 
   await configureJobs(agenda)
