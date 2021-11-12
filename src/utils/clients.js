@@ -201,7 +201,7 @@ async function createTerraClient (asset) {
     asset: terraConfig.asset,
     feeAsset: terraConfig.feeAsset
   }))
-  terraClient.addProvider(new TerraSwapProvider(terraNetwork,  terraConfig.asset))
+  terraClient.addProvider(new TerraSwapProvider(terraNetwork, terraConfig.asset))
   terraClient.addProvider(new TerraSwapFindProvider(terraNetwork, terraConfig.asset))
 
   return terraClient
