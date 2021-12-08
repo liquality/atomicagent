@@ -147,7 +147,7 @@ async function createEthClient (asset) {
 
 async function createNearClient () {
   const nearConfig = config.assets.NEAR
-  const network = NearNetworks[nearConfig.network]
+  const network = { ...NearNetworks[nearConfig.network], nodeUrl: nearConfig.rpc.url }
 
   const nearClient = new Client()
   const mnemonic = await secretManager.getMnemonic('NEAR')
