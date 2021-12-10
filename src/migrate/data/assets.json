@@ -1,23 +1,75 @@
 [
   {
-    "code": "BTC",
-    "actualBalance": 0,
-    "min": 80000,
-    "max": 45000000,
-    "minConf": 1
+    "min": 200000,
+    "max": 0,
+    "actualBalance": 191574040,
+    "minConf": 1,
+    "code": "BTC"
   },
   {
     "code": "ETH",
-    "actualBalance": 0,
-    "min": 40000000000000000,
-    "max": 12000000000000000000,
+    "actualBalance": 34838098275881832000,
+    "min": 50000000000000000,
     "minConf": 1
   },
   {
     "code": "DAI",
-    "actualBalance": 0,
-    "min": 5000000000000000000,
-    "max": 2e+21,
+    "actualBalance": 1.1806732860914405e+23,
+    "min": 100000000000000000000,
     "minConf": 1
+  },
+  {
+    "code": "USDC",
+    "actualBalance": 104467212573,
+    "min": 100000000,
+    "minConf": 1
+  },
+  {
+    "code": "USDT",
+    "actualBalance": 106768343029,
+    "min": 100000000,
+    "minConf": 1
+  },
+  {
+    "min": 200000,
+    "max": 0,
+    "actualBalance": 0,
+    "minConf": 1,
+    "code": "WBTC"
+  },
+  {
+    "code": "UNI",
+    "actualBalance": 0,
+    "min": 25000000000000000000,
+    "minConf": 1
+  },
+  {
+    "min": 2000000000000000,
+    "max": 0,
+    "actualBalance": 4379287433770149400,
+    "minConf": 5,
+    "code": "RBTC"
+  },
+  {
+    "code": "NEAR",
+    "actualBalance": 1.324004967228864e+28,
+    "min": 2e+25,
+    "max": 2e+27,
+    "minConf": 10,
+    "24hrUsdLimit": 30000
+  },
+  {
+    "code": "MATIC",
+    "actualBalance": 1.7178199995924267e+22,
+    "min": 120000000000000000000,
+    "minConf": 5
+  },
+  {
+    "code": "LUNA",
+    "actualBalance": 5955469269,
+    "min": 5000000,
+    "max": 50000000000,
+    "minConf": 10,
+    "24hrUsdLimit": 200000
   }
 ]
