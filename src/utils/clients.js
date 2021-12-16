@@ -169,7 +169,8 @@ async function createNearClient () {
 
 async function createSolClient () {
   const solanaConfig = config.assets.SOL
-  const solanaNetwork = SolanaNetworks[solanaConfig.network]
+  const defaultConfig = SolanaNetworks[solanaConfig.network]
+  const solanaNetwork = { ...defaultConfig, nodeUrl: solanaConfig.rpc.url || defaultConfig.nodeUrl }
 
   const solanaClient = new Client()
   const mnemonic = await secretManager.getMnemonic('SOL')
@@ -188,8 +189,8 @@ async function createSolClient () {
 
 async function createTerraClient (asset) {
   const terraConfig = config.assets[asset]
-
-  const terraNetwork = TerraNetworks[terraConfig.network]
+  const defaultConfig = TerraNetworks[terraConfig.network]
+  const terraNetwork = { ...defaultConfig, nodeUrl: terraConfig.rpc.url || defaultConfig.nodeUrl }
 
   const terraClient = new Client()
   const mnemonic = await secretManager.getMnemonic('LUNA')
