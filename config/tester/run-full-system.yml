@@ -1,0 +1,27 @@
+# Run with: docker-compose -f run-full-system.yml up -d --build
+version: "3.8"
+
+services:
+  atomicagent-full-system:
+    build:
+      context: ../../
+      dockerfile: api.dockerfile
+    container_name: atomicagent-full-system
+    environment:
+      - MONGO_URI=mongodb://10.10.0.8:27017/swapOrders
+      - CONFIG_PATH=/config/config.tester.toml
+    volumes:
+      - ./config/tester:/config
+    ports:
+      - 3030:3030
+    restart: unless-stopped
+    networks:
+      local:
+        ipv4_address: 10.10.0.6
+
+networks:
+  local:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24

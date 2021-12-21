@@ -1,7 +1,5 @@
 [database]
-# uri = "mongodb://docker.for.mac.host.internal:27017/swapOrders"
-uri = "mongodb://localhost/swapOrders"
-debug = true
+debug = false
 
 [application]
 apiPort = 3030
@@ -15,10 +13,6 @@ simplePassword = '25ec02267950f537347b4a7c02b00ced'
 
 [threshold]
 manualAboveFromAmountUsd = 5000
-
-# [vault]
-# endpoint = "http://127.0.0.1:8200"
-# mnemonicsBasePath = "secret/data/agent/mainnet/production/mnemonics"
 
 [worker]
 maxJobRetry = 5
@@ -40,11 +34,11 @@ killswitch = 'pm2 stop "Worker"'
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.BTC.api]
-    url = "http://localhost:3002/"
+    url = "http://10.10.0.12:3002/" # vulpemventures/electrs:latest (3rd party)
     [assets.BTC.batchApi]
-    url = "http://localhost:9090/"
+    url = "http://10.10.0.14:9090/" # electrs-batch-server.dockerfile (inside docker dir)
     [assets.BTC.rpc]
-    url = "http://localhost:18443/"
+    url = "http://10.10.0.10:18443/" # vulpemventures/bitcoin:latest (3rd party)
     user = "admin1"
     password = "123"
 
@@ -56,9 +50,9 @@ killswitch = 'pm2 stop "Worker"'
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.ETH.scraper]
-    url = "http://localhost:8080"
+    url = "http://10.10.0.20:8080" # ethereum-scraper
     [assets.ETH.rpc]
-    url = "http://localhost:8545"
+    url = "http://10.10.0.16:8545" # Infura (3rd party)
 
   [assets.DAI]
   network="local"
@@ -70,9 +64,9 @@ killswitch = 'pm2 stop "Worker"'
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
     [assets.DAI.scraper]
-    url = "http://localhost:8080"
+    url = "http://10.10.0.20:8080" # ethereum-scraper
     [assets.DAI.rpc]
-    url = "http://localhost:8545"
+    url = "http://10.10.0.16:8545" # Infura (3rd party)
 
   [assets.RBTC]
   blockTime = "20 seconds"
@@ -80,9 +74,9 @@ killswitch = 'pm2 stop "Worker"'
   defaultFee = "average"
   pegWith = "BTC"
     [assets.RBTC.rpc]
-    url = "https://public-node.testnet.rsk.co"
+    url = "https://public-node.testnet.rsk.co" # RSK service (3rd party)
     [assets.RBTC.scraper]
-    url = "https://liquality.io/rsk-testnet-api/"
+    url = "https://liquality.io/rsk-testnet-api/" # ethereum-scraper
     [assets.RBTC.wallet]
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
@@ -93,9 +87,9 @@ killswitch = 'pm2 stop "Worker"'
   defaultFee = "average"
   contractAddress = "0x6a9A07972D07E58f0daF5122D11e069288A375fB"
     [assets.SOV.rpc]
-    url = "https://public-node.testnet.rsk.co"
+    url = "https://public-node.testnet.rsk.co" # Infura (3rd party)
     [assets.SOV.scraper]
-    url="https://liquality.io/rsk-testnet-api/"
+    url="https://liquality.io/rsk-testnet-api/" # ethereum-scraper
     [assets.SOV.wallet]
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"

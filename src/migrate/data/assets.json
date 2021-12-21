@@ -1,23 +1,66 @@
 [
   {
     "code": "BTC",
-    "actualBalance": 0,
-    "min": 80000,
-    "max": 45000000,
-    "minConf": 1
+    "min": 200000,
+    "max": 0,
+    "actualBalance": 247886556,
+    "minConf": 1,
+    "updatedAt": "2021-12-14T14:06:22.182Z"
   },
   {
     "code": "ETH",
-    "actualBalance": 0,
-    "min": 40000000000000000,
-    "max": 12000000000000000000,
-    "minConf": 1
+    "actualBalance": 56427481491786380000,
+    "min": 50000000000000000,
+    "minConf": 1,
+    "createdAt": "2020-04-07T18:43:23.284Z",
+    "updatedAt": "2021-12-14T13:50:23.261Z"
   },
   {
     "code": "DAI",
+    "actualBalance": 1.7089336621378284e+23,
+    "min": 100000000000000000000,
+    "minConf": 1,
+    "createdAt": "2020-04-07T18:43:23.284Z",
+    "updatedAt": "2021-12-10T18:15:03.712Z"
+  },
+  {
+    "code": "USDC",
+    "actualBalance": 104467212573,
+    "min": 100000000,
+    "minConf": 1,
+    "createdAt": "2020-04-07T18:43:23.284Z",
+    "updatedAt": "2021-11-30T15:36:53.302Z"
+  },
+  {
+    "code": "WBTC",
+    "min": 200000,
+    "max": 0,
+    "actualBalance": 9364900,
+    "minConf": 1,
+    "updatedAt": "2021-12-14T13:46:53.153Z"
+  },
+  {
+    "code": "UNI",
     "actualBalance": 0,
-    "min": 5000000000000000000,
-    "max": 2e+21,
-    "minConf": 1
+    "min": 25000000000000000000,
+    "minConf": 1,
+    "createdAt": "2020-09-29T20:30:22.975Z",
+    "updatedAt": "2021-06-28T01:40:28.582Z"
+  },
+  {
+    "code": "RBTC",
+    "min": 2000000000000000,
+    "max": 0,
+    "actualBalance": 8555522522403779000,
+    "minConf": 5,
+    "updatedAt": "2021-12-14T14:08:53.015Z"
+  },
+  {
+    "code": "MATIC",
+    "actualBalance": 1.6740307252607191e+22,
+    "min": 120000000000000000000,
+    "minConf": 5,
+    "createdAt": "2021-06-21T14:42:10.516Z",
+    "updatedAt": "2021-12-14T13:28:54.066Z"
   }
 ]

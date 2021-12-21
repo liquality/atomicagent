@@ -1,6 +1,7 @@
 [database]
-debug = true
-uri = ""
+debug = false
+# uri = "mongodb://docker.for.mac.host.internal:27017/swapOrders"
+uri = "mongodb://admin:admin-password@docker.for.mac.host.internal:27017/swapOrders?authSource=admin"
 
 [application]
 apiPort = 3030

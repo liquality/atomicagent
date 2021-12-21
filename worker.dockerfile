@@ -17,6 +17,4 @@ COPY LICENSE.md ./
 # -------------
 # Start Service
 # -------------
-EXPOSE 3030
-
-CMD ["./bin/start-api.sh"]
+CMD ["./bin/start-worker.sh"]

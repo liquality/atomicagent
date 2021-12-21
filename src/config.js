@@ -3,7 +3,7 @@ const path = require('path')
 const toml = require('toml')
 
 if (!process.env.CONFIG_PATH) {
-  process.env.CONFIG_PATH = path.resolve(__dirname, '..', 'config.toml')
+  process.env.CONFIG_PATH = path.resolve(__dirname, '..', 'config/config.toml')
 }
 
 console.log(`Config file: ${process.env.CONFIG_PATH}`)

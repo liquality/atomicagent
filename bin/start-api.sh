@@ -1,10 +1,5 @@
 #! /bin/sh
 
-echo "--------------------------------"
-echo "ENV_ALIAS: ${ENV_ALIAS}"
-echo "--------------------------------"
-echo ""
+echo "Starting the Atomic Agent API..."
 
-echo "Starting Atomic Agent API..."
-
-npm run api
+npm run api-service
