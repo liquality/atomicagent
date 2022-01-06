@@ -3,7 +3,7 @@ const debug = require('debug')('liquality:agent:worker:verify-user-init-tx')
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async job => {
+module.exports = async (job) => {
   const { agenda } = job
   const { data } = job.attrs
 

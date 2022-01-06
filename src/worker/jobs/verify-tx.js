@@ -6,7 +6,7 @@ const { getClient } = require('../../utils/clients')
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async job => {
+module.exports = async (job) => {
   const { attrs } = job
   const { orderId, type } = attrs.data
 

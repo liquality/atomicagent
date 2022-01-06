@@ -3,7 +3,7 @@ const debug = require('debug')('liquality:agent:worker:find-claim-tx-or-refund')
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async job => {
+module.exports = async (job) => {
   const { agenda } = job
   const { data } = job.attrs
 
@@ -60,7 +60,7 @@ module.exports = async job => {
     throw new RescheduleError(`Waiting for user to claim ${order.orderId} ${order.toFundHash}`, order.to)
   }
 
-  debug('Node found user\'s claim swap transaction', order.orderId, toClaimTx.hash)
+  debug("Node found user's claim swap transaction", order.orderId, toClaimTx.hash)
 
   order.secret = toClaimTx.secret
   order.addTx('toClaimHash', toClaimTx)

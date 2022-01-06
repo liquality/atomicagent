@@ -8,33 +8,37 @@ const { BitcoinNetworks } = require('@liquality/bitcoin-networks')
 module.exports = [
   {
     provider: BitcoinEsploraBatchApiProvider,
-    args: config => [{
-      batchUrl: config.assetConfig.batchApi.url,
-      url: config.assetConfig.api.url,
-      network: BitcoinNetworks.bitcoin_regtest,
-      numberOfBlockConfirmation: config.assetConfig.feeNumberOfBlocks
-    }]
+    args: (config) => [
+      {
+        batchUrl: config.assetConfig.batchApi.url,
+        url: config.assetConfig.api.url,
+        network: BitcoinNetworks.bitcoin_regtest,
+        numberOfBlockConfirmation: config.assetConfig.feeNumberOfBlocks
+      }
+    ]
   },
   {
     provider: BitcoinJsWalletProvider,
     requires: ['mnemonic'],
-    args: config => [{
-      network: BitcoinNetworks.bitcoin_regtest,
-      mnemonic: config.mnemonic,
-      baseDerivationPath: `m/84'/${BitcoinNetworks.bitcoin_regtest.coinType}'/0'`
-    }]
+    args: (config) => [
+      {
+        network: BitcoinNetworks.bitcoin_regtest,
+        mnemonic: config.mnemonic,
+        baseDerivationPath: `m/84'/${BitcoinNetworks.bitcoin_regtest.coinType}'/0'`
+      }
+    ]
   },
   {
     provider: BitcoinSwapProvider,
-    args: [{
-      network: BitcoinNetworks.bitcoin_regtest
-    }]
+    args: [
+      {
+        network: BitcoinNetworks.bitcoin_regtest
+      }
+    ]
   },
   {
     provider: BitcoinEsploraSwapFindProvider,
-    args: config => [
-      config.assetConfig.api.url
-    ]
+    args: (config) => [config.assetConfig.api.url]
   },
   {
     provider: BitcoinRpcFeeProvider

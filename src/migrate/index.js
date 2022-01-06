@@ -5,7 +5,7 @@ const markets = require('./data/markets.json')
 
 const logHeader = '[MIGRATE]'
 
-module.exports.run = async (options = {}) => {
+module.exports.run = async () => {
   console.log(`${logHeader} Seeding data...`)
   await Asset.deleteMany({})
   const newAssets = await Asset.insertMany(assets, { ordered: false })

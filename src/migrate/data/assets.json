@@ -17,7 +17,7 @@
     "code": "DAI",
     "actualBalance": 0,
     "min": 5000000000000000000,
-    "max": 2e+21,
+    "max": 2e21,
     "minConf": 1
   }
 ]

@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const config = require('../config')
 const BN = require('bignumber.js')
 
-const mongooseOnError = err => {
+const mongooseOnError = (err) => {
   console.error(err)
   process.exit(1)
 }
@@ -15,7 +15,7 @@ mongoose
 
 const Order = require('../models/Order')
 
-async function main () {
+async function main() {
   const order = await Order.findOne({
     orderId: process.env.ORDER_ID
   }).exec()

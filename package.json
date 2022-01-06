@@ -23,15 +23,16 @@
     "docker:log-local": "docker container logs -t atomicagent",
     "docker:start": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
     "docker:stop": "docker-compose -f test/docker/docker-compose.yml down",
-    "lint": "standard",
-    "flint": "standard --fix",
+    "lint": "eslint \".\"",
+    "prettier": "prettier --write .",
     "precommit-message-lint": "printf '\nPre-commit checks (linting)...\n' && exit 0",
     "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js",
     "test:unit": "NODE_ENV=test mocha test/unit/**"
   },
   "pre-commit": [
     "precommit-message-lint",
-    "lint"
+    "lint",
+    "prettier"
   ],
   "standard": {
     "env": [
@@ -59,10 +60,10 @@
     "@liquality/client-factory": "1.11.2",
     "@liquality/crypto": "1.11.2",
     "@liquality/cryptoassets": "^1.6.0",
+    "@liquality/ethereum-eip1559-fee-provider": "^1.12.0-next.0",
     "@liquality/ethereum-erc20-provider": "1.11.2",
     "@liquality/ethereum-erc20-scraper-swap-find-provider": "1.11.2",
     "@liquality/ethereum-erc20-swap-provider": "1.11.2",
-    "@liquality/ethereum-gas-now-fee-provider": "1.11.2",
     "@liquality/ethereum-js-wallet-provider": "1.11.2",
     "@liquality/ethereum-networks": "1.11.2",
     "@liquality/ethereum-rpc-fee-provider": "1.11.2",
@@ -114,10 +115,13 @@
   "devDependencies": {
     "chai": "^4.3.4",
     "chai-http": "^4.3.0",
+    "eslint": "^8.6.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "human-interval": "^2.0.0",
     "mocha": "^6.2.2",
     "nodemon": "^2.0.13",
     "pre-commit": "1.2.2",
-    "standard": "^16.0.3"
+    "prettier": "^2.5.1"
   }
 }

@@ -3,7 +3,7 @@ const debug = require('debug')('liquality:agent:worker:fund-swap')
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async job => {
+module.exports = async (job) => {
   const { agenda } = job
   const { data } = job.attrs
 
@@ -26,7 +26,8 @@ module.exports = async job => {
     throw e
   }
 
-  const stop = order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock) || order.isNodeSwapExpired(fromCurrentBlock)
+  const stop =
+    order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock) || order.isNodeSwapExpired(fromCurrentBlock)
   if (stop) {
     if (order.isQuoteExpired()) {
       debug(`Order ${order.orderId} expired due to expiresAt`)
@@ -70,5 +71,8 @@ module.exports = async job => {
     toSecondaryFundHash: order.toSecondaryFundHash
   })
 
-  return agenda.schedule('in 15 seconds', 'find-claim-tx-or-refund', { orderId: order.orderId, toLastScannedBlock: data.toLastScannedBlock })
+  return agenda.schedule('in 15 seconds', 'find-claim-tx-or-refund', {
+    orderId: order.orderId,
+    toLastScannedBlock: data.toLastScannedBlock
+  })
 }

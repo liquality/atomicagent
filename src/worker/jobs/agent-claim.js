@@ -2,7 +2,7 @@ const debug = require('debug')('liquality:agent:worker:agent-claim')
 
 const Order = require('../../models/Order')
 
-module.exports = async job => {
+module.exports = async (job) => {
   const { agenda } = job
   const { data } = job.attrs
 

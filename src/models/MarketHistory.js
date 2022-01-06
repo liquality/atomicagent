@@ -3,31 +3,34 @@ const { formatISO, getUnixTime } = require('date-fns')
 
 const TIME_BUFFER = 3600
 
-const MarketHistorySchema = new mongoose.Schema({
-  market: {
-    type: String,
-    index: true
+const MarketHistorySchema = new mongoose.Schema(
+  {
+    market: {
+      type: String,
+      index: true
+    },
+    count: {
+      type: Number,
+      index: true
+    },
+    first: {
+      type: Number,
+      index: true
+    },
+    last: {
+      type: Number,
+      index: true
+    },
+    day: {
+      type: Date,
+      index: true
+    },
+    rates: {
+      type: Array
+    }
   },
-  count: {
-    type: Number,
-    index: true
-  },
-  first: {
-    type: Number,
-    index: true
-  },
-  last: {
-    type: Number,
-    index: true
-  },
-  day: {
-    type: Date,
-    index: true
-  },
-  rates: {
-    type: Array
-  }
-}, { strict: false })
+  { strict: false }
+)
 
 MarketHistorySchema.static('logRate', async function (market, rate, time) {
   if (!time) time = Date.now()
@@ -69,9 +72,12 @@ MarketHistorySchema.static('getRateNearUnsafe', async function (market, timestam
   let rates = await MarketHistory.find({
     market,
     first: { $gte: unixTimestamp - TIME_BUFFER }
-  }).sort('first').limit(3).exec()
+  })
+    .sort('first')
+    .limit(3)
+    .exec()
 
-  rates = rates.filter(rates => !!rates)
+  rates = rates.filter((rates) => !!rates)
 
   if (rates.length === 0) return null
 
@@ -80,7 +86,7 @@ MarketHistorySchema.static('getRateNearUnsafe', async function (market, timestam
     return acc
   }, [])
 
-  const item = rates.find(({ r, t }) => t >= unixTimestamp)
+  const item = rates.find(({ t }) => t >= unixTimestamp)
   if (item) return item.r
 
   return rates.pop().r

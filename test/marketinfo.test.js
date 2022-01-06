@@ -15,9 +15,10 @@ describe('Market Info', () => {
   })
 
   it('should get all the markets', async () => {
-    return chai.request(app())
+    return chai
+      .request(app())
       .get('/api/swap/marketinfo')
-      .then(res => {
+      .then((res) => {
         res.should.have.status(200)
         res.body.should.be.a('array')
         res.body.length.should.be.eql(6) // for tests, we only check for ETH, BTC markets
