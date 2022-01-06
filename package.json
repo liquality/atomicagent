@@ -23,7 +23,7 @@
     "docker:log-local": "docker container logs -t atomicagent",
     "docker:start": "docker-compose -f test/docker/docker-compose.yml up -d --force-recreate --renew-anon-volumes",
     "docker:stop": "docker-compose -f test/docker/docker-compose.yml down",
-    "lint": "eslint --ext \".jsx,.ts,.tsx\" \"*\"",
+    "lint": "eslint \".\"",
     "prettier": "prettier --write .",
     "precommit-message-lint": "printf '\nPre-commit checks (linting)...\n' && exit 0",
     "test": "DEBUG=liquality:agent* NODE_ENV=test CONFIG_PATH=test.config.toml mocha --exit --bail ./test/*.test.js",
