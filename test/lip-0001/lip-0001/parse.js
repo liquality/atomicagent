@@ -24,7 +24,7 @@ const bitcoin = require('bitcoinjs-lib')
 */
 const NETWORK = bitcoin.networks.testnet
 
-Validator.prototype.customFormats.address = function (input, m) {
+Validator.prototype.customFormats.address = function (input) {
   try {
     if (/^0x/.test(input)) {
       input = eip55.verify(input)
@@ -45,18 +45,19 @@ const v = new Validator()
 /*
   Custom URI querystring parser for checking types
 */
-function querystring (query) {
+function querystring(query) {
   const parser = /([^=?&]+)=?([^&]*)/g
   const result = {}
 
   let part
 
-  function parse () {
+  function parse() {
     part = parser.exec(query)
     return part
   }
 
-  while (parse()) { /* eslint-ignore */
+  while (parse()) {
+    /* eslint-ignore */
     const key = decodeURIComponent(part[1].replace(/\+/g, ' '))
     let value = decodeURIComponent(part[2].replace(/\+/g, ' '))
 
@@ -76,7 +77,11 @@ function querystring (query) {
 /*
   Create Url Object from swap uri
 */
-const uri = new Url('swap://127.0.0.1/?from=BTC&to=ETH&rate=30&fromCounterPartyAddress=0x454f8D6e2b0F6Ca13638cE6E00904D5E75CBA291&toCounterPartyAddress=mvSHVS5pxyjoAnSaFqV5jBGVfFA3rqQJLs', null, querystring)
+const uri = new Url(
+  'swap://127.0.0.1/?from=BTC&to=ETH&rate=30&fromCounterPartyAddress=0x454f8D6e2b0F6Ca13638cE6E00904D5E75CBA291&toCounterPartyAddress=mvSHVS5pxyjoAnSaFqV5jBGVfFA3rqQJLs',
+  null,
+  querystring
+)
 
 /*
   JSON schema for validating swap URI

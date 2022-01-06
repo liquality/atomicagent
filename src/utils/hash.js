@@ -12,4 +12,4 @@ module.exports.isValidTxHash = function (hash, asset) {
   return chains[assets[asset].chain].isValidTransactionHash(hash)
 }
 
-module.exports.isValidSecretHash = secretHash => /^([A-Fa-f0-9]{64})$/.test(secretHash)
+module.exports.isValidSecretHash = (secretHash) => /^([A-Fa-f0-9]{64})$/.test(secretHash)

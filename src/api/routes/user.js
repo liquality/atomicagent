@@ -9,14 +9,9 @@ const Order = require('../../models/Order')
 
 const ensureAuth = require('../../middlewares/ensureAuth')
 
-const ALLOWED_TYPES = [
-  'reciprocate-init-swap'
-]
+const ALLOWED_TYPES = ['reciprocate-init-swap']
 
-const ALLOWED_ACTIONS = [
-  'approve',
-  'reject'
-]
+const ALLOWED_ACTIONS = ['approve', 'reject']
 
 const ALLOWED_RETRY_JOBS = [
   {
@@ -37,171 +32,199 @@ const ALLOWED_RETRY_JOBS = [
   }
 ]
 
-router.post('/login', asyncHandler(async (req, res) => {
-  const { body } = req
+router.post(
+  '/login',
+  asyncHandler(async (req, res) => {
+    const { body } = req
 
-  if (body.password !== config.auth.simplePassword) {
-    return res.notOk(401, 'Invalid password')
-  }
-
-  req.session.authAt = Date.now()
-
-  res.ok()
-}))
-
-router.post('/logout', asyncHandler(async (req, res) => {
-  await new Promise(resolve => {
-    if (req.session) {
-      req.session.destroy(_ => {
-        resolve()
-      })
-    } else {
-      resolve()
+    if (body.password !== config.auth.simplePassword) {
+      return res.notOk(401, 'Invalid password')
     }
+
+    req.session.authAt = Date.now()
+
+    res.ok()
   })
+)
 
-  res.ok()
-}))
+router.post(
+  '/logout',
+  asyncHandler(async (req, res) => {
+    await new Promise((resolve) => {
+      if (req.session) {
+        req.session.destroy(() => {
+          resolve()
+        })
+      } else {
+        resolve()
+      }
+    })
 
-router.post('/killswitch', ensureAuth(401), asyncHandler(async (req, res) => {
-  const arr = parseArgsStringToArgv(config.worker.killswitch)
-  spawn(arr.shift(), arr, { stdio: 'inherit' }) // TODO: find a better way
-  res.ok()
-}))
-
-router.get('/', ensureAuth(200), asyncHandler(async (req, res) => {
-  res.ok()
-}))
-
-router.get('/order', ensureAuth(401), asyncHandler(async (req, res) => {
-  const { query } = req
-  const { orderId } = query
-
-  if (!orderId) {
-    return res.notOk(400, 'Order ID missing')
-  }
-
-  const order = await Order.findOne({ orderId: orderId }).exec()
-  if (!order) {
-    return res.notOk(400, `Order not found: ${orderId}`)
-  }
-
-  const check = await Check.findOne({ orderId: orderId }).exec()
-  res.ok(check)
-}))
-
-router.post('/order/retry', ensureAuth(401), asyncHandler(async (req, res) => {
-  const agenda = req.app.get('agenda')
-  const { body } = req
-  const { orderId, jobName } = body
-
-  if (!orderId) {
-    return res.notOk(400, 'Order ID missing')
-  }
-
-  if (!ALLOWED_RETRY_JOBS.find(job => job.name === jobName)) {
-    return res.notOk(400, `Invalid job name: ${jobName}`)
-  }
-
-  const order = await Order.findOne({ orderId: orderId }).exec()
-  if (!order) {
-    return res.notOk(400, `Order not found: ${orderId}`)
-  }
-
-  const index = ALLOWED_RETRY_JOBS.findIndex(job => job.name === jobName)
-  const jobsToBeRemoved = ALLOWED_RETRY_JOBS.slice(index).map(job => job.name)
-
-  await agenda.cancel({
-    name: {
-      $in: jobsToBeRemoved
-    },
-    'data.orderId': orderId
+    res.ok()
   })
+)
 
-  order.status = ALLOWED_RETRY_JOBS[index].setStatus
-  await order.save()
+router.post(
+  '/killswitch',
+  ensureAuth(401),
+  asyncHandler(async (req, res) => {
+    const arr = parseArgsStringToArgv(config.worker.killswitch)
+    spawn(arr.shift(), arr, { stdio: 'inherit' }) // TODO: find a better way
+    res.ok()
+  })
+)
 
-  await agenda.now(jobName, { orderId: order.orderId })
+router.get(
+  '/',
+  ensureAuth(200),
+  asyncHandler(async (req, res) => {
+    res.ok()
+  })
+)
 
-  await order.log('RETRY', jobName)
+router.get(
+  '/order',
+  ensureAuth(401),
+  asyncHandler(async (req, res) => {
+    const { query } = req
+    const { orderId } = query
 
-  res.ok()
-}))
+    if (!orderId) {
+      return res.notOk(400, 'Order ID missing')
+    }
 
-router.post('/order/ignore', ensureAuth(401), asyncHandler(async (req, res) => {
-  const { body } = req
-  const { orderId, setQuoteExpired } = body
+    const order = await Order.findOne({ orderId: orderId }).exec()
+    if (!order) {
+      return res.notOk(400, `Order not found: ${orderId}`)
+    }
 
-  if (!orderId) {
-    return res.notOk(400, 'Order ID missing')
-  }
+    const check = await Check.findOne({ orderId: orderId }).exec()
+    res.ok(check)
+  })
+)
 
-  const order = await Order.findOne({ orderId: orderId }).exec()
-  if (!order) {
-    return res.notOk(400, `Order not found: ${orderId}`)
-  }
+router.post(
+  '/order/retry',
+  ensureAuth(401),
+  asyncHandler(async (req, res) => {
+    const agenda = req.app.get('agenda')
+    const { body } = req
+    const { orderId, jobName } = body
 
-  Object
-    .entries(order.txMap)
-    .forEach(([key, value]) => {
+    if (!orderId) {
+      return res.notOk(400, 'Order ID missing')
+    }
+
+    if (!ALLOWED_RETRY_JOBS.find((job) => job.name === jobName)) {
+      return res.notOk(400, `Invalid job name: ${jobName}`)
+    }
+
+    const order = await Order.findOne({ orderId: orderId }).exec()
+    if (!order) {
+      return res.notOk(400, `Order not found: ${orderId}`)
+    }
+
+    const index = ALLOWED_RETRY_JOBS.findIndex((job) => job.name === jobName)
+    const jobsToBeRemoved = ALLOWED_RETRY_JOBS.slice(index).map((job) => job.name)
+
+    await agenda.cancel({
+      name: {
+        $in: jobsToBeRemoved
+      },
+      'data.orderId': orderId
+    })
+
+    order.status = ALLOWED_RETRY_JOBS[index].setStatus
+    await order.save()
+
+    await agenda.now(jobName, { orderId: order.orderId })
+
+    await order.log('RETRY', jobName)
+
+    res.ok()
+  })
+)
+
+router.post(
+  '/order/ignore',
+  ensureAuth(401),
+  asyncHandler(async (req, res) => {
+    const { body } = req
+    const { orderId, setQuoteExpired } = body
+
+    if (!orderId) {
+      return res.notOk(400, 'Order ID missing')
+    }
+
+    const order = await Order.findOne({ orderId: orderId }).exec()
+    if (!order) {
+      return res.notOk(400, `Order not found: ${orderId}`)
+    }
+
+    Object.entries(order.txMap).forEach(([key, value]) => {
       if (!value.blockHash) {
         order.set(`txMap.${key}.replacedBy`, true)
       }
     })
 
-  if (setQuoteExpired) {
-    order.status = 'QUOTE_EXPIRED'
-  }
+    if (setQuoteExpired) {
+      order.status = 'QUOTE_EXPIRED'
+    }
 
-  await order.save()
+    await order.save()
 
-  await order.log('IGNORE')
+    await order.log('IGNORE')
 
-  res.ok()
-}))
-
-router.post('/order', ensureAuth(401), asyncHandler(async (req, res) => {
-  const { body } = req
-  const { orderId, type, message, action } = body
-
-  if (!orderId) {
-    return res.notOk(400, 'Order ID missing')
-  }
-
-  if (!ALLOWED_TYPES.includes(type)) {
-    return res.notOk(400, `Invalid type: ${type}`)
-  }
-
-  if (!ALLOWED_ACTIONS.includes(action)) {
-    return res.notOk(400, `Invalid action: ${action}`)
-  }
-
-  const order = await Order.findOne({ orderId: orderId }).exec()
-  if (!order) {
-    return res.notOk(400, `Order not found: ${orderId}`)
-  }
-
-  const check = await Check.getCheckForOrder(orderId)
-
-  const entry = check.get(`flags.${type}`) || {}
-  if (entry.reject) {
-    return res.notOk(400, `Check ${orderId}:${type} has already been rejected: ${entry.message}`)
-  }
-
-  if (entry.approve) {
-    return res.notOk(400, `Check ${orderId}:${type} has already been approved: ${entry.message}`)
-  }
-
-  check.set(`flags.${type}`, {
-    [action]: new Date(),
-    message
+    res.ok()
   })
+)
 
-  await check.save()
+router.post(
+  '/order',
+  ensureAuth(401),
+  asyncHandler(async (req, res) => {
+    const { body } = req
+    const { orderId, type, message, action } = body
 
-  await order.log('AUTH', action === 'approve' ? 'APPROVED' : 'REJECTED', { type, message, action })
+    if (!orderId) {
+      return res.notOk(400, 'Order ID missing')
+    }
 
-  res.ok()
-}))
+    if (!ALLOWED_TYPES.includes(type)) {
+      return res.notOk(400, `Invalid type: ${type}`)
+    }
+
+    if (!ALLOWED_ACTIONS.includes(action)) {
+      return res.notOk(400, `Invalid action: ${action}`)
+    }
+
+    const order = await Order.findOne({ orderId: orderId }).exec()
+    if (!order) {
+      return res.notOk(400, `Order not found: ${orderId}`)
+    }
+
+    const check = await Check.getCheckForOrder(orderId)
+
+    const entry = check.get(`flags.${type}`) || {}
+    if (entry.reject) {
+      return res.notOk(400, `Check ${orderId}:${type} has already been rejected: ${entry.message}`)
+    }
+
+    if (entry.approve) {
+      return res.notOk(400, `Check ${orderId}:${type} has already been approved: ${entry.message}`)
+    }
+
+    check.set(`flags.${type}`, {
+      [action]: new Date(),
+      message
+    })
+
+    await check.save()
+
+    await order.log('AUTH', action === 'approve' ? 'APPROVED' : 'REJECTED', { type, message, action })
+
+    res.ok()
+  })
+)
 
 module.exports = router

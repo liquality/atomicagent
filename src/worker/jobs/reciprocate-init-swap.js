@@ -6,7 +6,7 @@ const Order = require('../../models/Order')
 const Asset = require('../../models/Asset')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async job => {
+module.exports = async (job) => {
   const { agenda } = job
   const { data } = job.attrs
 
@@ -30,7 +30,8 @@ module.exports = async job => {
     throw e
   }
 
-  const stop = order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock) || order.isNodeSwapExpired(fromCurrentBlock)
+  const stop =
+    order.isQuoteExpired() || order.isSwapExpired(fromCurrentBlock) || order.isNodeSwapExpired(fromCurrentBlock)
   if (stop) {
     if (order.isQuoteExpired()) {
       debug(`Order ${order.orderId} expired due to expiresAt`)
@@ -75,7 +76,7 @@ module.exports = async job => {
 
   const fromAsset = await Asset.findOne({ code: order.from }).exec()
   if (fromAsset['24hrUsdLimit']) {
-    const yesterday = (new Date()) - (1000 * 60 * 60 * 24)
+    const yesterday = new Date() - 1000 * 60 * 60 * 24
     const query = await Order.aggregate([
       {
         $match: {

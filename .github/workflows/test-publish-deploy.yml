@@ -80,4 +80,3 @@ jobs:
           key: ${{secrets.SSH_KEY}}
           port: 22
           script: ./update_reload
-

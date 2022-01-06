@@ -5,7 +5,6 @@ cp vault.config.sample.hcl vault.config.hcl
 vault server -config vault.config.hcl
 ```
 
-
 ## Setup vault
 
 ```
@@ -28,7 +27,6 @@ vault secrets enable -path secret kv
 vault auth enable approle
 ```
 
-
 ## Setup role & policy for the agent
 
 ```
@@ -49,7 +47,6 @@ vault write auth/approle/role/agent-mainnet-production \
   token_max_ttl=0
 ```
 
-
 ## Get authentication parameters for the agent
 
 ```
@@ -60,14 +57,12 @@ vault read auth/approle/role/agent-mainnet-production/role-id
 vault write -f auth/approle/role/agent-mainnet-production/secret-id
 ```
 
-
 ## Set asset's mnemonic
 
 ```
 vault write secret/agent/mainnet/production/<ASSET> mnemonic=-
 # write your mnemonic, press enter and then ^D to save
 ```
-
 
 ## Update config.toml
 

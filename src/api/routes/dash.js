@@ -6,15 +6,15 @@ const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 const MarketHistory = require('../../models/MarketHistory')
 
-const addressHashVariants = address => {
+const addressHashVariants = (address) => {
   const addressLowerCase = address.toLowerCase()
 
   const arr = [address, addressLowerCase]
 
   if (/0x/i.test(address)) {
-    arr.push(...arr.map(item => item.replace(/^0x/, '')))
+    arr.push(...arr.map((item) => item.replace(/^0x/, '')))
   } else {
-    arr.push(...arr.map(item => `0x${item}`))
+    arr.push(...arr.map((item) => `0x${item}`))
   }
 
   return [...new Set(arr)]
@@ -44,7 +44,7 @@ const getLimitPageSort = ({ limit, page, sort }, defaultSortBy = '-createdAt') =
   }
 }
 
-const createQuery = _query => {
+const createQuery = (_query) => {
   const { q, from, to, start, end, status, excludeStatus, userAgent, pending } = _query
   const query = {}
 
@@ -118,256 +118,283 @@ const createQuery = _query => {
   return query
 }
 
-router.get('/orders', asyncHandler(async (req, res) => {
-  const query = createQuery(req.query)
-  const { limit, page, sort } = getLimitPageSort(req.query)
+router.get(
+  '/orders',
+  asyncHandler(async (req, res) => {
+    const query = createQuery(req.query)
+    const { limit, page, sort } = getLimitPageSort(req.query)
 
-  const result = await Order.find(query, null, {
-    sort,
-    skip: limit * (page - 1),
-    limit
-  }).lean().exec()
+    const result = await Order.find(query, null, {
+      sort,
+      skip: limit * (page - 1),
+      limit
+    })
+      .lean()
+      .exec()
 
-  res.json({
-    page,
-    count: result.length,
-    result
-  })
-}))
-
-router.get('/rate', asyncHandler(async (req, res) => {
-  const { market, timestamp } = req.query
-
-  const rate = await MarketHistory.getRateNear(market, timestamp)
-
-  res.json({
-    result: rate
-  })
-}))
-
-router.get('/statsByAddress', asyncHandler(async (req, res) => {
-  const { address } = req.query
-
-  const inAddresses = { $in: addressHashVariants(address) }
-
-  const _result = await Order.aggregate([
-    {
-      $match: {
-        status: 'AGENT_CLAIMED',
-        $or: [
-          { fromCounterPartyAddress: inAddresses },
-          { toCounterPartyAddress: inAddresses },
-          { fromAddress: inAddresses },
-          { toAddress: inAddresses }
-        ]
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
-        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
-        count: { $sum: 1 }
-      }
-    }
-  ]).exec()
-
-  const result = _result[0] || {}
-
-  res.json({
-    address,
-    result
-  })
-}))
-
-router.get('/topAddresses', asyncHandler(async (req, res) => {
-  const { limit, page, sort } = getLimitPageSort(req.query, 'volume')
-
-  const sortKey = sort.endsWith('volume')
-    ? 'sum:fromAmountUsd'
-    : 'count'
-
-  const _result = await Order.aggregate([
-    {
-      $match: {
-        status: 'AGENT_CLAIMED'
-      }
-    },
-    {
-      $addFields: {
-        market: { $concat: ['$from', '-', '$to'] }
-      }
-    },
-    {
-      $group: {
-        _id: '$fromAddress',
-        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
-        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
-        markets: { $addToSet: '$market' },
-        count: { $sum: 1 }
-      }
-    },
-    {
-      $sort: { [sortKey]: sort.startsWith('-') ? -1 : 1 }
-    },
-    {
-      $skip: limit * (page - 1)
-    },
-    {
-      $limit: limit
-    }
-  ]).exec()
-
-  const result = _result.map(r => {
-    r.address = r._id
-    delete r._id
-
-    return r
-  })
-
-  res.json({
-    count: result.length,
-    result
-  })
-}))
-
-router.get('/stats', asyncHandler(async (req, res) => {
-  const query = createQuery({
-    ...req.query,
-    status: ['AGENT_CLAIMED']
-  })
-  const markets = (await Market.find({}, 'from to').lean().exec()).map(market => `${market.from}-${market.to}`)
-
-  const $group = markets.reduce((acc, market) => {
-    acc[`market:${market}:sum:fromAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] } }
-    acc[`market:${market}:sum:toAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] } }
-    acc[`market:${market}:count`] = { $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] } }
-
-    return acc
-  }, {})
-
-  const result = await Order.aggregate([
-    {
-      $match: query
-    },
-    {
-      $addFields: {
-        market: { $concat: ['$from', '-', '$to'] },
-        date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
-      }
-    },
-    {
-      $group: {
-        _id: '$date',
-        ...$group,
-        'wallet:sum:fromAmountUsd': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0] } },
-        'wallet:sum:toAmountUsd': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0] } },
-        'wallet:count': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0] } },
-        'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
-        'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
-        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
-        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
-        count: { $sum: 1 }
-      }
-    }
-  ]).exec()
-
-  const stats = result.map(json => {
-    json.date = json._id
-    delete json._id
-
-    json.markets = Object.entries(json)
-      .filter(([key]) => key.startsWith('market:'))
-      .reduce((acc, [key, value]) => {
-        const arr = key.split(':')
-        arr.shift() // discard 'market'
-
-        const market = arr.shift()
-        const type = arr.join(':')
-
-        if (!acc[market]) acc[market] = {}
-        acc[market][type] = value
-
-        return acc
-      }, {})
-
-    return json
-  })
-
-  const emptyDataPoint = {
-    'wallet:sum:fromAmountUsd': 0,
-    'wallet:sum:toAmountUsd': 0,
-    'wallet:count': 0,
-    'sum:totalAgentFeeUsd': 0,
-    'sum:totalUserFeeUsd': 0,
-    'sum:fromAmountUsd': 0,
-    'sum:toAmountUsd': 0,
-    count: 0
-  }
-
-  eachDayOfInterval({
-    start: new Date(Number(req.query.start)),
-    end: new Date(Number(req.query.end))
-  }).forEach(date => {
-    date = format(date, 'yyyy-MM-dd')
-    if (stats.find(stat => stat.date === date)) return
-
-    stats.push({
-      date,
-      ...emptyDataPoint
+    res.json({
+      page,
+      count: result.length,
+      result
     })
   })
+)
 
-  stats.sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)))
+router.get(
+  '/rate',
+  asyncHandler(async (req, res) => {
+    const { market, timestamp } = req.query
 
-  res.json({
-    count: result.length,
-    result: {
-      markets,
-      stats
-    }
+    const rate = await MarketHistory.getRateNear(market, timestamp)
+
+    res.json({
+      result: rate
+    })
   })
-}))
+)
 
-router.get('/rates', asyncHandler(async (req, res) => {
-  const { market, start, end } = req.query
+router.get(
+  '/statsByAddress',
+  asyncHandler(async (req, res) => {
+    const { address } = req.query
 
-  if (!market) return res.notOk(400, 'Value not specified: market')
-  if (!start) return res.notOk(400, 'Value not specified: start')
-  if (!end) return res.notOk(400, 'Value not specified: end')
-  if (start >= end) return res.notOk(400, 'Invalid values: start should be <= end')
+    const inAddresses = { $in: addressHashVariants(address) }
 
-  const diff = differenceInDays(fromUnixTime(end), fromUnixTime(start))
-  if (diff > 30) return res.notOk(400, 'Range cannot exceed 30 days')
-
-  const result = await MarketHistory.getRates(market, start, end)
-
-  res.json({
-    count: result.length,
-    result
-  })
-}))
-
-router.get('/accumulate', asyncHandler(async (req, res) => {
-  const [result] = await Order.aggregate([
-    {
-      $match: {
-        status: 'AGENT_CLAIMED'
+    const _result = await Order.aggregate([
+      {
+        $match: {
+          status: 'AGENT_CLAIMED',
+          $or: [
+            { fromCounterPartyAddress: inAddresses },
+            { toCounterPartyAddress: inAddresses },
+            { fromAddress: inAddresses },
+            { toAddress: inAddresses }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+          'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+          count: { $sum: 1 }
+        }
       }
-    },
-    {
-      $group: {
-        _id: null,
-        'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
-        'sum:toAmountUsd': { $sum: '$toAmountUsd' },
-        count: { $sum: 1 }
-      }
-    }
-  ]).exec()
+    ]).exec()
 
-  res.json({
-    result
+    const result = _result[0] || {}
+
+    res.json({
+      address,
+      result
+    })
   })
-}))
+)
+
+router.get(
+  '/topAddresses',
+  asyncHandler(async (req, res) => {
+    const { limit, page, sort } = getLimitPageSort(req.query, 'volume')
+
+    const sortKey = sort.endsWith('volume') ? 'sum:fromAmountUsd' : 'count'
+
+    const _result = await Order.aggregate([
+      {
+        $match: {
+          status: 'AGENT_CLAIMED'
+        }
+      },
+      {
+        $addFields: {
+          market: { $concat: ['$from', '-', '$to'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$fromAddress',
+          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+          'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+          markets: { $addToSet: '$market' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { [sortKey]: sort.startsWith('-') ? -1 : 1 }
+      },
+      {
+        $skip: limit * (page - 1)
+      },
+      {
+        $limit: limit
+      }
+    ]).exec()
+
+    const result = _result.map((r) => {
+      r.address = r._id
+      delete r._id
+
+      return r
+    })
+
+    res.json({
+      count: result.length,
+      result
+    })
+  })
+)
+
+router.get(
+  '/stats',
+  asyncHandler(async (req, res) => {
+    const query = createQuery({
+      ...req.query,
+      status: ['AGENT_CLAIMED']
+    })
+    const markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
+
+    const $group = markets.reduce((acc, market) => {
+      acc[`market:${market}:sum:fromAmountUsd`] = {
+        $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
+      }
+      acc[`market:${market}:sum:toAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] } }
+      acc[`market:${market}:count`] = { $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] } }
+
+      return acc
+    }, {})
+
+    const result = await Order.aggregate([
+      {
+        $match: query
+      },
+      {
+        $addFields: {
+          market: { $concat: ['$from', '-', '$to'] },
+          date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+        }
+      },
+      {
+        $group: {
+          _id: '$date',
+          ...$group,
+          'wallet:sum:fromAmountUsd': {
+            $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0] }
+          },
+          'wallet:sum:toAmountUsd': {
+            $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0] }
+          },
+          'wallet:count': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0] } },
+          'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
+          'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
+          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+          'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+          count: { $sum: 1 }
+        }
+      }
+    ]).exec()
+
+    const stats = result.map((json) => {
+      json.date = json._id
+      delete json._id
+
+      json.markets = Object.entries(json)
+        .filter(([key]) => key.startsWith('market:'))
+        .reduce((acc, [key, value]) => {
+          const arr = key.split(':')
+          arr.shift() // discard 'market'
+
+          const market = arr.shift()
+          const type = arr.join(':')
+
+          if (!acc[market]) acc[market] = {}
+          acc[market][type] = value
+
+          return acc
+        }, {})
+
+      return json
+    })
+
+    const emptyDataPoint = {
+      'wallet:sum:fromAmountUsd': 0,
+      'wallet:sum:toAmountUsd': 0,
+      'wallet:count': 0,
+      'sum:totalAgentFeeUsd': 0,
+      'sum:totalUserFeeUsd': 0,
+      'sum:fromAmountUsd': 0,
+      'sum:toAmountUsd': 0,
+      count: 0
+    }
+
+    eachDayOfInterval({
+      start: new Date(Number(req.query.start)),
+      end: new Date(Number(req.query.end))
+    }).forEach((date) => {
+      date = format(date, 'yyyy-MM-dd')
+      if (stats.find((stat) => stat.date === date)) return
+
+      stats.push({
+        date,
+        ...emptyDataPoint
+      })
+    })
+
+    stats.sort((a, b) => compareAsc(parseISO(a.date), parseISO(b.date)))
+
+    res.json({
+      count: result.length,
+      result: {
+        markets,
+        stats
+      }
+    })
+  })
+)
+
+router.get(
+  '/rates',
+  asyncHandler(async (req, res) => {
+    const { market, start, end } = req.query
+
+    if (!market) return res.notOk(400, 'Value not specified: market')
+    if (!start) return res.notOk(400, 'Value not specified: start')
+    if (!end) return res.notOk(400, 'Value not specified: end')
+    if (start >= end) return res.notOk(400, 'Invalid values: start should be <= end')
+
+    const diff = differenceInDays(fromUnixTime(end), fromUnixTime(start))
+    if (diff > 30) return res.notOk(400, 'Range cannot exceed 30 days')
+
+    const result = await MarketHistory.getRates(market, start, end)
+
+    res.json({
+      count: result.length,
+      result
+    })
+  })
+)
+
+router.get(
+  '/accumulate',
+  asyncHandler(async (req, res) => {
+    const [result] = await Order.aggregate([
+      {
+        $match: {
+          status: 'AGENT_CLAIMED'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+          'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+          count: { $sum: 1 }
+        }
+      }
+    ]).exec()
+
+    res.json({
+      result
+    })
+  })
+)
 
 module.exports = router

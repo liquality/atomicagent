@@ -15,233 +15,260 @@ const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require
 const blockScanOrFind = require('../utils/blockScanOrFind')
 const BN = require('bignumber.js')
 
-const OrderSchema = new mongoose.Schema({
-  migrationVersion: {
-    type: Number,
-    index: true
-  },
-  orderId: {
-    type: String,
-    index: true,
-    unique: true
-  },
-  userAgent: {
-    type: String,
-    index: true
-  },
-  from: {
-    type: String,
-    index: true
-  },
-  to: {
-    type: String,
-    index: true
-  },
-  fromAmount: {
-    type: Number,
-    index: true
-  },
-  toAmount: {
-    type: Number,
-    index: true
-  },
-  fromRateUsd: {
-    type: Number
-  },
-  toRateUsd: {
-    type: Number
-  },
-  fromSecondaryRateUsd: {
-    type: Number
-  },
-  toSecondaryRateUsd: {
-    type: Number
-  },
-  toUsdValue: { // deprecated
-    type: Number
-  },
-  fromUsdValue: { // deprecated
-    type: Number
-  },
-  fromAmountUsd: {
-    type: Number
-  },
-  toAmountUsd: {
-    type: Number
-  },
-  rate: {
-    type: Number,
-    index: true
-  },
-  spread: {
-    type: Number,
-    index: true
-  },
-  minConf: {
-    type: Number,
-    index: true
-  },
-  expiresAt: {
-    type: Number,
-    index: true
-  },
-  fromCounterPartyAddress: {
-    type: String,
-    index: true
-  },
-  toCounterPartyAddress: {
-    type: String,
-    index: true
-  },
+const OrderSchema = new mongoose.Schema(
+  {
+    migrationVersion: {
+      type: Number,
+      index: true
+    },
+    orderId: {
+      type: String,
+      index: true,
+      unique: true
+    },
+    userAgent: {
+      type: String,
+      index: true
+    },
+    from: {
+      type: String,
+      index: true
+    },
+    to: {
+      type: String,
+      index: true
+    },
+    fromAmount: {
+      type: Number,
+      index: true
+    },
+    toAmount: {
+      type: Number,
+      index: true
+    },
+    fromRateUsd: {
+      type: Number
+    },
+    toRateUsd: {
+      type: Number
+    },
+    fromSecondaryRateUsd: {
+      type: Number
+    },
+    toSecondaryRateUsd: {
+      type: Number
+    },
+    toUsdValue: {
+      // deprecated
+      type: Number
+    },
+    fromUsdValue: {
+      // deprecated
+      type: Number
+    },
+    fromAmountUsd: {
+      type: Number
+    },
+    toAmountUsd: {
+      type: Number
+    },
+    rate: {
+      type: Number,
+      index: true
+    },
+    spread: {
+      type: Number,
+      index: true
+    },
+    minConf: {
+      type: Number,
+      index: true
+    },
+    expiresAt: {
+      type: Number,
+      index: true
+    },
+    fromCounterPartyAddress: {
+      type: String,
+      index: true
+    },
+    toCounterPartyAddress: {
+      type: String,
+      index: true
+    },
 
-  fromAddress: {
-    type: String,
-    index: true
-  },
-  toAddress: {
-    type: String,
-    index: true
-  },
+    fromAddress: {
+      type: String,
+      index: true
+    },
+    toAddress: {
+      type: String,
+      index: true
+    },
 
-  fromFundHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.from) }
-  },
-  fromSecondaryFundHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.from) }
-  },
-  fromRefundHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.from) }
-  },
-  fromClaimHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.from) }
-  },
-  toFundHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.to) }
-  },
-  toSecondaryFundHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.to) }
-  },
-  toClaimHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.to) }
-  },
-  toRefundHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return formatHash(hash, this.to) }
-  },
-  secretHash: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return hash.toLowerCase().replace(/0x/g, '') }
-  },
-  secret: {
-    type: String,
-    unique: true,
-    sparse: true,
-    lowercase: false,
-    set: function (hash) { return hash.toLowerCase().replace(/0x/g, '') }
-  },
-  swapExpiration: {
-    type: Number,
-    index: true
-  },
-  nodeSwapExpiration: {
-    type: Number,
-    index: true
-  },
+    fromFundHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.from)
+      }
+    },
+    fromSecondaryFundHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.from)
+      }
+    },
+    fromRefundHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.from)
+      }
+    },
+    fromClaimHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.from)
+      }
+    },
+    toFundHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.to)
+      }
+    },
+    toSecondaryFundHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.to)
+      }
+    },
+    toClaimHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.to)
+      }
+    },
+    toRefundHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return formatHash(hash, this.to)
+      }
+    },
+    secretHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return hash.toLowerCase().replace(/0x/g, '')
+      }
+    },
+    secret: {
+      type: String,
+      unique: true,
+      sparse: true,
+      lowercase: false,
+      set: function (hash) {
+        return hash.toLowerCase().replace(/0x/g, '')
+      }
+    },
+    swapExpiration: {
+      type: Number,
+      index: true
+    },
+    nodeSwapExpiration: {
+      type: Number,
+      index: true
+    },
 
-  txMap: {
-    type: Object,
-    default: {}
-  },
+    txMap: {
+      type: Object,
+      default: {}
+    },
 
-  totalAgentFeeUsd: {
-    type: Number
-  },
-  totalUserFeeUsd: {
-    type: Number
-  },
-  totalFeeUsd: {
-    type: Number
-  },
+    totalAgentFeeUsd: {
+      type: Number
+    },
+    totalUserFeeUsd: {
+      type: Number
+    },
+    totalFeeUsd: {
+      type: Number
+    },
 
-  hasAgentUnconfirmedTx: {
-    type: Boolean,
-    default: true,
-    index: true
-  },
-  hasUserUnconfirmedTx: {
-    type: Boolean,
-    default: true,
-    index: true
-  },
-  hasUnconfirmedTx: {
-    type: Boolean,
-    default: true,
-    index: true
-  },
+    hasAgentUnconfirmedTx: {
+      type: Boolean,
+      default: true,
+      index: true
+    },
+    hasUserUnconfirmedTx: {
+      type: Boolean,
+      default: true,
+      index: true
+    },
+    hasUnconfirmedTx: {
+      type: Boolean,
+      default: true,
+      index: true
+    },
 
-  passphraseHash: {
-    type: String
-  },
-  passphraseSalt: {
-    type: String
-  },
+    passphraseHash: {
+      type: String
+    },
+    passphraseSalt: {
+      type: String
+    },
 
-  fromStartBlock: {
-    type: Number
-  },
-  toStartBlock: {
-    type: Number
-  },
+    fromStartBlock: {
+      type: Number
+    },
+    toStartBlock: {
+      type: Number
+    },
 
-  status: {
-    type: String,
-    enum: [
-      'QUOTE',
-      'USER_FUNDED_UNVERIFIED', 'USER_FUNDED',
-      'AGENT_CONTRACT_CREATED', 'AGENT_FUNDED',
-      'USER_CLAIMED',
-      'AGENT_CLAIMED',
-      'AGENT_REFUNDED',
-      'QUOTE_EXPIRED',
-      'SWAP_EXPIRED'
-    ],
-    index: true
-  }
-}, { timestamps: true })
+    status: {
+      type: String,
+      enum: [
+        'QUOTE',
+        'USER_FUNDED_UNVERIFIED',
+        'USER_FUNDED',
+        'AGENT_CONTRACT_CREATED',
+        'AGENT_FUNDED',
+        'USER_CLAIMED',
+        'AGENT_CLAIMED',
+        'AGENT_REFUNDED',
+        'QUOTE_EXPIRED',
+        'SWAP_EXPIRED'
+      ],
+      index: true
+    }
+  },
+  { timestamps: true }
+)
 
 OrderSchema.methods.fromClient = function () {
   return getClient(this.from)
@@ -264,17 +291,14 @@ OrderSchema.methods.json = function () {
 OrderSchema.methods.setPassphrase = function (passphrase) {
   if (this.passphraseHash) throw new Error('Passphrase already exists')
 
-  const {
-    salt,
-    hash
-  } = crypto.hash(passphrase)
+  const { salt, hash } = crypto.hash(passphrase)
 
   this.passphraseSalt = salt
   this.passphraseHash = hash
 }
 
 OrderSchema.methods.verifyPassphrase = function (passphrase) {
-  if (!this.passphraseHash) throw new Error('Passphrase doesn\'t exists')
+  if (!this.passphraseHash) throw new Error("Passphrase doesn't exists")
 
   return crypto.verify(passphrase, this.passphraseSalt, this.passphraseHash)
 }
@@ -327,11 +351,13 @@ OrderSchema.pre('save', function (next) {
   const txs = Object.values(this.txMap)
 
   const userTxs = txs.filter(
-    ({ type }) => (type.startsWith('from') && !type.includes('Claim')) || (type.startsWith('to') && type.includes('Claim'))
+    ({ type }) =>
+      (type.startsWith('from') && !type.includes('Claim')) || (type.startsWith('to') && type.includes('Claim'))
   )
 
   const agentTxs = txs.filter(
-    ({ type }) => (type.startsWith('to') && !type.includes('Claim')) || (type.startsWith('from') && type.includes('Claim'))
+    ({ type }) =>
+      (type.startsWith('to') && !type.includes('Claim')) || (type.startsWith('from') && type.includes('Claim'))
   )
 
   this.hasUserUnconfirmedTx = !userTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
@@ -409,13 +435,11 @@ OrderSchema.methods.addTx = function (type, tx) {
     txMapItemValue.blockNumber = tx.blockNumber
 
     // update existing tx:type entry with replacedBy key:val
-    Object
-      .entries(this.txMap)
-      .forEach(([key, value]) => {
-        if (value.type === type && !value.replacedBy) {
-          this.set(`txMap.${key}.replacedBy`, hash)
-        }
-      })
+    Object.entries(this.txMap).forEach(([key, value]) => {
+      if (value.type === type && !value.replacedBy) {
+        this.set(`txMap.${key}.replacedBy`, hash)
+      }
+    })
   }
 
   if (tx.placeholder) {
@@ -425,7 +449,7 @@ OrderSchema.methods.addTx = function (type, tx) {
   }
 
   // remove existing placeholder tx with same type
-  this.txMap = omitBy(this.txMap, (value, key) => value.type === type && value.placeholder)
+  this.txMap = omitBy(this.txMap, (value) => value.type === type && value.placeholder)
   this.set(`txMap.${hash}`, txMapItemValue)
 }
 
@@ -599,29 +623,34 @@ OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedB
     fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
   }
 
-  return blockScanOrFind(fromClient, async blockNumber => {
-    try {
-      const tx = await fromClient.swap.findRefundSwapTransaction(
-        {
-          value: BN(this.fromAmount),
-          recipientAddress: this.fromCounterPartyAddress,
-          refundAddress: this.fromAddress,
-          secretHash: this.secretHash,
-          expiration: this.swapExpiration
-        },
-        this.fromFundHash,
-        blockNumber
-      )
+  return blockScanOrFind(
+    fromClient,
+    async (blockNumber) => {
+      try {
+        const tx = await fromClient.swap.findRefundSwapTransaction(
+          {
+            value: BN(this.fromAmount),
+            recipientAddress: this.fromCounterPartyAddress,
+            refundAddress: this.fromAddress,
+            secretHash: this.secretHash,
+            expiration: this.swapExpiration
+          },
+          this.fromFundHash,
+          blockNumber
+        )
 
-      return tx
-    } catch (e) {
-      if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-        throw new RescheduleError(e.message, this.from)
+        return tx
+      } catch (e) {
+        if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
+          throw new RescheduleError(e.message, this.from)
+        }
+
+        throw e
       }
-
-      throw e
-    }
-  }, fromLastScannedBlock, fromCurrentBlockNumber)
+    },
+    fromLastScannedBlock,
+    fromCurrentBlockNumber
+  )
 }
 
 OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBlock, toCurrentBlockNumber) {
@@ -631,29 +660,34 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
     toCurrentBlockNumber = await toClient.chain.getBlockHeight()
   }
 
-  return blockScanOrFind(toClient, async blockNumber => {
-    try {
-      const tx = await toClient.swap.findClaimSwapTransaction(
-        {
-          value: BN(this.toAmount),
-          recipientAddress: this.toAddress,
-          refundAddress: this.toCounterPartyAddress,
-          secretHash: this.secretHash,
-          expiration: this.nodeSwapExpiration
-        },
-        this.toFundHash,
-        blockNumber
-      )
+  return blockScanOrFind(
+    toClient,
+    async (blockNumber) => {
+      try {
+        const tx = await toClient.swap.findClaimSwapTransaction(
+          {
+            value: BN(this.toAmount),
+            recipientAddress: this.toAddress,
+            refundAddress: this.toCounterPartyAddress,
+            secretHash: this.secretHash,
+            expiration: this.nodeSwapExpiration
+          },
+          this.toFundHash,
+          blockNumber
+        )
 
-      return tx
-    } catch (e) {
-      if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-        throw new RescheduleError(e.message, this.to)
+        return tx
+      } catch (e) {
+        if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
+          throw new RescheduleError(e.message, this.to)
+        }
+
+        throw e
       }
-
-      throw e
-    }
-  }, toLastScannedBlock, toCurrentBlockNumber)
+    },
+    toLastScannedBlock,
+    toCurrentBlockNumber
+  )
 }
 
 OrderSchema.methods.log = async function (context, status, extra) {
@@ -682,11 +716,10 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
   })
 })
 
-function formatHash (hash, asset) {
+function formatHash(hash, asset) {
   // when querying documents, to/from are not set
   if (!asset) return hash
-  return chains[assets[asset].chain]
-    .formatTransactionHash(hash)
+  return chains[assets[asset].chain].formatTransactionHash(hash)
 }
 
 const Order = mongoose.model('Order', OrderSchema)

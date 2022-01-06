@@ -43,7 +43,7 @@ const { TerraWalletProvider } = require('@liquality/terra-wallet-provider')
 const { TerraSwapProvider } = require('@liquality/terra-swap-provider')
 const { TerraSwapFindProvider } = require('@liquality/terra-swap-find-provider')
 
-async function createBtcClient () {
+async function createBtcClient() {
   const btcConfig = config.assets.BTC
   const network = BitcoinNetworks[btcConfig.network]
 
@@ -55,41 +55,52 @@ async function createBtcClient () {
   if (btcConfig.wallet && btcConfig.wallet.type === 'js') {
     const mnemonic = await secretManager.getMnemonic('BTC')
 
-    btcClient.addProvider(new BitcoinEsploraBatchApiProvider({
-      batchUrl: btcConfig.batchApi.url,
-      url: btcConfig.api.url,
-      network: network,
-      numberOfBlockConfirmation: btcConfig.feeNumberOfBlocks
-    }))
+    btcClient.addProvider(
+      new BitcoinEsploraBatchApiProvider({
+        batchUrl: btcConfig.batchApi.url,
+        url: btcConfig.api.url,
+        network: network,
+        numberOfBlockConfirmation: btcConfig.feeNumberOfBlocks
+      })
+    )
 
-    btcClient.addProvider(new BitcoinJsWalletProvider({
-      network: network,
-      mnemonic,
-      baseDerivationPath: `m/84'/${network.coinType}'/0'`
-    }))
+    btcClient.addProvider(
+      new BitcoinJsWalletProvider({
+        network: network,
+        mnemonic,
+        baseDerivationPath: `m/84'/${network.coinType}'/0'`
+      })
+    )
   } else {
-    btcClient.addProvider(new BitcoinRpcProvider({
-      uri: btcConfig.rpc.url,
-      username: btcConfig.rpc.username,
-      password: btcConfig.rpc.password,
-      network: network,
-      feeBlockConfirmations: btcConfig.feeNumberOfBlocks
-    }))
-    btcClient.addProvider(new BitcoinNodeWalletProvider({
-      network: network,
-      uri: btcConfig.rpc.url,
-      username: btcConfig.rpc.username,
-      password: btcConfig.rpc.password,
-      addressType: btcConfig.addressType
-    }))
+    btcClient.addProvider(
+      new BitcoinRpcProvider({
+        uri: btcConfig.rpc.url,
+        username: btcConfig.rpc.username,
+        password: btcConfig.rpc.password,
+        network: network,
+        feeBlockConfirmations: btcConfig.feeNumberOfBlocks
+      })
+    )
+    btcClient.addProvider(
+      new BitcoinNodeWalletProvider({
+        network: network,
+        uri: btcConfig.rpc.url,
+        username: btcConfig.rpc.username,
+        password: btcConfig.rpc.password,
+        addressType: btcConfig.addressType
+      })
+    )
   }
 
-  btcClient.addProvider(new BitcoinSwapProvider({
-    network: network,
-    mode: btcConfig.swapMode
-  }))
+  btcClient.addProvider(
+    new BitcoinSwapProvider({
+      network: network,
+      mode: btcConfig.swapMode
+    })
+  )
 
-  if (btcConfig.wallet && btcConfig.wallet.type === 'js') { // Override swap finding with esplora
+  if (btcConfig.wallet && btcConfig.wallet.type === 'js') {
+    // Override swap finding with esplora
     btcClient.addProvider(new BitcoinEsploraSwapFindProvider(btcConfig.api.url))
   }
 
@@ -102,7 +113,7 @@ async function createBtcClient () {
   return btcClient
 }
 
-async function createEthClient (asset) {
+async function createEthClient(asset) {
   const assetData = assets[asset]
   const assetConfig = config.assets[asset]
   let network = EthereumNetworks[assetConfig.network]
@@ -119,14 +130,18 @@ async function createEthClient (asset) {
   const ethClient = new Client()
   const mnemonic = await secretManager.getMnemonic(asset)
 
-  ethClient.addProvider(new EthereumRpcProvider({
-    uri: assetConfig.rpc.url
-  }))
-  ethClient.addProvider(new EthereumJsWalletProvider({
-    network,
-    mnemonic,
-    derivationPath: `m/44'/${network.coinType}'/0'/0/0`
-  }))
+  ethClient.addProvider(
+    new EthereumRpcProvider({
+      uri: assetConfig.rpc.url
+    })
+  )
+  ethClient.addProvider(
+    new EthereumJsWalletProvider({
+      network,
+      mnemonic,
+      derivationPath: `m/44'/${network.coinType}'/0'/0/0`
+    })
+  )
 
   if (assetData.type === 'erc20') {
     const contractAddress = assetConfig.contractAddress
@@ -151,7 +166,7 @@ async function createEthClient (asset) {
   return ethClient
 }
 
-async function createNearClient () {
+async function createNearClient() {
   const nearConfig = config.assets.NEAR
   const defaultConfig = NearNetworks[nearConfig.network]
   const network = { ...defaultConfig, nodeUrl: nearConfig.rpc?.url || defaultConfig.nodeUrl }
@@ -159,11 +174,13 @@ async function createNearClient () {
   const nearClient = new Client()
   const mnemonic = await secretManager.getMnemonic('NEAR')
   if (nearConfig.wallet && nearConfig.wallet.type === 'js') {
-    nearClient.addProvider(new NearJsWalletProvider({
-      network,
-      mnemonic,
-      derivationPath: `m/44'/${network.coinType}'/0'`
-    }))
+    nearClient.addProvider(
+      new NearJsWalletProvider({
+        network,
+        mnemonic,
+        derivationPath: `m/44'/${network.coinType}'/0'`
+      })
+    )
   }
 
   nearClient.addProvider(new NearRpcProvider(network))
@@ -173,7 +190,7 @@ async function createNearClient () {
   return nearClient
 }
 
-async function createSolClient () {
+async function createSolClient() {
   const solanaConfig = config.assets.SOL
   const defaultConfig = SolanaNetworks[solanaConfig.network]
   const solanaNetwork = { ...defaultConfig, nodeUrl: solanaConfig.rpc?.url || defaultConfig.nodeUrl }
@@ -182,18 +199,20 @@ async function createSolClient () {
   const mnemonic = await secretManager.getMnemonic('SOL')
   const derivationPath = `m/44'/501'/${solanaNetwork.walletIndex}'/0'`
   solanaClient.addProvider(new SolanaRpcProvider(solanaNetwork))
-  solanaClient.addProvider(new SolanaWalletProvider({
-    network: solanaNetwork,
-    mnemonic,
-    derivationPath
-  }))
+  solanaClient.addProvider(
+    new SolanaWalletProvider({
+      network: solanaNetwork,
+      mnemonic,
+      derivationPath
+    })
+  )
   solanaClient.addProvider(new SolanaSwapProvider(solanaNetwork))
   solanaClient.addProvider(new SolanaSwapFindProvider(solanaNetwork))
 
   return solanaClient
 }
 
-async function createTerraClient (asset) {
+async function createTerraClient(asset) {
   const terraConfig = config.assets[asset]
   const defaultConfig = TerraNetworks[terraConfig.network]
   const terraNetwork = { ...defaultConfig, nodeUrl: terraConfig.rpc?.url || defaultConfig.nodeUrl }
@@ -202,13 +221,15 @@ async function createTerraClient (asset) {
   const mnemonic = await secretManager.getMnemonic('LUNA')
 
   terraClient.addProvider(new TerraRpcProvider(terraNetwork, terraConfig.asset, terraConfig.feeAsset))
-  terraClient.addProvider(new TerraWalletProvider({
-    network: terraNetwork,
-    mnemonic,
-    baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`,
-    asset: terraConfig.asset,
-    feeAsset: terraConfig.feeAsset
-  }))
+  terraClient.addProvider(
+    new TerraWalletProvider({
+      network: terraNetwork,
+      mnemonic,
+      baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`,
+      asset: terraConfig.asset,
+      feeAsset: terraConfig.feeAsset
+    })
+  )
   terraClient.addProvider(new TerraSwapProvider(terraNetwork, terraConfig.asset))
   terraClient.addProvider(new TerraSwapFindProvider(terraNetwork, terraConfig.asset))
 
@@ -217,7 +238,7 @@ async function createTerraClient (asset) {
 
 const clients = {}
 
-async function createClient (asset) {
+async function createClient(asset) {
   const assetData = assets[asset]
 
   if (assetData.chain === 'bitcoin') return createBtcClient()
@@ -233,7 +254,7 @@ async function createClient (asset) {
   throw new Error(`Could not create client for asset ${asset}`)
 }
 
-async function getClient (asset) {
+async function getClient(asset) {
   if (asset in clients) return clients[asset]
   const client = await createClient(asset)
   clients[asset] = client
