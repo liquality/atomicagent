@@ -22,7 +22,7 @@ const { EthereumErc20SwapProvider } = require('@liquality/ethereum-erc20-swap-pr
 const { EthereumNetworks } = require('@liquality/ethereum-networks')
 const { EthereumScraperSwapFindProvider } = require('@liquality/ethereum-scraper-swap-find-provider')
 const { EthereumErc20ScraperSwapFindProvider } = require('@liquality/ethereum-erc20-scraper-swap-find-provider')
-const { EthereumGasNowFeeProvider } = require('@liquality/ethereum-gas-now-fee-provider')
+const { EthereumEIP1559FeeProvider } = require('@liquality/ethereum-eip1559-fee-provider')
 const { EthereumRpcFeeProvider } = require('@liquality/ethereum-rpc-fee-provider')
 
 const { NearSwapProvider } = require('@liquality/near-swap-provider')
@@ -111,7 +111,8 @@ async function createEthClient (asset) {
       ...network,
       name: 'mainnet',
       chainId: 1337,
-      networkId: 1337
+      networkId: 1337,
+      local: true
     }
   }
 
@@ -137,9 +138,14 @@ async function createEthClient (asset) {
     ethClient.addProvider(new EthereumScraperSwapFindProvider(assetConfig.scraper.url))
   }
 
-  const feeProvider = assetData.chain === 'ethereum' && !network.isTestnet
-    ? new EthereumGasNowFeeProvider('https://gasoracle.liquality.io/')
-    : new EthereumRpcFeeProvider()
+  let feeProvider
+
+  if (!network.local && (assetData.chain === 'ethereum' || (assetData.chain === 'polygon' && network.isTestnet))) {
+    feeProvider = new EthereumEIP1559FeeProvider({ uri: assetConfig.rpc.url })
+  } else {
+    feeProvider = new EthereumRpcFeeProvider()
+  }
+
   ethClient.addProvider(feeProvider)
 
   return ethClient
