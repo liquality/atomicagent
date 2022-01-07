@@ -135,11 +135,25 @@ async function createEthClient(asset) {
       uri: assetConfig.rpc.url
     })
   )
+
+  let feeProvider
+  let eip1559 = false
+
+  if (!network.local && (assetData.chain === 'ethereum' || (assetData.chain === 'polygon' && network.isTestnet))) {
+    eip1559 = true
+    feeProvider = new EthereumEIP1559FeeProvider({ uri: assetConfig.rpc.url })
+  } else {
+    feeProvider = new EthereumRpcFeeProvider()
+  }
+
+  ethClient.addProvider(feeProvider)
+
   ethClient.addProvider(
     new EthereumJsWalletProvider({
       network,
       mnemonic,
-      derivationPath: `m/44'/${network.coinType}'/0'/0/0`
+      derivationPath: `m/44'/${network.coinType}'/0'/0/0`,
+      hardfork: eip1559 ? 'london' : undefined
     })
   )
 
@@ -152,16 +166,6 @@ async function createEthClient(asset) {
     ethClient.addProvider(new EthereumSwapProvider())
     ethClient.addProvider(new EthereumScraperSwapFindProvider(assetConfig.scraper.url))
   }
-
-  let feeProvider
-
-  if (!network.local && (assetData.chain === 'ethereum' || (assetData.chain === 'polygon' && network.isTestnet))) {
-    feeProvider = new EthereumEIP1559FeeProvider({ uri: assetConfig.rpc.url })
-  } else {
-    feeProvider = new EthereumRpcFeeProvider()
-  }
-
-  ethClient.addProvider(feeProvider)
 
   return ethClient
 }
