@@ -25,6 +25,9 @@ module.exports = [
     ]
   },
   {
+    provider: EthereumRpcFeeProvider
+  },
+  {
     provider: EthereumJsWalletProvider,
     requires: ['mnemonic'],
     args: (config) => [
@@ -45,8 +48,5 @@ module.exports = [
   {
     provider: EthereumErc20ScraperSwapFindProvider,
     args: (config) => [config.assetConfig.scraper.url]
-  },
-  {
-    provider: EthereumRpcFeeProvider
   }
 ]
