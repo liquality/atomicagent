@@ -8,7 +8,7 @@ const config = require('../src/config')
 
 addCommonOptions(program)
 
-async function getBalance (asset) {
+async function getBalance(asset) {
   const client = await getClient(asset)
   const addresses = await client.wallet.getUsedAddresses()
   const balance = await client.chain.getBalance(addresses)
@@ -21,44 +21,36 @@ async function getBalance (asset) {
   }
 }
 
-program
-  .command('balances')
-  .action(async () => {
-    const data = []
-    const tickers = Object.keys(config.assets)
+program.command('balances').action(async () => {
+  const data = []
+  const tickers = Object.keys(config.assets)
 
-    for (let i = 0; i < tickers.length; i++) {
-      data.push(await getBalance(tickers[i]))
-    }
+  for (let i = 0; i < tickers.length; i++) {
+    data.push(await getBalance(tickers[i]))
+  }
 
-    console.log(data)
-  })
+  console.log(data)
+})
 
-program
-  .command('balance <asset>')
-  .action(async (asset) => {
-    const balance = await getBalance(asset)
+program.command('balance <asset>').action(async (asset) => {
+  const balance = await getBalance(asset)
 
-    console.log(balance.balanceInCurrency + ' ' + balance.code)
-  })
+  console.log(balance.balanceInCurrency + ' ' + balance.code)
+})
 
-program
-  .command('getnewaddress <asset>')
-  .action(async (asset) => {
-    const client = await getClient(asset)
-    const address = await client.wallet.getUnusedAddress()
+program.command('getnewaddress <asset>').action(async (asset) => {
+  const client = await getClient(asset)
+  const address = await client.wallet.getUnusedAddress()
 
-    console.log(address)
-  })
+  console.log(address)
+})
 
-program
-  .command('sendtoaddress <asset> <address> <amount>')
-  .action(async (asset, address, amount) => {
-    const amountInUnit = currencyToUnit(assets[asset], amount)
-    const client = await getClient(asset)
-    const tx = await client.chain.sendTransaction({ to: address, value: amountInUnit })
+program.command('sendtoaddress <asset> <address> <amount>').action(async (asset, address, amount) => {
+  const amountInUnit = currencyToUnit(assets[asset], amount)
+  const client = await getClient(asset)
+  const tx = await client.chain.sendTransaction({ to: address, value: amountInUnit })
 
-    console.log(tx)
-  })
+  console.log(tx)
+})
 
 program.parse(process.argv)

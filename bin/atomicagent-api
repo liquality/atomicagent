@@ -5,8 +5,7 @@ const { addCommonOptions } = require('./common')
 
 addCommonOptions(program)
 
-program
-  .parse(process.argv)
+program.parse(process.argv)
 
 process.env.PROCESS_TYPE = 'api'
 
