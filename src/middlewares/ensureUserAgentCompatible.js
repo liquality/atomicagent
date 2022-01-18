@@ -1,6 +1,6 @@
 const semver = require('semver')
 
-const CAL_VERSION_CHECK = '>=1.8.0'
+const CAL_VERSION_CHECK = '>=1.12.0'
 const USER_AGENT_REGEX = /Wallet (\d.*?\.\d.*?\.\d.*?) \(CAL (\d.*?\.\d.*?\.\d.*?)\)/
 
 module.exports = (incompatibleResponse) => (req, res, next) => {
