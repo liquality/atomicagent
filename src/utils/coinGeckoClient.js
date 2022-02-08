@@ -4,24 +4,28 @@ const BN = require('bignumber.js')
 const { assets } = require('@liquality/cryptoassets')
 
 class CoinGecko {
-  constructor (url = 'https://api.coingecko.com/api/v3') {
+  constructor(url = 'https://api.coingecko.com/api/v3') {
     this._axios = axios.create({ baseURL: url })
   }
 
-  async getPrices (coinIds, vsCurrencies) {
+  async getPrices(coinIds, vsCurrencies) {
     const formattedCoinIds = coinIds.join(',')
-    const formattedVsCurrencies = vsCurrencies.map(c => c.toLowerCase()).join(',') // Normalize to agent casing
-    const { data } = await this._axios.get(`/simple/price?ids=${formattedCoinIds}&vs_currencies=${formattedVsCurrencies}`)
+    const formattedVsCurrencies = vsCurrencies.map((c) => c.toLowerCase()).join(',') // Normalize to agent casing
+    const { data } = await this._axios.get(
+      `/simple/price?ids=${formattedCoinIds}&vs_currencies=${formattedVsCurrencies}`
+    )
     // Normalize to agent casing
-    let formattedData = _.mapKeys(data, (v, coinGeckoId) => _.findKey(assets, asset => asset.coinGeckoId === coinGeckoId))
-    formattedData = _.mapValues(formattedData, rates => _.mapKeys(rates, (v, k) => k.toUpperCase()))
+    let formattedData = _.mapKeys(data, (v, coinGeckoId) =>
+      _.findKey(assets, (asset) => asset.coinGeckoId === coinGeckoId)
+    )
+    formattedData = _.mapValues(formattedData, (rates) => _.mapKeys(rates, (v, k) => k.toUpperCase()))
     return formattedData
   }
 
-  async getRates (markets, fixedUsdRates = {}) {
+  async getRates(markets, fixedUsdRates = {}) {
     const all = new Set([])
 
-    markets.forEach(market => {
+    markets.forEach((market) => {
       if (!fixedUsdRates[market.from]) {
         all.add(market.from)
       }
@@ -31,7 +35,7 @@ class CoinGecko {
       }
     })
 
-    const coinIds = [...all].map(currency => assets[currency].coinGeckoId)
+    const coinIds = [...all].map((currency) => assets[currency].coinGeckoId)
     const rates = await this.getPrices(coinIds, ['USD', ...all])
 
     for (const symbol of [...all]) {
@@ -40,13 +44,11 @@ class CoinGecko {
       }
     }
 
-    Object
-      .entries(fixedUsdRates)
-      .forEach(([asset, usdRate]) => {
-        rates[asset] = { USD: usdRate }
-      })
+    Object.entries(fixedUsdRates).forEach(([asset, usdRate]) => {
+      rates[asset] = { USD: usdRate }
+    })
 
-    return markets.map(market => {
+    return markets.map((market) => {
       let rate
 
       if (market.from in rates && market.to in rates[market.from]) {

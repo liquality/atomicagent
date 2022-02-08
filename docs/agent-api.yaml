@@ -11,34 +11,34 @@ info:
   x-logo:
     url: https://avatars1.githubusercontent.com/u/42639968?s=200&v=4
 servers:
-- url: https://liquality.io/swap-testnet-dev/agent/api
+  - url: https://liquality.io/swap-testnet-dev/agent/api
 tags:
-- name: swap
-  description: Swap with the agent
-  externalDocs:
-    description: API Source
-    url: https://github.com/liquality/agent
-  x-displayName: Swap API
+  - name: swap
+    description: Swap with the agent
+    externalDocs:
+      description: API Source
+      url: https://github.com/liquality/agent
+    x-displayName: Swap API
 paths:
   /swap/marketinfo:
     parameters:
-    - name: from
-      in: query
-      description: from currency
-      required: false
-      schema:
-        type: string
-        example: BTC
-    - name: to
-      in: query
-      description: to currency
-      required: false
-      schema:
-        type: string
-        example: ETH
+      - name: from
+        in: query
+        description: from currency
+        required: false
+        schema:
+          type: string
+          example: BTC
+      - name: to
+        in: query
+        description: to currency
+        required: false
+        schema:
+          type: string
+          example: ETH
     get:
       tags:
-      - swap
+        - swap
       summary: Retrieve the markets that the agent is able to swap
       operationId: getSwapMarketInfo
       responses:
@@ -53,7 +53,7 @@ paths:
   /swap/order:
     post:
       tags:
-      - swap
+        - swap
       summary: Create an Order with the agent
       operationId: createOrder
       requestBody:
@@ -86,16 +86,16 @@ paths:
                 minConf: 3
   /swap/order/{orderId}:
     parameters:
-    - in: path
-      name: orderId
-      schema:
-        type: string
-        format: uuid
-      required: true
-      description: ID of the Order
+      - in: path
+        name: orderId
+        schema:
+          type: string
+          format: uuid
+        required: true
+        description: ID of the Order
     post:
       tags:
-      - swap
+        - swap
       summary: Update order with swap details
       operationId: updateOrder
       requestBody:
@@ -130,7 +130,7 @@ paths:
                 error: Order not found
     get:
       tags:
-      - swap
+        - swap
       summary: Get order details
       operationId: getOrder
       responses:
@@ -151,47 +151,47 @@ paths:
 components:
   schemas:
     Market:
-        type: object
-        properties:
-          from:
-            type: string
-            description: from currency
-          to:
-            type: string
-            description: to currency
-          min:
-            type: number
-            format: float
-            description: The minimum amount of currency1 that can be traded
-          max:
-            type: number
-            format: float
-            description: The maximum amount of currency1 that can be traded
-          minConf:
-            type: number
-            format: integer
-            description: Minimum confirmations this market requires
-          rate:
-            type: number
-            format: float
-            description: The rate of the market
-          orderExpiresIn:
-            type: number
-            format: integer
-            description: Returns milliseconds the order is valid for
-          status:
-            type: string
-            enum: [ACTIVE, INACTIVE]
-            description: Status of the market
-        example:
-          from: BTC
-          to: ETH
-          min: 0.01
-          max: 1.6
-          minConf: 1
-          rate: 44.5216
-          orderExpiresIn: 7200000
-          status: ACTIVE
+      type: object
+      properties:
+        from:
+          type: string
+          description: from currency
+        to:
+          type: string
+          description: to currency
+        min:
+          type: number
+          format: float
+          description: The minimum amount of currency1 that can be traded
+        max:
+          type: number
+          format: float
+          description: The maximum amount of currency1 that can be traded
+        minConf:
+          type: number
+          format: integer
+          description: Minimum confirmations this market requires
+        rate:
+          type: number
+          format: float
+          description: The rate of the market
+        orderExpiresIn:
+          type: number
+          format: integer
+          description: Returns milliseconds the order is valid for
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+          description: Status of the market
+      example:
+        from: BTC
+        to: ETH
+        min: 0.01
+        max: 1.6
+        minConf: 1
+        rate: 44.5216
+        orderExpiresIn: 7200000
+        status: ACTIVE
     OrderRequest:
       type: object
       properties:
@@ -243,15 +243,15 @@ components:
           type: string
           description: Order Status
           enum:
-          - QUOTE
-          - USER_FUNDED_UNVERIFIED
-          - USER_FUNDED
-          - AGENT_FUNDED
-          - USER_CLAIMED
-          - AGENT_CLAIMED
-          - AGENT_REFUNDED
-          - QUOTE_EXPIRED
-          - SWAP_EXPIRED
+            - QUOTE
+            - USER_FUNDED_UNVERIFIED
+            - USER_FUNDED
+            - AGENT_FUNDED
+            - USER_CLAIMED
+            - AGENT_CLAIMED
+            - AGENT_REFUNDED
+            - QUOTE_EXPIRED
+            - SWAP_EXPIRED
         fromAddress:
           type: string
           description: from currency address

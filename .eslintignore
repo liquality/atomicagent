@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+examples/
+doc/
+typedoc.js
+test/docker/config/*

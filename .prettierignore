@@ -1,0 +1,7 @@
+node_modules
+dist
+coverage
+examples
+doc
+README.md
+test/docker/config/*

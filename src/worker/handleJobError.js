@@ -5,25 +5,20 @@ const debug = require('debug')('liquality:agent:worker:error-handler')
 
 const config = require('../config')
 
-const getStatusCode = e => _.get(e, 'statusCode') || _.get(e, 'response.status') || _.get(e, 'response.statusCode')
-const getResponseBody = e => _.get(e, 'response.data') || _.get(e, 'response.body')
-const getRequestUrl = e => _.get(e, 'config.url') || e.url
-const getRequestData = e => e.data
-const getRequestParams = e => e.params
+const getStatusCode = (e) => _.get(e, 'statusCode') || _.get(e, 'response.status') || _.get(e, 'response.statusCode')
+const getResponseBody = (e) => _.get(e, 'response.data') || _.get(e, 'response.body')
+const getRequestUrl = (e) => _.get(e, 'config.url') || e.url
+const getRequestData = (e) => e.data
+const getRequestParams = (e) => e.params
 
 module.exports = async (err, job) => {
   if (
-    err.name === 'RescheduleError' ||
-    ( // do not retry PossibleTimelockError in production
-      process.env.NODE_ENV !== 'production' &&
-      err.name === 'PossibleTimelockError'
-    )
+    err.name === 'RescheduleError' || // do not retry PossibleTimelockError in production
+    (process.env.NODE_ENV !== 'production' && err.name === 'PossibleTimelockError')
   ) {
     debug(`[x${job.attrs.failCount}]`, err.name, err.message, job.attrs.name, job.attrs.data)
 
-    const scheduleIn = err.waitFor
-      ? 'in ' + err.waitFor + ' seconds'
-      : 'in ' + config.assets[err.asset].blockTime // TODO: blocktime should probably be per chain and in cryptoassets
+    const scheduleIn = err.waitFor ? 'in ' + err.waitFor + ' seconds' : 'in ' + config.assets[err.asset].blockTime // TODO: blocktime should probably be per chain and in cryptoassets
 
     job.schedule(scheduleIn)
     return job.save()
@@ -41,15 +36,9 @@ module.exports = async (err, job) => {
     }
   }
 
-  debug(
-    '[failed]',
-    err.name,
-    err.message,
-    job.attrs,
-    httpData
-  )
+  debug('[failed]', err.name, err.message, job.attrs, httpData)
 
-  Sentry.withScope(scope => {
+  Sentry.withScope((scope) => {
     scope.setTag('httpUrl', httpData.req.url)
     scope.setTag('httpResponseStatusCode', httpData.res.statusCode)
     scope.setTag('jobName', _.get(job, 'attrs.name'))

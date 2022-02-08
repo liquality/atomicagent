@@ -17,29 +17,31 @@ network = {
 module.exports = [
   {
     provider: EthereumRpcProvider,
-    args: config => [{
-      uri: config.assetConfig.rpc.url
-    }]
+    args: (config) => [
+      {
+        uri: config.assetConfig.rpc.url
+      }
+    ]
+  },
+  {
+    provider: EthereumRpcFeeProvider
   },
   {
     provider: EthereumJsWalletProvider,
     requires: ['mnemonic'],
-    args: config => [{
-      network,
-      mnemonic: config.mnemonic,
-      derivationPath: `m/44'/${network.coinType}'/0'/0/0`
-    }]
+    args: (config) => [
+      {
+        network,
+        mnemonic: config.mnemonic,
+        derivationPath: `m/44'/${network.coinType}'/0'/0/0`
+      }
+    ]
   },
   {
     provider: EthereumSwapProvider
   },
   {
     provider: EthereumScraperSwapFindProvider,
-    args: config => [
-      config.assetConfig.scraper.url
-    ]
-  },
-  {
-    provider: EthereumRpcFeeProvider
+    args: (config) => [config.assetConfig.scraper.url]
   }
 ]

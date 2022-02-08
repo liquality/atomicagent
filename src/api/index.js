@@ -43,9 +43,11 @@ module.exports.start = () => {
 
   app.use(session(sessionConfig))
   app.use(httpHelpers())
-  app.use(helmet({
-    contentSecurityPolicy: false
-  }))
+  app.use(
+    helmet({
+      contentSecurityPolicy: false
+    })
+  )
   app.use(cors())
   app.use(compression())
   app.use(bodyParser.json({ limit: '5mb' }))
@@ -59,9 +61,12 @@ module.exports.start = () => {
 
   // TODO: guard this route
   if (process.env.NODE_ENV !== 'test') {
-    app.use('/queue', Agendash(agenda, {
-      title: 'Agent Queues'
-    }))
+    app.use(
+      '/queue',
+      Agendash(agenda, {
+        title: 'Agent Queues'
+      })
+    )
   }
 
   if (process.env.NODE_ENV === 'production') {
@@ -76,7 +81,7 @@ module.exports.start = () => {
 }
 
 module.exports.app = () => {
-  if (!listen) throw new Error('API server isn\'t running')
+  if (!listen) throw new Error("API server isn't running")
 
   return listen
 }

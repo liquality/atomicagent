@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const config = require('../config')
 
-const mongooseOnError = err => {
+const mongooseOnError = (err) => {
   console.error(err)
   process.exit(1)
 }
@@ -15,7 +15,7 @@ mongoose
 const Bluebird = require('bluebird')
 const Order = require('../models/Order')
 
-async function main () {
+async function main() {
   const orders = await Order.find({
     status: { $ne: 'QUOTE' },
     txMap: { $exists: true }
@@ -25,27 +25,32 @@ async function main () {
   console.log('Total Orders', total)
   let index = 0
 
-  await Bluebird.map(orders, async order => {
-    const log = message => console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
+  await Bluebird.map(
+    orders,
+    async (order) => {
+      const log = (message) =>
+        console.log(`[${++index}/${total}] [${order.from}-${order.to}] ${order.orderId} - ${message}`)
 
-    const txs = Object.values(order.txMap)
-    const confirmedTxs = txs.filter(({ blockHash }) => blockHash)
-    const pendingTxs = txs.filter(({ blockHash }) => !blockHash)
+      const txs = Object.values(order.txMap)
+      const confirmedTxs = txs.filter(({ blockHash }) => blockHash)
+      const pendingTxs = txs.filter(({ blockHash }) => !blockHash)
 
-    confirmedTxs.forEach(({ type, hash }) => {
-      const pendingTx = pendingTxs.find(ptx => ptx.type === type && !ptx.replacedBy)
-      if (pendingTx) {
-        order.set(`txMap.${pendingTx.hash}.replacedBy`, hash)
+      confirmedTxs.forEach(({ type, hash }) => {
+        const pendingTx = pendingTxs.find((ptx) => ptx.type === type && !ptx.replacedBy)
+        if (pendingTx) {
+          order.set(`txMap.${pendingTx.hash}.replacedBy`, hash)
+        }
+      })
+
+      if (order.isModified()) {
+        await order.save()
+        log('Updated')
+      } else {
+        log('Skipped')
       }
-    })
-
-    if (order.isModified()) {
-      await order.save()
-      log('Updated')
-    } else {
-      log('Skipped')
-    }
-  }, { concurrency: 1 })
+    },
+    { concurrency: 1 }
+  )
 
   console.log('Done')
   process.exit(0)

@@ -2,36 +2,39 @@ const mongoose = require('mongoose')
 
 const { getClient } = require('../utils/clients')
 
-const AssetSchema = new mongoose.Schema({
-  code: {
-    type: String,
-    index: true
-  },
+const AssetSchema = new mongoose.Schema(
+  {
+    code: {
+      type: String,
+      index: true
+    },
 
-  actualBalance: {
-    type: Number
-  },
+    actualBalance: {
+      type: Number
+    },
 
-  min: {
-    type: Number
-  },
+    min: {
+      type: Number
+    },
 
-  max: {
-    type: Number
-  },
+    max: {
+      type: Number
+    },
 
-  minConf: {
-    type: Number
-  },
+    minConf: {
+      type: Number
+    },
 
-  fixedUsdRate: {
-    type: Number
-  },
+    fixedUsdRate: {
+      type: Number
+    },
 
-  '24hrUsdLimit': {
-    type: Number
-  }
-}, { timestamps: true })
+    '24hrUsdLimit': {
+      type: Number
+    }
+  },
+  { timestamps: true }
+)
 
 AssetSchema.methods.getClient = function () {
   return getClient(this.code)

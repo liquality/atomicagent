@@ -1,13 +1,13 @@
 const BaseError = require('standard-error')
 
-function createError (name) {
+function createError(name) {
   class Err extends BaseError {}
   Err.prototype.name = name
   return Err
 }
 
 class RescheduleError extends BaseError {
-  constructor (msg, asset, props) {
+  constructor(msg, asset, props) {
     super(msg, props)
     this.asset = asset
   }

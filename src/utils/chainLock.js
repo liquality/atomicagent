@@ -13,10 +13,10 @@ const CHAIN_LOCK = {}
 const emitter = new EventEmitter()
 emitter.setMaxListeners(20)
 
-const wait = millis => new Promise(resolve => setTimeout(() => resolve(), millis))
+const wait = (millis) => new Promise((resolve) => setTimeout(() => resolve(), millis))
 const waitForRandom = (min, max) => wait(_.random(min, max))
 
-const attemptToLockChain = asset => {
+const attemptToLockChain = (asset) => {
   const chain = assets[asset].chain
 
   if (CHAIN_LOCK[chain]) {
@@ -34,7 +34,7 @@ const attemptToLockChain = asset => {
   }
 }
 
-const unlockAsset = chain => {
+const unlockAsset = (chain) => {
   CHAIN_LOCK[chain] = false
 
   emitter.emit(`unlock:${chain}`)
@@ -51,7 +51,7 @@ const getLockForAsset = async (asset, id) => {
       debug(`${PENDING[chain].size} actions pending for ${chain} [#${id}]`)
     }
 
-    await new Promise(resolve => emitter.once(`unlock:${chain}`, () => resolve()))
+    await new Promise((resolve) => emitter.once(`unlock:${chain}`, () => resolve()))
 
     return getLockForAsset(asset, id)
   }
@@ -93,10 +93,8 @@ const withLock = async (asset, func) => {
 
     if (
       (chain === 'bitcoin' && e.message.includes('non-final')) ||
-      (isEthereumChain(chain) && (
-        e.message.includes('opcode 0xfe not defined') ||
-        e.message.includes('execution reverted')
-      ))
+      (isEthereumChain(chain) &&
+        (e.message.includes('opcode 0xfe not defined') || e.message.includes('execution reverted')))
     ) {
       throw new PossibleTimelockError(e.message, asset)
     }
