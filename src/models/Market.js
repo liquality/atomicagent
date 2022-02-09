@@ -89,6 +89,16 @@ MarketSchema.static('updateAllMarketData', async function () {
   const plainMarkets = markets.map((m) => ({ from: m.from, to: m.to }))
   const marketRates = await coingecko.getRates(plainMarkets, fixedUsdRates)
 
+  await Bluebird.map(
+    assets,
+    async (asset) => {
+      const market = marketRates.find((market) => market.from === asset.code || market.to === asset.code)
+
+      return MarketHistory.logRate([asset.code, 'USD'].join('-'), market.usd[asset.code])
+    },
+    { concurrency: 3 }
+  )
+
   const ASSET_MAP = {}
   await Bluebird.map(
     assets,
@@ -103,16 +113,6 @@ MarketSchema.static('updateAllMarketData', async function () {
       return asset.save()
     },
     { concurrency: 1 }
-  )
-
-  await Bluebird.map(
-    assets,
-    async (asset) => {
-      const market = marketRates.find((market) => market.from === asset.code || market.to === asset.code)
-
-      return MarketHistory.logRate([asset.code, 'USD'].join('-'), market.usd[asset.code])
-    },
-    { concurrency: 3 }
   )
 
   return Bluebird.map(
