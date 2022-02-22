@@ -1,4 +1,3 @@
-const debug = require('debug')('liquality:agent:swap-api')
 const Sentry = require('@sentry/node')
 const Amplitude = require('@amplitude/node')
 const _ = require('lodash')
