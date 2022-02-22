@@ -137,6 +137,9 @@ MarketSchema.static('updateAllMarketData', async function () {
 
       await MarketHistory.logRate([market.from, market.to].join('-'), rateWithSpread)
 
+      // force update timestamp, if rate doesn't change for a pair
+      market.updatedAt = new Date()
+
       return market.save()
     },
     { concurrency: 3 }
