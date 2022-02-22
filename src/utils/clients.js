@@ -250,6 +250,7 @@ async function createClient(asset) {
   if (assetData.chain === 'rsk') return createEthClient(asset)
   if (assetData.chain === 'bsc') return createEthClient(asset)
   if (assetData.chain === 'polygon') return createEthClient(asset)
+  if (assetData.chain === 'avalanche') return createEthClient(asset)
   if (assetData.chain === 'arbitrum') return createEthClient(asset)
   if (assetData.chain === 'ethereum') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
