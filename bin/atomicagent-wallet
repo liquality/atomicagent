@@ -8,34 +8,26 @@ const config = require('../src/config')
 
 addCommonOptions(program)
 
-async function getBalance(asset) {
+async function printBalance(asset) {
   const client = await getClient(asset)
   const addresses = await client.wallet.getUsedAddresses()
   const balance = await client.chain.getBalance(addresses)
   const balanceInCurrency = unitToCurrency(assets[asset], balance).toNumber()
   const code = assets[asset].code
 
-  return {
-    balanceInCurrency,
-    code
-  }
+  console.log(balanceInCurrency + ' ' + code)
 }
 
 program.command('balances').action(async () => {
-  const data = []
   const tickers = Object.keys(config.assets)
 
   for (let i = 0; i < tickers.length; i++) {
-    data.push(await getBalance(tickers[i]))
+    await printBalance(tickers[i])
   }
-
-  console.log(data)
 })
 
 program.command('balance <asset>').action(async (asset) => {
-  const balance = await getBalance(asset)
-
-  console.log(balance.balanceInCurrency + ' ' + balance.code)
+  await printBalance(asset)
 })
 
 program.command('getnewaddress <asset>').action(async (asset) => {

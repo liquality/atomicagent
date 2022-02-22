@@ -19,6 +19,14 @@ addCommonOptions(program)
 program
   .command('asset:add <code> <min> <max> <minConf> <dailyUsdLimit>')
   .action(async (code, min, max, minConf, dailyUsdLimit) => {
+    if (!config.assets[code]) {
+      throw new Error(`"${code}" is missing from the config file`)
+    }
+
+    if (await Asset.findOne({ code })) {
+      throw new Error(`"${code}" already exists`)
+    }
+
     const asset = new Asset({
       code,
       min: currencyToUnit(assets[code], min),
