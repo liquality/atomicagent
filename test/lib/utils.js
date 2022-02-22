@@ -53,7 +53,8 @@ const getClient = async function (asset) {
 
 module.exports.getClient = getClient
 
-const clearJobs = () => Job.deleteMany({}).then(() => debug('Cleared Job collection'))
+const clearJobs = () =>
+  Job.deleteMany({ name: { $ne: 'update-market-data' } }).then(() => debug('Cleared Job collection'))
 const updateMarketData = () => Market.updateAllMarketData().then(() => debug('Updated marketdata'))
 
 module.exports.clearJobs = clearJobs
