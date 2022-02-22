@@ -54,8 +54,10 @@ const getClient = async function (asset) {
 module.exports.getClient = getClient
 
 const clearJobs = () => Job.deleteMany({}).then(() => debug('Cleared Job collection'))
+const updateMarketData = () => Market.updateAllMarketData().then(() => debug('Updated marketdata'))
 
 module.exports.clearJobs = clearJobs
+module.exports.updateMarketData = updateMarketData
 
 const clear = () =>
   clearJobs()
@@ -78,8 +80,7 @@ const clear = () =>
     .then(() => debug('Reinstalled Market collection'))
     .then(() => MarketHistory.deleteMany({}))
     .then(() => debug('Cleared MarketHistory collection'))
-    .then(() => Market.updateAllMarketData())
-    .then(() => debug('Updated marketdata'))
+    .then(updateMarketData)
 
 module.exports.prepare = () =>
   mongoose

@@ -1,3 +1,4 @@
+const debug = require('debug')('liquality:agent:market')
 const mongoose = require('mongoose')
 
 const Bluebird = require('bluebird')
@@ -107,8 +108,8 @@ MarketSchema.static('updateAllMarketData', async function () {
 
         LATEST_ASSET_MAP[asset.code] = asset
       } catch (e) {
-        console.error(e)
-        console.error(`Something went wrong while updating balance of ${asset.code}. Skipping ${asset.code}...`)
+        debug(e)
+        debug(`Could not update balance of ${asset.code}. Skipping ${asset.code}...`)
       }
     },
     { concurrency: 1 }
@@ -121,7 +122,7 @@ MarketSchema.static('updateAllMarketData', async function () {
       const fromAsset = LATEST_ASSET_MAP[from]
       const toAsset = LATEST_ASSET_MAP[to]
       if (!fromAsset || !toAsset) {
-        console.log(`Skipping ${from}-${to} due to outdated asset data...`)
+        debug(`Skipping ${from}-${to} due to outdated rate...`)
         return
       }
 
@@ -130,9 +131,7 @@ MarketSchema.static('updateAllMarketData', async function () {
           ? 1
           : marketRates.find((market) => market.from === from && market.to === to).rate
       const rateWithSpread = BN(rate).times(BN(1).minus(market.spread)).dp(8)
-      const reverseMarket = markets.find((market) => market.to === from && market.from === to) || {
-        rate: BN(1).div(rateWithSpread)
-      }
+      const reverseMarketRate = BN(BN(1).div(rate)).times(BN(1).minus(market.spread)).dp(8)
 
       market.rate = rateWithSpread
       market.minConf = fromAsset.minConf
@@ -141,7 +140,7 @@ MarketSchema.static('updateAllMarketData', async function () {
       const toMaxAmount = BN(toAsset.actualBalance).div(config.worker.minConcurrentSwaps)
       const toAssetMax = toAsset.max ? BN.min(toAsset.max, toMaxAmount) : toMaxAmount
 
-      market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarket.rate)).dp(0, BN.ROUND_DOWN)
+      market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarketRate)).dp(0, BN.ROUND_DOWN)
 
       market.updatedAt = new Date()
 

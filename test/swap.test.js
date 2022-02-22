@@ -2,7 +2,7 @@
 const _ = require('lodash')
 
 const swap = require('./lib/swap')
-const { prepare, clearJobs } = require('./lib/utils')
+const { prepare, clearJobs, updateMarketData } = require('./lib/utils')
 const config = require('../src/config')
 
 const NUM_CONCURRENT_SWAPS_PER_MARKET = 3
@@ -44,6 +44,7 @@ describe.only('Swap', () => {
         before(async function () {
           this.timeout(0)
           await clearJobs()
+          await updateMarketData()
 
           config.application.swapExpirationDurationInSeconds = 70
           config.application.nodeSwapExpirationDurationInSeconds = 30
@@ -60,6 +61,7 @@ describe.only('Swap', () => {
         before(async function () {
           this.timeout(0)
           await clearJobs()
+          await updateMarketData()
 
           config.application.swapExpirationDurationInSeconds = 70
           config.application.nodeSwapExpirationDurationInSeconds = 30
@@ -74,6 +76,7 @@ describe.only('Swap', () => {
     before(async function () {
       this.timeout(0)
       await clearJobs()
+      await updateMarketData()
 
       config.application.swapExpirationDurationInSeconds = 580
       config.application.nodeSwapExpirationDurationInSeconds = 380

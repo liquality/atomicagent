@@ -1,3 +1,4 @@
+const debug = require('debug')('liquality:agent:http-helpers')
 const _ = require('lodash')
 
 module.exports = () =>
@@ -18,6 +19,8 @@ module.exports = () =>
     }
 
     res.notOk = function (status, message) {
+      debug('res.notOk', status, message)
+
       res.status(status)
 
       const id = res.sentry
