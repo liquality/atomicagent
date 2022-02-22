@@ -1,3 +1,4 @@
+const debug = require('debug')('liquality:agent:swap-api')
 const Sentry = require('@sentry/node')
 const Amplitude = require('@amplitude/node')
 const _ = require('lodash')
@@ -15,17 +16,7 @@ const pkg = require('../../../package.json')
 
 const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentCompatible')
 const hashUtil = require('../../utils/hash')
-const {
-  MarketNotFoundError,
-  MarketNotActiveError,
-  CounterPartyInsufficientBalanceError,
-  OrderNotFoundError,
-  UnauthorisedError,
-  InvalidOrderStateError,
-  InvalidHashError,
-  InvalidHTTPBodyError,
-  DuplicateOrderError
-} = require('../../utils/errors')
+const { DuplicateOrderError } = require('../../utils/errors')
 
 const amplitude = Amplitude.init(process.env.AMPLITUDE_API_KEY)
 
@@ -73,18 +64,16 @@ router.post(
 
     const market = await Market.findOne(_.pick(body, ['from', 'to'])).exec()
     if (!market) {
-      Sentry.captureException(new MarketNotFoundError(`Market not found: ${body.from}-${body.to}`))
       return res.notOk(400, `Market not found: ${body.from}-${body.to}`)
     }
 
     if (market.status !== 'ACTIVE') {
-      Sentry.captureException(new MarketNotActiveError(`Market is not active: ${body.from}-${body.to}`))
       return res.notOk(400, `Market is not active: ${body.from}-${body.to}`)
     }
 
-    if (dateFns.differenceInSeconds(new Date(), market.updatedAt) > 60) {
-      Sentry.captureException(new MarketNotActiveError(`Market rate is outdated: ${body.from}-${body.to}`))
-      return res.notOk(400, `Market rate is outdated: ${body.from}-${body.to}`)
+    const lastUpdatedAgo = dateFns.differenceInSeconds(new Date(), market.updatedAt)
+    if (lastUpdatedAgo > 90) {
+      return res.notOk(400, `Market rate is outdated: ${body.from}-${body.to} (Last updated ${lastUpdatedAgo}s ago)`)
     }
 
     const { fromAmount } = body
@@ -99,7 +88,6 @@ router.post(
     const balance = await toClient.chain.getBalance(addresses)
 
     if (BigNumber(balance).isLessThan(BigNumber(order.toAmount))) {
-      Sentry.captureException(new CounterPartyInsufficientBalanceError('Counterparty has insufficient balance'))
       return res.notOk(400, 'Counterparty has insufficient balance')
     }
 
@@ -146,7 +134,6 @@ router.post(
 
     const order = await Order.findOne({ orderId: params.orderId }).exec()
     if (!order) {
-      Sentry.captureException(new OrderNotFoundError(`Order not found: ${params.orderId}`))
       return res.notOk(400, `Order not found: ${params.orderId}`)
     }
 
@@ -154,7 +141,6 @@ router.post(
       const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
       if (!passphrase || !order.verifyPassphrase(passphrase)) {
-        Sentry.captureException(new UnauthorisedError('Unauthorised'))
         return res.notOk(401, 'You are not authorised')
       }
     }
@@ -162,18 +148,15 @@ router.post(
     const oldStatus = order.status
 
     if (!['QUOTE', 'USER_FUNDED_UNVERIFIED'].includes(oldStatus)) {
-      Sentry.captureException(new InvalidOrderStateError(`Order cannot be updated after funding: ${params.orderId}`))
       return res.notOk(400, `Order cannot be updated after funding: ${params.orderId}`)
     }
 
     if (!hashUtil.isValidTxHash(body.fromFundHash, order.from)) {
-      Sentry.captureException(new InvalidHashError(`Invalid fromFundHash: ${body.fromFundHash}`))
       return res.notOk(400, `Invalid fromFundHash: ${body.fromFundHash}`)
     }
 
     if (body.secretHash) {
       if (!hashUtil.isValidSecretHash(body.secretHash)) {
-        Sentry.captureException(new InvalidHashError(`Invalid secretHash: ${body.secretHash}`))
         return res.notOk(400, `Invalid secretHash: ${body.secretHash}`)
       }
     }
@@ -187,7 +170,6 @@ router.post(
       const key = keysToBeCopied[i]
 
       if (!body[key]) {
-        Sentry.captureException(new InvalidHTTPBodyError(`Missing key from request body: ${key}`))
         return res.notOk(400, `Missing key from request body: ${key}`)
       }
 
@@ -225,7 +207,6 @@ router.get(
 
     const order = await Order.findOne({ orderId: params.orderId }).exec()
     if (!order) {
-      Sentry.captureException(new OrderNotFoundError(`Order not found: ${params.orderId}`))
       return res.notOk(400, 'Order not found')
     }
 
@@ -233,7 +214,6 @@ router.get(
       const passphrase = query.passphrase || req.get('X-Liquality-Agent-Passphrase')
 
       if (!passphrase || !order.verifyPassphrase(passphrase)) {
-        Sentry.captureException(new UnauthorisedError('Unauthorised'))
         return res.notOk(401, 'You are not authorised')
       }
     }

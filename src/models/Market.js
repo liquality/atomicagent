@@ -1,8 +1,10 @@
 const debug = require('debug')('liquality:agent:market')
 const mongoose = require('mongoose')
+const Sentry = require('@sentry/node')
 
 const Bluebird = require('bluebird')
 const BN = require('bignumber.js')
+const { assets: ASSETS, unitToCurrency } = require('@liquality/cryptoassets')
 
 const Asset = require('./Asset')
 const MarketHistory = require('./MarketHistory')
@@ -104,15 +106,17 @@ MarketSchema.static('updateAllMarketData', async function () {
         const client = await asset.getClient()
         const addresses = await client.wallet.getUsedAddresses()
         asset.actualBalance = await client.chain.getBalance(addresses)
+        debug('Balance', unitToCurrency(ASSETS[asset.code], asset.actualBalance).toString(), asset.code)
         await asset.save()
-
-        LATEST_ASSET_MAP[asset.code] = asset
       } catch (e) {
+        Sentry.captureException(e)
         debug(e)
-        debug(`Could not update balance of ${asset.code}. Skipping ${asset.code}...`)
+        debug(`Could not update balance of ${asset.code}`)
       }
+
+      LATEST_ASSET_MAP[asset.code] = asset
     },
-    { concurrency: 1 }
+    { concurrency: 2 }
   )
 
   return Bluebird.map(
@@ -121,10 +125,6 @@ MarketSchema.static('updateAllMarketData', async function () {
       const { from, to } = market
       const fromAsset = LATEST_ASSET_MAP[from]
       const toAsset = LATEST_ASSET_MAP[to]
-      if (!fromAsset || !toAsset) {
-        debug(`Skipping ${from}-${to} due to outdated rate...`)
-        return
-      }
 
       const rate =
         config.assets[from].pegWith === to || config.assets[to].pegWith === from
@@ -141,8 +141,6 @@ MarketSchema.static('updateAllMarketData', async function () {
       const toAssetMax = toAsset.max ? BN.min(toAsset.max, toMaxAmount) : toMaxAmount
 
       market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarketRate)).dp(0, BN.ROUND_DOWN)
-
-      market.updatedAt = new Date()
 
       await MarketHistory.logRate([market.from, market.to].join('-'), rateWithSpread)
 
