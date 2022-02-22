@@ -231,7 +231,8 @@ async function createTerraClient(asset) {
       mnemonic,
       baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`,
       asset: terraConfig.asset,
-      feeAsset: terraConfig.feeAsset
+      feeAsset: terraConfig.feeAsset,
+      stableFee: terraConfig.asset === 'UST' ? true : false
     })
   )
   terraClient.addProvider(new TerraSwapProvider(terraNetwork, terraConfig.asset))
