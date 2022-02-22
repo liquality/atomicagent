@@ -61,12 +61,7 @@ module.exports.start = () => {
 
   // TODO: guard this route
   if (process.env.NODE_ENV !== 'test') {
-    app.use(
-      '/queue',
-      Agendash(agenda, {
-        title: 'Agent Queues'
-      })
-    )
+    app.use('/queue', Agendash(agenda))
   }
 
   if (process.env.NODE_ENV === 'production') {
