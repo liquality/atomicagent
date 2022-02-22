@@ -6,7 +6,7 @@ const AssetSchema = new mongoose.Schema(
   {
     code: {
       type: String,
-      index: true
+      unique: true
     },
 
     actualBalance: {
@@ -49,4 +49,5 @@ AssetSchema.methods.json = function () {
   return json
 }
 
-module.exports = mongoose.model('Asset', AssetSchema)
+const Asset = mongoose.model('Asset', AssetSchema)
+module.exports = Asset

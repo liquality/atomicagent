@@ -1,6 +1,7 @@
 const Sentry = require('@sentry/node')
 const Amplitude = require('@amplitude/node')
 const _ = require('lodash')
+const dateFns = require('date-fns')
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const BigNumber = require('bignumber.js')
@@ -79,6 +80,11 @@ router.post(
     if (market.status !== 'ACTIVE') {
       Sentry.captureException(new MarketNotActiveError(`Market is not active: ${body.from}-${body.to}`))
       return res.notOk(400, `Market is not active: ${body.from}-${body.to}`)
+    }
+
+    if (dateFns.differenceInSeconds(new Date(), market.updatedAt) > 60) {
+      Sentry.captureException(new MarketNotActiveError(`Market rate is outdated: ${body.from}-${body.to}`))
+      return res.notOk(400, `Market rate is outdated: ${body.from}-${body.to}`)
     }
 
     const { fromAmount } = body

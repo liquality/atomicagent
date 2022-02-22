@@ -4,6 +4,7 @@ debug = true
 
 [application]
 apiPort = 3030
+quoteExpirationInSeconds = 1800
 swapExpirationDurationInSeconds = 3600
 nodeSwapExpirationDurationInSeconds = 1800
 

@@ -175,10 +175,6 @@ components:
           type: number
           format: float
           description: The rate of the market
-        orderExpiresIn:
-          type: number
-          format: integer
-          description: Returns milliseconds the order is valid for
         status:
           type: string
           enum: [ACTIVE, INACTIVE]
@@ -190,7 +186,6 @@ components:
         max: 1.6
         minConf: 1
         rate: 44.5216
-        orderExpiresIn: 7200000
         status: ACTIVE
     OrderRequest:
       type: object

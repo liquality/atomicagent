@@ -1,0 +1,186 @@
+#!/usr/bin/env node
+
+const program = require('commander')
+const Bluebird = require('bluebird')
+
+const { addCommonOptions } = require('./common')
+const { assets, currencyToUnit } = require('@liquality/cryptoassets')
+const mongoConnect = require('../src/utils/mongoConnect')
+const config = require('../src/config')
+
+const Asset = require('../src/models/Asset')
+const Market = require('../src/models/Market')
+
+// Load db settings and establish connection
+mongoConnect.connect(config.database)
+
+addCommonOptions(program)
+
+program
+  .command('asset:add <code> <min> <max> <minConf> <dailyUsdLimit>')
+  .action(async (code, min, max, minConf, dailyUsdLimit) => {
+    const asset = new Asset({
+      code,
+      min: currencyToUnit(assets[code], min),
+      max: currencyToUnit(assets[code], max),
+      minConf,
+      '24hrUsdLimit': dailyUsdLimit
+    })
+
+    await asset.save()
+
+    console.log('Added asset', asset.code)
+
+    process.exit()
+  })
+
+program.command('asset:set <code> <key> <value>').action(async (code, key, value) => {
+  const asset = await Asset.findOne({
+    code
+  }).exec()
+
+  if (!asset) {
+    throw new Error(`Invalid asset: "${code}"`)
+  }
+
+  switch (key) {
+    case 'min':
+    case 'max': {
+      if (!value || !Number(value)) {
+        throw new Error(`Invalid value: "${value}"`)
+      }
+
+      asset[key] = currencyToUnit(assets[code], value)
+      break
+    }
+    case 'minConf': {
+      if (!value || !Number(value)) {
+        throw new Error(`Invalid value: "${value}"`)
+      }
+
+      asset[key] = value
+      break
+    }
+    case '24hrUsdLimit': {
+      if (!Number(value)) {
+        asset[key] = null
+      } else {
+        asset[key] = currencyToUnit(assets[code], value)
+      }
+      break
+    }
+    default:
+      throw new Error(`Invalid key: "${key}"`)
+  }
+
+  await asset.save()
+
+  console.log('Updated asset', asset.code)
+
+  process.exit()
+})
+
+program.command('asset:disable <code>').action(async (code) => {
+  const markets = await Market.find({ $or: [{ from: code }, { to: code }] }).exec()
+
+  await Bluebird.map(
+    markets,
+    async (market) => {
+      market.status = 'INACTIVE'
+      return market.save()
+    },
+    { concurrency: 2 }
+  )
+
+  console.log(`Disabled ${markets.length} markets`)
+
+  process.exit()
+})
+
+program.command('asset:enable <code>').action(async (code) => {
+  const markets = await Market.find({ $or: [{ from: code }, { to: code }] }).exec()
+
+  await Bluebird.map(
+    markets,
+    async (market) => {
+      market.status = 'ACTIVE'
+      return market.save()
+    },
+    { concurrency: 2 }
+  )
+
+  console.log(`Enabled ${markets.length} markets`)
+
+  process.exit()
+})
+
+program.command('markets:create').action(async () => {
+  const markets = await Market.find({}).exec()
+  const assets = await Asset.find({}).exec()
+  const existingMarkets = markets.map((market) => `${market.from}-${market.to}`)
+
+  for (const from of assets) {
+    for (const to of assets) {
+      if (to.code === from.code) continue
+      const market = `${from.code}-${to.code}`
+      if (existingMarkets.includes(market)) continue
+
+      const m = new Market({
+        from: from.code,
+        to: to.code,
+        spread: 0.01,
+        status: 'ACTIVE',
+        createdAt: new Date(),
+        updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6) // to prevent newly created markets from appearing without rates
+      })
+
+      await m.save({
+        timestamps: false
+      })
+
+      console.log('Created', market)
+    }
+  }
+
+  process.exit()
+})
+
+program.command('market:spread:set <from> <to> <spread>').action(async (from, to, spread) => {
+  const market = await Market.findOne({
+    from,
+    to
+  }).exec()
+
+  if (!market) {
+    throw new Error(`Invalid market: "${from}-${to}"`)
+  }
+
+  if (!spread || !Number(spread)) {
+    throw new Error(`Invalid spread: "${spread}"`)
+  }
+
+  market.spread = spread
+
+  await market.save()
+
+  console.log('Updated market spread', `${from}-${to}`)
+
+  process.exit()
+})
+
+program.command('market:spread:get <from> <to>').action(async (from, to) => {
+  const market = await Market.findOne({
+    from,
+    to
+  }).exec()
+
+  if (!market) {
+    throw new Error(`Invalid market: "${from}-${to}"`)
+  }
+
+  console.log(market.spread)
+
+  process.exit()
+})
+
+program.parse(process.argv)

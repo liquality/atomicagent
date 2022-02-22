@@ -36,10 +36,6 @@ const MarketSchema = new mongoose.Schema(
     spread: {
       type: Number
     },
-    orderExpiresIn: {
-      type: Number
-    },
-
     status: {
       type: String,
       enum: ['ACTIVE', 'INACTIVE'],
@@ -99,18 +95,21 @@ MarketSchema.static('updateAllMarketData', async function () {
     { concurrency: 3 }
   )
 
-  const ASSET_MAP = {}
+  const LATEST_ASSET_MAP = {}
   await Bluebird.map(
     assets,
     async (asset) => {
-      const client = await asset.getClient()
+      try {
+        const client = await asset.getClient()
+        const addresses = await client.wallet.getUsedAddresses()
+        asset.actualBalance = await client.chain.getBalance(addresses)
+        await asset.save()
 
-      const addresses = await client.wallet.getUsedAddresses()
-      asset.actualBalance = await client.chain.getBalance(addresses)
-
-      ASSET_MAP[asset.code] = asset
-
-      return asset.save()
+        LATEST_ASSET_MAP[asset.code] = asset
+      } catch (e) {
+        console.error(e)
+        console.error(`Something went wrong while updating balance of ${asset.code}. Skipping ${asset.code}...`)
+      }
     },
     { concurrency: 1 }
   )
@@ -119,6 +118,12 @@ MarketSchema.static('updateAllMarketData', async function () {
     markets,
     async (market) => {
       const { from, to } = market
+      const fromAsset = LATEST_ASSET_MAP[from]
+      const toAsset = LATEST_ASSET_MAP[to]
+      if (!fromAsset || !toAsset) {
+        console.log(`Skipping ${from}-${to} due to outdated asset data...`)
+        return
+      }
 
       const rate =
         config.assets[from].pegWith === to || config.assets[to].pegWith === from
@@ -128,8 +133,6 @@ MarketSchema.static('updateAllMarketData', async function () {
       const reverseMarket = markets.find((market) => market.to === from && market.from === to) || {
         rate: BN(1).div(rateWithSpread)
       }
-      const fromAsset = ASSET_MAP[from]
-      const toAsset = ASSET_MAP[to]
 
       market.rate = rateWithSpread
       market.minConf = fromAsset.minConf

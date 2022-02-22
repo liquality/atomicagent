@@ -84,6 +84,9 @@ const OrderSchema = new mongoose.Schema(
       type: Number,
       index: true
     },
+
+    // this is a value in seconds
+    // TODO: rename to a proper key
     expiresAt: {
       type: Number,
       index: true
@@ -393,7 +396,8 @@ OrderSchema.methods.getFeeForTxType = function (type) {
 }
 
 OrderSchema.methods.isQuoteExpired = function () {
-  return Date.now() > this.expiresAt
+  const now = Math.ceil(Date.now() / 1000)
+  return now >= this.expiresAt
 }
 
 OrderSchema.methods.isSwapExpired = function (fromCurrentBlock) {
@@ -701,6 +705,8 @@ OrderSchema.methods.log = async function (context, status, extra) {
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {
+  const now = Math.ceil(Date.now() / 1000)
+
   return new Order({
     orderId: uuidv4(),
     fromAmount,
@@ -711,7 +717,7 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     spread: market.spread,
     minConf: market.minConf,
 
-    expiresAt: Date.now() + market.orderExpiresIn,
+    expiresAt: now + config.application.quoteExpirationInSeconds,
     status: 'QUOTE'
   })
 })

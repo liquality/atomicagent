@@ -4,7 +4,6 @@
     "to": "ETH",
     "rate": 42.63633734,
     "spread": 0,
-    "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 28163916,
     "min": 80000
@@ -14,7 +13,6 @@
     "to": "BTC",
     "rate": 0.02345417,
     "spread": 0,
-    "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 12000000000000000000,
     "min": 40000000000000000
@@ -24,7 +22,6 @@
     "to": "BTC",
     "rate": 0.00013726,
     "spread": 0,
-    "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 2e21,
     "min": 5000000000000000000
@@ -34,7 +31,6 @@
     "to": "DAI",
     "rate": 7285.42544146,
     "spread": 0,
-    "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 27452000,
     "min": 80000
@@ -44,7 +40,6 @@
     "to": "DAI",
     "rate": 170.87362322,
     "spread": 0,
-    "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 11704560000000000000,
     "min": 40000000000000000
@@ -54,7 +49,6 @@
     "to": "ETH",
     "rate": 0.00585228,
     "spread": 0,
-    "orderExpiresIn": 7200000,
     "status": "ACTIVE",
     "max": 2e21,
     "min": 5000000000000000000
