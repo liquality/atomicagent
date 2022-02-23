@@ -15,6 +15,10 @@ const ALLOWED_ACTIONS = ['approve', 'reject']
 
 const ALLOWED_RETRY_JOBS = [
   {
+    name: 'verify-user-init-tx',
+    setStatus: 'USER_FUNDED_UNVERIFIED'
+  },
+  {
     name: 'reciprocate-init-swap',
     setStatus: 'USER_FUNDED'
   },
