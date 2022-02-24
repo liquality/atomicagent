@@ -396,8 +396,7 @@ OrderSchema.methods.getFeeForTxType = function (type) {
 }
 
 OrderSchema.methods.isQuoteExpired = function () {
-  const now = Math.ceil(Date.now() / 1000)
-  return now >= this.expiresAt
+  return Date.now() >= this.expiresAt
 }
 
 OrderSchema.methods.isSwapExpired = function (fromCurrentBlock) {
@@ -705,8 +704,6 @@ OrderSchema.methods.log = async function (context, status, extra) {
 }
 
 OrderSchema.static('fromMarket', function (market, fromAmount) {
-  const now = Math.ceil(Date.now() / 1000)
-
   return new Order({
     orderId: uuidv4(),
     fromAmount,
@@ -717,7 +714,7 @@ OrderSchema.static('fromMarket', function (market, fromAmount) {
     spread: market.spread,
     minConf: market.minConf,
 
-    expiresAt: now + config.application.quoteExpirationInSeconds,
+    expiresAt: Date.now() + config.application.quoteExpirationInSeconds * 1000,
     status: 'QUOTE'
   })
 })
