@@ -7,7 +7,7 @@ const Asset = require('../../models/Asset')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda } = job
+  const { queue } = job.queue
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
@@ -55,7 +55,7 @@ module.exports = async (job) => {
       fromBlock: fromCurrentBlockNumber
     })
 
-    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
+    return queue.add('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
 
   const check = await Check.getCheckForOrder(data.orderId)
@@ -126,7 +126,7 @@ module.exports = async (job) => {
   order.status = 'AGENT_CONTRACT_CREATED'
   await order.save()
 
-  await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toFundHash' })
+  await queue.add('verify-tx', { orderId: order.orderId, type: 'toFundHash' }, { delay: 15000 })
 
   await order.log('RECIPROCATE_INIT_SWAP', null, {
     toLastScannedBlock: toLastScannedBlock,
@@ -134,5 +134,5 @@ module.exports = async (job) => {
     toSecondaryFundHash: order.toSecondaryFundHash
   })
 
-  return agenda.now('fund-swap', { orderId: order.orderId, toLastScannedBlock })
+  return queue.now('fund-swap', { orderId: order.orderId, toLastScannedBlock })
 }

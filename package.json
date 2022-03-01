@@ -92,6 +92,7 @@
     "bignumber.js": "^9.0.2",
     "bluebird": "^3.7.2",
     "body-parser": "^1.19.1",
+    "bull": "^4.6.2",
     "commander": "^6.2.0",
     "compression": "^1.7.4",
     "connect-mongo": "^4.6.0",

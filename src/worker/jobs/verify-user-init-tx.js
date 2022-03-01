@@ -4,7 +4,7 @@ const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda } = job
+  const { queue } = job.queue
   const { data } = job.attrs
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
@@ -23,7 +23,7 @@ module.exports = async (job) => {
     await order.log('VERIFY_USER_INIT_TX')
 
     const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
-    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
+    return queue.add('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
 
   await order.verifyInitiateSwapTransaction()
@@ -59,5 +59,5 @@ module.exports = async (job) => {
   await order.save()
   await order.log('VERIFY_USER_INIT_TX')
 
-  return agenda.now('reciprocate-init-swap', { orderId: order.orderId })
+  return queue.add('reciprocate-init-swap', { orderId: order.orderId })
 }

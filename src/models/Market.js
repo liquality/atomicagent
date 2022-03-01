@@ -104,12 +104,10 @@ MarketSchema.static('updateAllMarketData', async function () {
     assets,
     async (asset) => {
       const client = await asset.getClient()
-
+      //TODO handle error for client
       const addresses = await client.wallet.getUsedAddresses()
       asset.actualBalance = await client.chain.getBalance(addresses)
-
       ASSET_MAP[asset.code] = asset
-
       return asset.save()
     },
     { concurrency: 1 }

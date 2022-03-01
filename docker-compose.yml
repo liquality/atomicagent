@@ -1,0 +1,31 @@
+version: '3'
+services:
+  redis:
+    container_name: redis
+    hostname: redis
+    image: redis
+    ports:
+    - 6379:6379
+    links:
+    - redis-commander
+
+  redis-commander:
+    container_name: redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    build: .
+    restart: always
+    environment:
+      - REDIS_HOSTS=redis
+    ports:
+      - 8081:8081
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=app_user
+      - MONGO_INITDB_ROOT_PASSWORD=app_password
+      - MONGO_INITDB_DATABASE=admin

@@ -7,8 +7,7 @@ const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { attrs } = job
-  const { orderId, type } = attrs.data
+  const { orderId, type } = job.data
 
   const order = await Order.findOne({ orderId }).exec()
   if (!order) return

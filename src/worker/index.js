@@ -1,37 +1,102 @@
-const mongoose = require('mongoose')
-const Agenda = require('agenda')
-
+// const mongoose = require('mongoose')
+// const Agenda = require('agenda')
+// const jobReporter = require('./jobReporter')
+const Queue = require('bull')
 const configureJobs = require('./configureJobs')
-const jobReporter = require('./jobReporter')
-const handleJobError = require('./handleJobError')
 const config = require('../config')
+const Sentry = require('@sentry/node')
+const _ = require('lodash')
+const debug = require('debug')('liquality:agent:worker:error-handler')
 
-let agenda
+const getStatusCode = (e) => _.get(e, 'statusCode') || _.get(e, 'response.status') || _.get(e, 'response.statusCode')
+const getResponseBody = (e) => _.get(e, 'response.data') || _.get(e, 'response.body')
+const getRequestUrl = (e) => _.get(e, 'config.url') || e.url
+const getRequestData = (e) => e.data
+const getRequestParams = (e) => e.params
 
-module.exports.start = async () => {
-  agenda = new Agenda({
-    mongo: mongoose.connection,
-    defaultConcurrency: 1, // only process one job of a type at a time
-    defaultLockLimit: 1, // only one job of a type can be locked at a time
-    defaultLockLifetime: 600000 // a job can run for maximum 10 min before it is timedout
-  })
+let queue
 
-  await configureJobs(agenda)
+async function handleError(job, err) {
+  if (
+    err.name === 'RescheduleError' || // do not retry PossibleTimelockError in production
+    (process.env.NODE_ENV !== 'production' && err.name === 'PossibleTimelockError')
+  ) {
+    debug(`[x${job.attemptsMade}]`, err.name, err.message, job.name, job.data)
 
-  if (config.worker.jobReporter) {
-    jobReporter(agenda)
+    //TODO schedule in x seconds
+    const scheduleIn = err.waitFor ? err.waitFor : config.assets[err.asset].blockTime // TODO: blocktime should probably be per chain and in cryptoassets
+
+    //TODO there is no save so will add
+    return queue.add(job.name, job.data, { delay: scheduleIn, removeOnFail: true, removeOnComplete: true })
   }
 
-  agenda.on('fail', handleJobError)
+  const httpData = {
+    req: {
+      url: getRequestUrl(err),
+      data: getRequestData(err),
+      params: getRequestParams(err)
+    },
+    res: {
+      statusCode: getStatusCode(err),
+      body: getResponseBody(err)
+    }
+  }
 
-  await agenda.start()
-  await agenda.every('30 seconds', 'update-market-data')
+  debug('[failed]', err.name, err.message, job.attrs, httpData)
+
+  Sentry.withScope((scope) => {
+    scope.setTag('httpUrl', httpData.req.url)
+    scope.setTag('httpResponseStatusCode', httpData.res.statusCode)
+    scope.setTag('jobName', _.get(job, 'attrs.name'))
+    scope.setTag('orderId', _.get(job, 'attrs.data.orderId'))
+
+    scope.setExtra('attrs', job.attrs)
+    scope.setExtra('httpRequestData', httpData.req.data)
+    scope.setExtra('httpRequestParams', httpData.req.params)
+    scope.setExtra('httpResponseBody', httpData.res.responseBody)
+
+    Sentry.captureException(err)
+  })
+
+  //TODO there is no save
+  //job.fail(err)
+  // return job.save()
 }
 
-module.exports.stop = () => {
-  if (!agenda) return
+module.exports.start = async () => {
+  //TODO update the agenda to queue
+  queue = new Queue('agent', process.env.REDIS_URL)
 
-  agenda.stop().then(() => process.exit(0))
+  await configureJobs(queue)
+
+  //TODO do we need this?
+  // if (config.worker.jobReporter) {
+  //   jobReporter(queue)
+  // }
+
+  queue.on('failed', handleError)
+
+  const job = await queue.add(
+    'update-market-data',
+    {},
+    {
+      repeat: {
+        every: 30000
+      },
+      removeOnFail: true,
+      removeOnComplete: true
+    }
+  )
+
+  console.log(job)
+}
+
+module.exports.stop = async () => {
+  if (!queue) return
+
+  //TODO have to be fixed
+  //TODO find how to remove stalled jobs
+  await queue.close()
 }
 
 process.on('SIGTERM', module.exports.stop)

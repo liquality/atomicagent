@@ -4,8 +4,8 @@ const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda } = job
-  const { data } = job.attrs
+  const { queue } = job.queue
+  const { data } = job.data
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
@@ -51,7 +51,7 @@ module.exports = async (job) => {
       fromBlock: fromCurrentBlockNumber
     })
 
-    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
+    return queue.add('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
   }
 
   const toSecondaryFundTx = await order.fundSwap()
@@ -64,15 +64,19 @@ module.exports = async (job) => {
   await order.save()
 
   if (toSecondaryFundTx) {
-    await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toSecondaryFundHash' })
+    await queue.add('verify-tx', { orderId: order.orderId, type: 'toSecondaryFundHash' }, { delay: 15000 })
   }
 
   await order.log('FUND_SWAP', null, {
     toSecondaryFundHash: order.toSecondaryFundHash
   })
 
-  return agenda.schedule('in 15 seconds', 'find-claim-tx-or-refund', {
-    orderId: order.orderId,
-    toLastScannedBlock: data.toLastScannedBlock
-  })
+  return queue.add(
+    'find-claim-tx-or-refund',
+    {
+      orderId: order.orderId,
+      toLastScannedBlock: data.toLastScannedBlock
+    },
+    { delay: 15000 }
+  )
 }

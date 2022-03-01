@@ -11,6 +11,6 @@ module.exports = async (agenda) => {
 
     const processor = require(path.join(JOBS_DIR, jobSlug))
 
-    agenda.define(jobName, processor)
+    agenda.process(jobName, processor)
   })
 }

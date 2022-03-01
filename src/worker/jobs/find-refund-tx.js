@@ -4,8 +4,8 @@ const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda, attrs } = job
-  const { data } = attrs
+  const { queue } = job.queue
+  const { data } = job.data
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
@@ -20,7 +20,7 @@ module.exports = async (job) => {
   const fromRefundTx = await order.findRefundSwapTransaction(data.fromLastScannedBlock, fromCurrentBlockNumber)
 
   if (!fromRefundTx) {
-    job.attrs.data.fromLastScannedBlock = fromCurrentBlockNumber
+    data.fromLastScannedBlock = fromCurrentBlockNumber
     await job.save()
 
     throw new RescheduleError(`Waiting for user to refund ${order.orderId} ${order.toFundHash}`, order.from)
@@ -35,5 +35,6 @@ module.exports = async (job) => {
     fromRefundHash: fromRefundTx.hash
   })
 
-  return agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'fromRefundHash' })
+  //TODO schedule in 15
+  return queue.add('verify-tx', { orderId: order.orderId, type: 'fromRefundHash' }, { delay: 15000 })
 }

@@ -3,8 +3,7 @@ const debug = require('debug')('liquality:agent:worker:agent-claim')
 const Order = require('../../models/Order')
 
 module.exports = async (job) => {
-  const { agenda } = job
-  const { data } = job.attrs
+  const { queue, data } = job
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
@@ -22,5 +21,6 @@ module.exports = async (job) => {
     fromClaimHash: fromClaimTx.hash
   })
 
-  return agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'fromClaimHash' })
+  //TODO schedule in 15 seconds
+  return queue.add('verify-tx', { orderId: order.orderId, type: 'fromClaimHash' }, { delay: 15000 })
 }

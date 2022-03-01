@@ -4,8 +4,8 @@ const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda } = job
-  const { data } = job.attrs
+  const { queue } = job.queue
+  const { data } = job.data
 
   const order = await Order.findOne({ orderId: data.orderId }).exec()
   if (!order) return
@@ -48,9 +48,10 @@ module.exports = async (job) => {
         toBlockTimestamp: toCurrentBlock.timestamp
       })
 
-      await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toRefundHash' })
-
-      return agenda.now('find-refund-tx', { orderId: order.orderId })
+      //TODO re-schedule in 15sec
+      await queue.add('verify-tx', { orderId: order.orderId, type: 'toRefundHash' }, { delay: 15000 })
+      //TODO re-schedule in 15sec
+      return queue.add('find-refund-tx', { orderId: order.orderId })
     }
 
     await order.log('FIND_CLAIM_TX_OR_REFUND', 'AGENT_CLAIM_WAITING', {
@@ -72,7 +73,7 @@ module.exports = async (job) => {
     secret: toClaimTx.secret
   })
 
-  await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toClaimHash' })
+  await queue.add('verify-tx', { orderId: order.orderId, type: 'toClaimHash' }, { delay: 15000 })
 
-  return agenda.now('agent-claim', { orderId: order.orderId })
+  return queue.add('agent-claim', { orderId: order.orderId })
 }

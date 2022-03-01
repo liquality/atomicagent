@@ -3,10 +3,10 @@ const _ = require('lodash')
 
 const config = require('../config')
 const Order = require('../models/Order')
-
-module.exports = (agenda) =>
+//TODO update the agenda to queue
+module.exports = (queue) =>
   ['start', 'success', 'fail'].forEach((event) => {
-    agenda.on(event, async (...args) => {
+    queue.on(event, async (...args) => {
       const error = JSON.stringify(event.startsWith('fail') ? args[0] : null)
       const job = event.startsWith('fail') ? args[1] : args[0]
       const attrs = JSON.stringify(job.attrs)
