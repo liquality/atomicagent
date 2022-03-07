@@ -10,12 +10,13 @@ const AuditLog = require('../../models/AuditLog')
 const Asset = require('../../models/Asset')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
-const Job = require('../../models/Job')
 const pkg = require('../../../package.json')
 
 const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentCompatible')
 const hashUtil = require('../../utils/hash')
 const { DuplicateOrderError } = require('../../utils/errors')
+
+const { addUniqueJob } = require('../../worker')
 
 const amplitude = Amplitude.init(process.env.AMPLITUDE_API_KEY)
 
@@ -80,28 +81,22 @@ router.post(
       return res.notOk(400, `Invalid amount: ${fromAmount} (min: ${market.min}, max: ${market.max})`)
     }
 
+    const toAsset = await Asset.findOne({ code: body.to }).exec()
     const order = Order.fromMarket(market, body.fromAmount)
-    const toClient = await order.toClient()
 
-    const addresses = await toClient.wallet.getUsedAddresses()
-    const balance = await toClient.chain.getBalance(addresses)
-
-    if (BigNumber(balance).isLessThan(BigNumber(order.toAmount))) {
+    if (BigNumber(toAsset.balance).isLessThan(BigNumber(order.toAmount))) {
       return res.notOk(400, 'Counterparty has insufficient balance')
-    }
-
-    const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
-
-    if (passphrase) {
-      order.setPassphrase(passphrase)
     }
 
     order.userAgent = req.get('X-Liquality-User-Agent')
 
     order.setExpiration()
 
-    await Promise.all([order.setUsdRates(), order.setAgentAddresses()])
+    const fromAsset = await Asset.findOne({ code: body.from }).exec()
+    order.fromCounterPartyAddress = fromAsset.address
+    order.toCounterPartyAddress = toAsset.address
 
+    await order.setUsdRates()
     await order.save()
     await order.log('NEW_SWAP')
 
@@ -128,20 +123,11 @@ router.post(
 router.post(
   '/order/:orderId',
   asyncHandler(async (req, res) => {
-    const agenda = req.app.get('agenda')
     const { params, body } = req
 
     const order = await Order.findOne({ orderId: params.orderId }).exec()
     if (!order) {
       return res.notOk(400, `Order not found: ${params.orderId}`)
-    }
-
-    if (order.passphraseHash) {
-      const passphrase = body.passphrase || req.get('X-Liquality-Agent-Passphrase')
-
-      if (!passphrase || !order.verifyPassphrase(passphrase)) {
-        return res.notOk(401, 'You are not authorised')
-      }
     }
 
     const oldStatus = order.status
@@ -192,7 +178,7 @@ router.post(
     await order.log('SWAP_UPDATE', null, body)
 
     if (oldStatus === 'QUOTE') {
-      await agenda.now('verify-user-init-tx', { orderId: order.orderId })
+      addUniqueJob('1-verify-user-init', { orderId: order.orderId })
     }
 
     res.json(order.json())
@@ -209,26 +195,14 @@ router.get(
       return res.notOk(400, 'Order not found')
     }
 
-    if (order.passphraseHash) {
-      const passphrase = query.passphrase || req.get('X-Liquality-Agent-Passphrase')
-
-      if (!passphrase || !order.verifyPassphrase(passphrase)) {
-        return res.notOk(401, 'You are not authorised')
-      }
-    }
-
     const json = order.json()
 
     if (query.verbose === 'true') {
       try {
         json.agent_version = pkg.version
 
-        const [auditLog, jobData] = await Promise.all([
-          AuditLog.find({ orderId: params.orderId }).select('-_id -orderId').exec(),
-          Job.findByOrderId(params.orderId)
-        ])
+        const auditLog = await AuditLog.find({ orderId: params.orderId }).select('-_id -orderId').exec()
 
-        json.job_data = jobData
         json.audit_log = auditLog
       } catch (e) {
         json.verbose_error = e.toString()

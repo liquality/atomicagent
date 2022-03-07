@@ -9,7 +9,12 @@ const AssetSchema = new mongoose.Schema(
       unique: true
     },
 
-    actualBalance: {
+    address: {
+      type: String,
+      index: true
+    },
+
+    balance: {
       type: Number
     },
 

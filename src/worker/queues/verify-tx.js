@@ -1,4 +1,7 @@
+require('../../utils/sentry')
+require('../../utils/mongo').connect()
 const debug = require('debug')('liquality:agent:worker:verify-tx')
+
 const BN = require('bignumber.js')
 const { assets } = require('@liquality/cryptoassets')
 
@@ -7,8 +10,9 @@ const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { attrs } = job
-  const { orderId, type } = attrs.data
+  debug(job.data)
+
+  const { orderId, type } = job.data
 
   const order = await Order.findOne({ orderId }).exec()
   if (!order) return

@@ -7,26 +7,39 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-const mongoConnect = require('./utils/mongoConnect')
-const config = require('./config')
+const api = require('./api')
+const worker = require('./worker')
+const mongo = require('./utils/mongo')
 
-// Load db settings and establish connection
-mongoConnect.connect(config.database)
+mongo.connect()
 
-// Run service
+function start() {
+  api.start()
+  worker.start()
+}
+
+function stop(signal) {
+  return async function () {
+    console.log('Received', signal)
+
+    await worker.stop()
+    await api.stop()
+    await mongo.disconnect()
+    process.exit(0)
+  }
+}
+
 switch (process.env.PROCESS_TYPE) {
-  case 'api':
-    require('./api').start()
-    break
-
-  case 'worker':
-    require('./worker').start()
-    break
-
   case 'migrate':
     require('./migrate').run()
     break
 
-  default:
-    throw new Error('Unknown PROCESS_TYPE')
+  default: {
+    start()
+
+    process.on('SIGTERM', stop('SIGTERM'))
+    process.on('SIGINT', stop('SIGINT'))
+
+    break
+  }
 }

@@ -21,12 +21,10 @@ manualAboveFromAmountUsd = 5000
 # mnemonicsBasePath = "secret/data/agent/mainnet/production/mnemonics"
 
 [worker]
-maxJobRetry = 5
-jobRetryDelay = "5 seconds"
-backendJobRetryDelay = "5 seconds"
 minConcurrentSwaps = 3
-defaultLockLifetimeInMs = 120000 # 2 min
 killswitch = 'pm2 stop "Worker"'
+maxConcurrentJobs = 3
+maxConcurrentJobsDurationInSeconds = 20
 
 [assets]
   [assets.BTC]
@@ -34,7 +32,7 @@ killswitch = 'pm2 stop "Worker"'
   addressType = "bech32"
   swapMode = "p2wsh"
   feeNumberOfBlocks = 2
-  blockTime = "5 seconds"
+  blockTimeInSeconds = 5
   defaultFee = "average"
     [assets.BTC.wallet]
     type = "js"
@@ -50,7 +48,7 @@ killswitch = 'pm2 stop "Worker"'
 
   [assets.ETH]
   network="local"
-  blockTime = "5 seconds"
+  blockTimeInSeconds = 5
   defaultFee = "average"
     [assets.ETH.wallet]
     type = "js"
@@ -63,7 +61,7 @@ killswitch = 'pm2 stop "Worker"'
   [assets.DAI]
   network="local"
   type = "ERC20"
-  blockTime = "5 seconds"
+  blockTimeInSeconds = 5
   contractAddress = "0x094cdd8e19b97505869c87a995a972c4df7f69a8"
   defaultFee = "average"
     [assets.DAI.wallet]
@@ -75,7 +73,7 @@ killswitch = 'pm2 stop "Worker"'
     url = "http://localhost:8545"
 
   [assets.RBTC]
-  blockTime = "20 seconds"
+  blockTimeInSeconds = 20
   network = "rsk_testnet"
   defaultFee = "average"
   pegWith = "BTC"
@@ -88,7 +86,7 @@ killswitch = 'pm2 stop "Worker"'
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
 
   [assets.SOV]
-  blockTime = "20 seconds"
+  blockTimeInSeconds = 20
   network = "rsk_testnet"
   defaultFee = "average"
   contractAddress = "0x6a9A07972D07E58f0daF5122D11e069288A375fB"

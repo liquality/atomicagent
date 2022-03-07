@@ -1,13 +1,16 @@
+require('../../utils/sentry')
+require('../../utils/mongo').connect()
 const debug = require('debug')('liquality:agent:worker:verify-user-init-tx')
 
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda } = job
-  const { data } = job.attrs
+  debug(job.data)
 
-  const order = await Order.findOne({ orderId: data.orderId }).exec()
+  const { orderId } = job.data
+
+  const order = await Order.findOne({ orderId }).exec()
   if (!order) return
   if (order.status !== 'USER_FUNDED_UNVERIFIED') return
 
@@ -16,14 +19,12 @@ module.exports = async (job) => {
   if (order.isQuoteExpired()) {
     debug(`Order ${order.orderId} expired due to expiresAt`)
 
-    order.addTx('fromRefundHash', { placeholder: true })
     order.status = 'QUOTE_EXPIRED'
-    await order.save()
 
+    await order.save()
     await order.log('VERIFY_USER_INIT_TX')
 
-    const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
-    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
+    return
   }
 
   await order.verifyInitiateSwapTransaction()
@@ -59,5 +60,12 @@ module.exports = async (job) => {
   await order.save()
   await order.log('VERIFY_USER_INIT_TX')
 
-  return agenda.now('reciprocate-init-swap', { orderId: order.orderId })
+  return {
+    next: [
+      {
+        name: '2-agent-reciprocate',
+        data: { orderId, asset: order.to }
+      }
+    ]
+  }
 }

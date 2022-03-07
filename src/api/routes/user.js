@@ -13,28 +13,28 @@ const ALLOWED_TYPES = ['reciprocate-init-swap']
 
 const ALLOWED_ACTIONS = ['approve', 'reject']
 
-const ALLOWED_RETRY_JOBS = [
-  {
-    name: 'verify-user-init-tx',
-    setStatus: 'USER_FUNDED_UNVERIFIED'
-  },
-  {
-    name: 'reciprocate-init-swap',
-    setStatus: 'USER_FUNDED'
-  },
-  {
-    name: 'fund-swap',
-    setStatus: 'AGENT_CONTRACT_CREATED'
-  },
-  {
-    name: 'find-claim-tx-or-refund',
-    setStatus: 'AGENT_FUNDED'
-  },
-  {
-    name: 'agent-claim',
-    setStatus: 'USER_CLAIMED'
-  }
-]
+// const ALLOWED_RETRY_JOBS = [
+//   {
+//     name: 'verify-user-init-tx',
+//     setStatus: 'USER_FUNDED_UNVERIFIED'
+//   },
+//   {
+//     name: 'reciprocate-init-swap',
+//     setStatus: 'USER_FUNDED'
+//   },
+//   {
+//     name: 'fund-swap',
+//     setStatus: 'AGENT_CONTRACT_CREATED'
+//   },
+//   {
+//     name: 'find-claim-tx-or-refund',
+//     setStatus: 'AGENT_FUNDED'
+//   },
+//   {
+//     name: 'agent-claim',
+//     setStatus: 'USER_CLAIMED'
+//   }
+// ]
 
 router.post(
   '/login',
@@ -107,47 +107,46 @@ router.get(
   })
 )
 
-router.post(
-  '/order/retry',
-  ensureAuth(401),
-  asyncHandler(async (req, res) => {
-    const agenda = req.app.get('agenda')
-    const { body } = req
-    const { orderId, jobName } = body
+// router.post(
+//   '/order/retry',
+//   ensureAuth(401),
+//   asyncHandler(async (req, res) => {
+//     const { body } = req
+//     const { orderId, jobName } = body
 
-    if (!orderId) {
-      return res.notOk(400, 'Order ID missing')
-    }
+//     if (!orderId) {
+//       return res.notOk(400, 'Order ID missing')
+//     }
 
-    if (!ALLOWED_RETRY_JOBS.find((job) => job.name === jobName)) {
-      return res.notOk(400, `Invalid job name: ${jobName}`)
-    }
+//     if (!ALLOWED_RETRY_JOBS.find((job) => job.name === jobName)) {
+//       return res.notOk(400, `Invalid job name: ${jobName}`)
+//     }
 
-    const order = await Order.findOne({ orderId: orderId }).exec()
-    if (!order) {
-      return res.notOk(400, `Order not found: ${orderId}`)
-    }
+//     const order = await Order.findOne({ orderId: orderId }).exec()
+//     if (!order) {
+//       return res.notOk(400, `Order not found: ${orderId}`)
+//     }
 
-    const index = ALLOWED_RETRY_JOBS.findIndex((job) => job.name === jobName)
-    const jobsToBeRemoved = ALLOWED_RETRY_JOBS.slice(index).map((job) => job.name)
+//     const index = ALLOWED_RETRY_JOBS.findIndex((job) => job.name === jobName)
+//     const jobsToBeRemoved = ALLOWED_RETRY_JOBS.slice(index).map((job) => job.name)
 
-    await agenda.cancel({
-      name: {
-        $in: jobsToBeRemoved
-      },
-      'data.orderId': orderId
-    })
+//     await agenda.cancel({
+//       name: {
+//         $in: jobsToBeRemoved
+//       },
+//       'data.orderId': orderId
+//     })
 
-    order.status = ALLOWED_RETRY_JOBS[index].setStatus
-    await order.save()
+//     order.status = ALLOWED_RETRY_JOBS[index].setStatus
+//     await order.save()
 
-    await agenda.now(jobName, { orderId: order.orderId })
+//     await agenda.now(jobName, { orderId: order.orderId })
 
-    await order.log('RETRY', jobName)
+//     await order.log('RETRY', jobName)
 
-    res.ok()
-  })
-)
+//     res.ok()
+//   })
+// )
 
 router.post(
   '/order/ignore',
@@ -225,7 +224,11 @@ router.post(
 
     await check.save()
 
-    await order.log('AUTH', action === 'approve' ? 'APPROVED' : 'REJECTED', { type, message, action })
+    await order.log('AUTH', action === 'approve' ? 'APPROVED' : 'REJECTED', {
+      type,
+      message,
+      action
+    })
 
     res.ok()
   })

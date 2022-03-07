@@ -1,10 +1,9 @@
 const debug = require('debug')('liquality:agent:market')
 const mongoose = require('mongoose')
-const Sentry = require('@sentry/node')
 
 const Bluebird = require('bluebird')
 const BN = require('bignumber.js')
-const { assets: ASSETS, unitToCurrency } = require('@liquality/cryptoassets')
+const { assets: ASSETS, chains, unitToCurrency } = require('@liquality/cryptoassets')
 
 const Asset = require('./Asset')
 const MarketHistory = require('./MarketHistory')
@@ -13,6 +12,7 @@ const fx = require('../utils/fx')
 const { getClient } = require('../utils/clients')
 const config = require('../config')
 const coingecko = require('../utils/coinGeckoClient')
+const reportError = require('../worker/reportError')
 
 const MarketSchema = new mongoose.Schema(
   {
@@ -92,18 +92,29 @@ MarketSchema.static('updateAllMarketData', async function () {
   await Bluebird.map(
     assets,
     async (asset) => {
+      debug(`Updating ${asset.code}...`)
       const mkt = marketRates.find((market) => market.from === asset.code || market.to === asset.code)
       await MarketHistory.logRate([asset.code, 'USD'].join('-'), mkt.usd[asset.code])
 
       try {
         const client = await asset.getClient()
         const addresses = await client.wallet.getUsedAddresses()
-        asset.actualBalance = await client.chain.getBalance(addresses)
-        debug('Balance', unitToCurrency(ASSETS[asset.code], asset.actualBalance).toString(), asset.code)
+        asset.balance = await client.chain.getBalance(addresses)
+
+        try {
+          const address = (await client.wallet.getUnusedAddress()).address
+          asset.address = chains[ASSETS[asset.code].chain].formatAddress(address)
+        } catch (e) {
+          // ignore if this snippet fails
+        }
+
+        debug('Balance', unitToCurrency(ASSETS[asset.code], asset.balance).toString(), asset.code)
+
         await asset.save()
+
+        debug('Updated', asset.code, asset.address)
       } catch (e) {
-        Sentry.captureException(e)
-        debug(e)
+        reportError(e)
         debug(`Could not update balance of ${asset.code}`)
       }
 
@@ -130,7 +141,7 @@ MarketSchema.static('updateAllMarketData', async function () {
       market.minConf = fromAsset.minConf
       market.min = fromAsset.min
 
-      const toMaxAmount = BN(toAsset.actualBalance).div(config.worker.minConcurrentSwaps)
+      const toMaxAmount = BN(toAsset.balance).div(config.worker.minConcurrentSwaps)
       const toAssetMax = toAsset.max ? BN.min(toAsset.max, toMaxAmount) : toMaxAmount
 
       market.max = BN(fx.calculateToAmount(to, from, toAssetMax, reverseMarketRate)).dp(0, BN.ROUND_DOWN)

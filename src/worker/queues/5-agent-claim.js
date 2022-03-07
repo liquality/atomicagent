@@ -1,18 +1,21 @@
+require('../../utils/sentry')
+require('../../utils/mongo').connect()
 const debug = require('debug')('liquality:agent:worker:agent-claim')
 
 const Order = require('../../models/Order')
 
 module.exports = async (job) => {
-  const { agenda } = job
-  const { data } = job.attrs
+  debug(job.data)
 
-  const order = await Order.findOne({ orderId: data.orderId }).exec()
+  const { orderId } = job.data
+
+  const order = await Order.findOne({ orderId }).exec()
   if (!order) return
   if (order.status !== 'USER_CLAIMED') return
 
   const fromClaimTx = await order.claimSwap()
 
-  debug('Node has claimed the swap', order.orderId, fromClaimTx.hash)
+  debug('Node has claimed the swap', orderId, fromClaimTx.hash)
 
   order.addTx('fromClaimHash', fromClaimTx)
   order.status = 'AGENT_CLAIMED'
@@ -22,5 +25,15 @@ module.exports = async (job) => {
     fromClaimHash: fromClaimTx.hash
   })
 
-  return agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'fromClaimHash' })
+  return {
+    next: [
+      {
+        name: 'verify-tx',
+        data: {
+          orderId,
+          type: 'fromClaimHash'
+        }
+      }
+    ]
+  }
 }

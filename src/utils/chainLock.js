@@ -2,19 +2,30 @@ const debug = require('debug')('liquality:agent:chain-lock')
 
 const EventEmitter = require('events')
 const _ = require('lodash')
-const { isEthereumChain, assets } = require('@liquality/cryptoassets')
+const { assets } = require('@liquality/cryptoassets')
 
-const { RescheduleError, PossibleTimelockError } = require('./errors')
+const { RescheduleError } = require('./errors')
 
 let counter = 0
+
 const PENDING = {}
 const CHAIN_LOCK_TIMESTAMP = {}
 const CHAIN_LOCK = {}
+
 const emitter = new EventEmitter()
 emitter.setMaxListeners(20)
 
 const wait = (millis) => new Promise((resolve) => setTimeout(() => resolve(), millis))
 const waitForRandom = (min, max) => wait(_.random(min, max))
+
+const RETRY_ON = [
+  'TxNotFoundError',
+  'PendingTxError',
+  'BlockNotFoundError',
+  'InsufficientBalanceError',
+  'RescheduleError',
+  'PossibleTimelockError'
+]
 
 const attemptToLockChain = (asset) => {
   const chain = assets[asset].chain
@@ -72,11 +83,28 @@ const getLockForAsset = async (asset, id) => {
     }
   }
 
-  debug(`Got lock for ${chain} [#${id}] - (Pending: ${[...PENDING[chain]]})`)
+  debug(`Got lock for ${chain} [#${id}] - (Pending IDs: ${[...PENDING[chain]]})`)
 
   CHAIN_LOCK_TIMESTAMP[chain] = Date.now()
 
   return chain
+}
+
+const withRetry = async (asset, func) => {
+  try {
+    const result = await func()
+    return result
+  } catch (e) {
+    if (RETRY_ON.includes(e.name)) {
+      throw new RescheduleError(e.message, asset)
+    }
+
+    if (e.message.includes('opcode 0xfe not defined') || e.message.includes('execution reverted')) {
+      throw new RescheduleError(e.message, asset)
+    }
+
+    throw e
+  }
 }
 
 const withLock = async (asset, func) => {
@@ -84,29 +112,16 @@ const withLock = async (asset, func) => {
   const chain = await getLockForAsset(asset, id)
 
   try {
-    const result = await func()
+    const result = await withRetry(asset, func)
     return result
-  } catch (e) {
-    if (['TxNotFoundError', 'PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-      throw new RescheduleError(e.message, asset)
-    }
-
-    if (
-      (chain === 'bitcoin' && e.message.includes('non-final')) ||
-      (isEthereumChain(chain) &&
-        (e.message.includes('opcode 0xfe not defined') || e.message.includes('execution reverted')))
-    ) {
-      throw new PossibleTimelockError(e.message, asset)
-    }
-
-    throw e
   } finally {
     unlockAsset(chain)
-    debug(`Unlocked ${chain} [#${id}] - (Pending: ${[...PENDING[chain]]})`)
+    debug(`Unlocked ${chain} [#${id}] - (Pending IDs: ${[...PENDING[chain]]})`)
   }
 }
 
 module.exports = {
+  withRetry,
   withLock,
   wait,
   waitForRandom

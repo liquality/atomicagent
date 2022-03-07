@@ -106,13 +106,7 @@ const createQuery = (_query) => {
   }
 
   if (pending) {
-    if (pending.length === 2) {
-      query.hasUnconfirmedTx = true
-    } else if (pending[0] === 'USER') {
-      query.hasUserUnconfirmedTx = true
-    } else {
-      query.hasAgentUnconfirmedTx = true
-    }
+    query.hasAgentUnconfirmedTx = true
   }
 
   return query
@@ -256,8 +250,12 @@ router.get(
       acc[`market:${market}:sum:fromAmountUsd`] = {
         $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
       }
-      acc[`market:${market}:sum:toAmountUsd`] = { $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] } }
-      acc[`market:${market}:count`] = { $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] } }
+      acc[`market:${market}:sum:toAmountUsd`] = {
+        $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] }
+      }
+      acc[`market:${market}:count`] = {
+        $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] }
+      }
 
       return acc
     }, {})
@@ -277,12 +275,20 @@ router.get(
           _id: '$date',
           ...$group,
           'wallet:sum:fromAmountUsd': {
-            $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0] }
+            $sum: {
+              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
+            }
           },
           'wallet:sum:toAmountUsd': {
-            $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0] }
+            $sum: {
+              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
+            }
           },
-          'wallet:count': { $sum: { $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0] } },
+          'wallet:count': {
+            $sum: {
+              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
+            }
+          },
           'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
           'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
           'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },

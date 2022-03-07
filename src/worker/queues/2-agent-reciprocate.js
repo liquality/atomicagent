@@ -1,3 +1,5 @@
+require('../../utils/sentry')
+require('../../utils/mongo').connect()
 const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
 
 const config = require('../../config')
@@ -7,10 +9,11 @@ const Asset = require('../../models/Asset')
 const { RescheduleError } = require('../../utils/errors')
 
 module.exports = async (job) => {
-  const { agenda } = job
-  const { data } = job.attrs
+  debug(job.data)
 
-  const order = await Order.findOne({ orderId: data.orderId }).exec()
+  const { orderId } = job.data
+
+  const order = await Order.findOne({ orderId }).exec()
   if (!order) return
   if (order.status !== 'USER_FUNDED') return
 
@@ -48,35 +51,35 @@ module.exports = async (job) => {
       order.status = 'SWAP_EXPIRED'
     }
 
-    order.addTx('fromRefundHash', { placeholder: true })
     await order.save()
 
     await order.log('RECIPROCATE_INIT_SWAP', null, {
       fromBlock: fromCurrentBlockNumber
     })
 
-    return agenda.now('find-refund-tx', { orderId: order.orderId, fromLastScannedBlock: fromCurrentBlockNumber })
+    return
   }
 
-  const check = await Check.getCheckForOrder(data.orderId)
+  const check = await Check.getCheckForOrder(orderId)
   const flag = check.get('flags.reciprocate-init-swap') || {}
 
   if (flag.reject) {
-    debug(`Rejected ${data.orderId}`, flag.message)
+    debug(`Rejected ${orderId}`, flag.message)
     return
   }
 
   const withinUsdThreshold = order.fromAmountUsd > 0 && order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd
   if (!withinUsdThreshold) {
     if (!flag.approve) {
-      throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
+      throw new RescheduleError(`Reschedule ${orderId}: reciprocate-init-swap is not approved yet`, order.from)
     }
-    debug(`Approved ${data.orderId}`, flag.message)
+
+    debug(`Approved ${orderId}`, flag.message)
   }
 
   const fromAsset = await Asset.findOne({ code: order.from }).exec()
   if (fromAsset['24hrUsdLimit']) {
-    const yesterday = new Date() - 1000 * 60 * 60 * 24
+    const yesterday = Date.now() - 1000 * 60 * 60 * 24
     const query = await Order.aggregate([
       {
         $match: {
@@ -95,9 +98,9 @@ module.exports = async (job) => {
     const fromAmountDaily = query[0]['sum:fromAmountUsd']
     if (fromAmountDaily > fromAsset['24hrUsdLimit']) {
       if (!flag.approve) {
-        throw new RescheduleError(`Reschedule ${data.orderId}: reciprocate-init-swap is not approved yet`, order.from)
+        throw new RescheduleError(`Reschedule ${orderId}: reciprocate-init-swap is not approved yet`, order.from)
       }
-      debug(`Approved ${data.orderId}`, flag.message)
+      debug(`Approved ${orderId}`, flag.message)
     }
   }
 
@@ -114,19 +117,17 @@ module.exports = async (job) => {
 
   await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
 
-  debug(`Auto-approved order ${data.orderId} worth $${order.fromAmountUsd}`)
+  debug(`Auto-approved order ${orderId} worth $${order.fromAmountUsd}`)
 
   const toLastScannedBlock = await toClient.chain.getBlockHeight()
 
   const toFundTx = await order.initiateSwap()
 
-  debug('Initiated funding transaction', order.orderId, toFundTx.hash)
+  debug('Created contract/funded with transaction', order.orderId, toFundTx.hash)
 
   order.addTx('toFundHash', toFundTx)
   order.status = 'AGENT_CONTRACT_CREATED'
   await order.save()
-
-  await agenda.schedule('in 15 seconds', 'verify-tx', { orderId: order.orderId, type: 'toFundHash' })
 
   await order.log('RECIPROCATE_INIT_SWAP', null, {
     toLastScannedBlock: toLastScannedBlock,
@@ -134,5 +135,22 @@ module.exports = async (job) => {
     toSecondaryFundHash: order.toSecondaryFundHash
   })
 
-  return agenda.now('fund-swap', { orderId: order.orderId, toLastScannedBlock })
+  return {
+    next: [
+      {
+        name: '3-agent-fund',
+        data: { orderId, toLastScannedBlock, asset: order.to },
+        opts: {
+          delay: 1000 * 15
+        }
+      },
+      {
+        name: 'verify-tx',
+        data: {
+          orderId,
+          type: 'toFundHash'
+        }
+      }
+    ]
+  }
 }

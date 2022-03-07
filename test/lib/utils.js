@@ -20,7 +20,6 @@ const config = require('../../src/config')
 const Asset = require('../../src/models/Asset')
 const Market = require('../../src/models/Market')
 const MarketHistory = require('../../src/models/MarketHistory')
-const Job = require('../../src/models/Job')
 const Order = require('../../src/models/Order')
 const Check = require('../../src/models/Check')
 
@@ -53,16 +52,12 @@ const getClient = async function (asset) {
 
 module.exports.getClient = getClient
 
-const clearJobs = () =>
-  Job.deleteMany({ name: { $ne: 'update-market-data' } }).then(() => debug('Cleared Job collection'))
 const updateMarketData = () => Market.updateAllMarketData().then(() => debug('Updated marketdata'))
 
-module.exports.clearJobs = clearJobs
 module.exports.updateMarketData = updateMarketData
 
 const clear = () =>
-  clearJobs()
-    .then(() => Order.deleteMany({}))
+  Order.deleteMany({})
     .then(() => debug('Cleared Order collection'))
     .then(() => Check.deleteMany({}))
     .then(() => debug('Cleared Check collection'))
@@ -149,7 +144,7 @@ module.exports.approveOrder = async (context) => {
   return check.save()
 }
 
-module.exports.initiate = async (context) => {
+module.exports.userInitiate = async (context) => {
   const fromClient = await getClient(context.from)
   const toClient = await getClient(context.to)
 
@@ -179,7 +174,7 @@ module.exports.initiate = async (context) => {
   context.fromFundHash = tx.hash
 }
 
-module.exports.fund = async (context, request) => {
+module.exports.userFund = async (context, request) => {
   const fromClient = await getClient(context.from)
   const { defaultFee } = config.assets[context.from]
 
@@ -236,7 +231,7 @@ module.exports.updateAgentOrder = (context, request, isDuplicate = false) => {
     })
 }
 
-module.exports.verifyInitiate = async (context, request) => {
+module.exports.verifyAgentInitiation = async (context, request) => {
   const check = () =>
     waitForRandom(1000, 1500).then(() =>
       request.get(`/api/swap/order/${context.orderId}`).then((res) => {
@@ -302,7 +297,7 @@ module.exports.findAgentFundingTx = async (context) => {
   context.toFundHash = tx.hash
 }
 
-module.exports.claim = async (context) => {
+module.exports.userClaim = async (context) => {
   const toClient = await getClient(context.to)
 
   const { defaultFee } = config.assets[context.to]
@@ -322,37 +317,6 @@ module.exports.claim = async (context) => {
       context.secret,
       fees[defaultFee].fee
     )
-  })
-}
-
-module.exports.refundSwap = async (context) => {
-  const fromClient = await getClient(context.from)
-
-  const { defaultFee } = config.assets[context.from]
-
-  return withLock(context.from, async () => {
-    const fees = await fromClient.chain.getFees()
-
-    const { hash } = await fromClient.swap.refundSwap(
-      {
-        value: BN(context.fromAmount),
-        recipientAddress: context.fromCounterPartyAddress,
-        refundAddress: context.fromAddress,
-        secretHash: context.secretHash,
-        expiration: context.swapExpiration
-      },
-      context.fromFundHash,
-      fees[defaultFee].fee
-    )
-
-    context.fromRefundHash = hash
-  }).catch((e) => {
-    if (e.name === 'PossibleTimelockError') {
-      console.log('[user] PossibleTimelockError')
-      return wait(5000).then(() => module.exports.refundSwap(context))
-    }
-
-    throw e
   })
 }
 
@@ -377,16 +341,16 @@ module.exports.verifyAllTxs = async (context, request) => {
       request.get(`/api/swap/order/${context.orderId}`).then((res) => {
         res.should.have.status(200)
 
-        if (res.body.hasUnconfirmedTx) return check()
+        if (res.body.hasAgentUnconfirmedTx) return check()
 
-        expect(res.body.hasUnconfirmedTx).to.equal(false)
+        expect(res.body.hasAgentUnconfirmedTx).to.equal(false)
       })
     )
 
   return check()
 }
 
-module.exports.verifyClaimOrRefund = async (context, request, expectedStatus) => {
+module.exports.verifyAgentClaimOrRefund = async (context, request, expectedStatus) => {
   const check = () =>
     waitForRandom(1000, 1500).then(() =>
       request.get(`/api/swap/order/${context.orderId}`).then((res) => {

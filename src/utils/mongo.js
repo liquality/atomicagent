@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
+const config = require('../config')
 
-const connect = async (options) => {
-  mongoose.set('debug', options.debug)
+const connect = async () => {
+  mongoose.set('debug', config.database.debug)
 
   const mongooseOnError = (err) => {
     console.error(err)
@@ -9,7 +10,7 @@ const connect = async (options) => {
   }
 
   mongoose
-    .connect(options.uri, {
+    .connect(config.database.uri, {
       useNewUrlParser: true,
       useUnifiedTopology: false
     })
@@ -19,5 +20,7 @@ const connect = async (options) => {
 }
 
 module.exports = {
-  connect
+  mongoose,
+  connect,
+  disconnect: () => mongoose.disconnect()
 }
