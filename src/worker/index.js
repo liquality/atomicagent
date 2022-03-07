@@ -6,9 +6,8 @@ const Queue = require('bull')
 const Redis = require('ioredis')
 const { assets } = require('@liquality/cryptoassets')
 
+const config = require('../config')
 const reportError = require('./reportError')
-
-const { REDIS_URL } = process.env
 
 let client
 let subscriber
@@ -37,16 +36,16 @@ const opts = {
     switch (type) {
       case 'client':
         if (!client) {
-          client = new Redis(REDIS_URL, redisOpts)
+          client = new Redis(config.redis.uri, redisOpts)
         }
         return client
       case 'subscriber':
         if (!subscriber) {
-          subscriber = new Redis(REDIS_URL, redisOpts)
+          subscriber = new Redis(config.redis.uri, redisOpts)
         }
         return subscriber
       case 'bclient': {
-        const client = new Redis(REDIS_URL, redisOpts)
+        const client = new Redis(config.redis.uri, redisOpts)
         bclients.push(client)
         return client
       }

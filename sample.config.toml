@@ -1,6 +1,9 @@
 [database]
 uri = "mongodb://localhost/liqualitytest"
-debug = true
+debug = false
+
+[redis]
+uri = "redis://localhost:6379/1"
 
 [application]
 apiPort = 3030
@@ -23,8 +26,6 @@ manualAboveFromAmountUsd = 5000
 [worker]
 minConcurrentSwaps = 3
 killswitch = 'pm2 stop "Worker"'
-maxConcurrentJobs = 3
-maxConcurrentJobsDurationInSeconds = 20
 
 [assets]
   [assets.BTC]
