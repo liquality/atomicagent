@@ -46,7 +46,7 @@ describe.only('Swap', () => {
           await updateMarketData()
 
           config.application.swapExpirationDurationInSeconds = 70
-          config.application.nodeSwapExpirationDurationInSeconds = 30
+          config.application.nodeSwapExpirationDurationInSeconds = 50
         })
 
         swap([SWAPS[market][0]], { refund: false, reject: false })
@@ -62,7 +62,7 @@ describe.only('Swap', () => {
           await updateMarketData()
 
           config.application.swapExpirationDurationInSeconds = 70
-          config.application.nodeSwapExpirationDurationInSeconds = 30
+          config.application.nodeSwapExpirationDurationInSeconds = 50
         })
 
         swap([SWAPS[market][0]], { refund: true, reject: false })
@@ -75,8 +75,8 @@ describe.only('Swap', () => {
       this.timeout(0)
       await updateMarketData()
 
-      config.application.swapExpirationDurationInSeconds = 2000
-      config.application.nodeSwapExpirationDurationInSeconds = 1000
+      config.application.swapExpirationDurationInSeconds = 580
+      config.application.nodeSwapExpirationDurationInSeconds = 380
     })
 
     swap(SWAPS_ARR, { refund: false, reject: false })

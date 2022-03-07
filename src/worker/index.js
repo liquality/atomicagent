@@ -121,7 +121,7 @@ module.exports.start = async () => {
         debug(`Adding ${job.name} due to RescheduleError with ${opts.delay}ms delay`)
 
         const data = {
-          chain: assets[err.asset].chain,
+          groupBy: assets[err.asset].chain,
           ...job.data
         }
 

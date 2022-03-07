@@ -24,7 +24,8 @@ const RETRY_ON = [
   'BlockNotFoundError',
   'InsufficientBalanceError',
   'RescheduleError',
-  'PossibleTimelockError'
+  'PossibleTimelockError',
+  'NodeError'
 ]
 
 const attemptToLockChain = (asset) => {
