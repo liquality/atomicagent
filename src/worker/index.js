@@ -165,4 +165,4 @@ module.exports.stop = async () => {
   console.log('Closed worker')
 }
 
-module.exports.queue = mainqueue
+module.exports.getQueues = () => [mainqueue, updateMarketDataQueue]

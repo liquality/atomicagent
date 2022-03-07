@@ -5,7 +5,7 @@ const swap = require('./lib/swap')
 const { prepare, updateMarketData } = require('./lib/utils')
 const config = require('../src/config')
 
-const NUM_CONCURRENT_SWAPS_PER_MARKET = 2
+const NUM_CONCURRENT_SWAPS_PER_MARKET = 1
 
 const AMOUNT = {
   BTC: () => _.random(...[0.03, 0.031].map((v) => v * 1e8)),
@@ -75,8 +75,8 @@ describe.only('Swap', () => {
       this.timeout(0)
       await updateMarketData()
 
-      config.application.swapExpirationDurationInSeconds = 580 * 3
-      config.application.nodeSwapExpirationDurationInSeconds = 380 * 4
+      config.application.swapExpirationDurationInSeconds = 2000
+      config.application.nodeSwapExpirationDurationInSeconds = 1000
     })
 
     swap(SWAPS_ARR, { refund: false, reject: false })

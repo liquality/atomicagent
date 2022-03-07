@@ -13,9 +13,9 @@ const mongo = require('./utils/mongo')
 
 mongo.connect()
 
-function start() {
+async function start() {
+  await worker.start()
   api.start()
-  worker.start()
 }
 
 function stop(signal) {

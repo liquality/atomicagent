@@ -83,8 +83,8 @@ module.exports.prepare = () =>
     .connect(config.database.uri, { useNewUrlParser: true })
     .then(() => module.exports.deployAndMintMidman())
     .then(() => clear())
-    .then(() => api.start())
     .then(() => worker.start())
+    .then(() => api.start())
     .then(() => waitForRandom(3500, 5000))
     .then(() => debug('Started api & worker'))
 

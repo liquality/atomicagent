@@ -7,7 +7,13 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
+const basicAuth = require('express-basic-auth')
 
+const { createBullBoard } = require('@bull-board/api')
+const { BullAdapter } = require('@bull-board/api/bullAdapter')
+const { ExpressAdapter } = require('@bull-board/express')
+
+const { getQueues } = require('../worker')
 const config = require('../config')
 const httpHelpers = require('../middlewares/httpHelpers')
 const handleHttpError = require('../middlewares/handleHttpError')
@@ -55,10 +61,24 @@ module.exports.start = () => {
   app.use('/api/swap', require('./routes/swap'))
   app.use('/api/dash', require('./routes/dash'))
 
-  // TODO: guard this route
-  // if (process.env.NODE_ENV !== 'test') {
-  //   app.use('/queue')
-  // }
+  const serverAdapter = new ExpressAdapter()
+
+  createBullBoard({
+    queues: getQueues().map((q) => new BullAdapter(q)),
+    serverAdapter: serverAdapter
+  })
+
+  serverAdapter.setBasePath('/queues')
+
+  app.use(
+    '/queues',
+    basicAuth({
+      users: { admin: config.application.queuePassword },
+      challenge: true,
+      realm: 'AtomicAgent'
+    }),
+    serverAdapter.getRouter()
+  )
 
   if (process.env.NODE_ENV === 'production') {
     app.use(Sentry.Handlers.errorHandler())
