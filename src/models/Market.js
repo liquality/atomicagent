@@ -12,7 +12,7 @@ const fx = require('../utils/fx')
 const { getClient } = require('../utils/clients')
 const config = require('../config')
 const coingecko = require('../utils/coinGeckoClient')
-const reportError = require('../worker/reportError')
+const reportError = require('../utils/reportError')
 
 const MarketSchema = new mongoose.Schema(
   {
@@ -110,6 +110,8 @@ MarketSchema.static('updateAllMarketData', async function () {
 
         debug('Balance', unitToCurrency(ASSETS[asset.code], asset.balance).toString(), asset.code)
 
+        // force update timestamp, if balance doesn't change for an asset
+        asset.updatedAt = new Date()
         await asset.save()
 
         debug('Updated', asset.code, asset.address)

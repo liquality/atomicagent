@@ -7,7 +7,7 @@ const Redis = require('ioredis')
 const { assets } = require('@liquality/cryptoassets')
 
 const config = require('../config')
-const reportError = require('./reportError')
+const reportError = require('../utils/reportError')
 
 let client
 let subscriber
