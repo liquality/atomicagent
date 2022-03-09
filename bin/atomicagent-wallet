@@ -11,7 +11,7 @@ addCommonOptions(program)
 async function printBalance(asset) {
   const client = await getClient(asset)
   const addresses = await client.wallet.getUsedAddresses()
-  const balance = await client.chain.getBalance(addresses)
+  const balance = addresses.length === 0 ? 0 : await client.chain.getBalance(addresses)
   const balanceInCurrency = unitToCurrency(assets[asset], balance).toNumber()
   const code = assets[asset].code
 
