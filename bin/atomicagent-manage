@@ -5,14 +5,13 @@ const Bluebird = require('bluebird')
 
 const { addCommonOptions } = require('./common')
 const { assets, currencyToUnit } = require('@liquality/cryptoassets')
-const mongoConnect = require('../src/utils/mongoConnect')
+const mongo = require('../src/utils/mongo')
 const config = require('../src/config')
 
 const Asset = require('../src/models/Asset')
 const Market = require('../src/models/Market')
 
-// Load db settings and establish connection
-mongoConnect.connect(config.database)
+mongo.connect()
 
 addCommonOptions(program)
 
