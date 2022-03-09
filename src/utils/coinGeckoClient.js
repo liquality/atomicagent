@@ -1,3 +1,4 @@
+const debug = require('debug')('liquality:agent:market')
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')
@@ -11,6 +12,9 @@ class CoinGecko {
   async getPrices(coinIds, vsCurrencies) {
     const formattedCoinIds = coinIds.join(',')
     const formattedVsCurrencies = vsCurrencies.map((c) => c.toLowerCase()).join(',') // Normalize to agent casing
+    debug(
+      `Getting rates from coingecko for /simple/price?ids=${formattedCoinIds}&vs_currencies=${formattedVsCurrencies} `
+    )
     const { data } = await this._axios.get(
       `/simple/price?ids=${formattedCoinIds}&vs_currencies=${formattedVsCurrencies}`
     )
