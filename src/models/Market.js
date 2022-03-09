@@ -99,7 +99,7 @@ MarketSchema.static('updateAllMarketData', async function () {
       try {
         const client = await asset.getClient()
         const addresses = await client.wallet.getUsedAddresses()
-        asset.balance = await client.chain.getBalance(addresses)
+        asset.balance = addresses.length === 0 ? 0 : await client.chain.getBalance(addresses)
 
         try {
           const address = (await client.wallet.getUnusedAddress()).address
