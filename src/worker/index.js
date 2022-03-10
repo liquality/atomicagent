@@ -68,8 +68,6 @@ const addUniqueJob = (name, data = {}, opts = {}) => {
 
   if (data.asset) {
     data.groupBy = assets[data.asset].chain
-  } else {
-    data.groupBy = Date.now() + '-' + Math.random()
   }
 
   const newOpts = { ...defaultOpts, ...opts }
