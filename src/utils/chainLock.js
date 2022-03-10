@@ -92,6 +92,8 @@ const getLockForAsset = async (asset, id) => {
 }
 
 const withRetry = async (asset, func) => {
+  debug('With retry', asset)
+
   try {
     const result = await func()
     return result
