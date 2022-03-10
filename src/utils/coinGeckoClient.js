@@ -1,4 +1,4 @@
-const debug = require('debug')('liquality:agent:market')
+const debug = require('debug')('liquality:agent:coingecko')
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')

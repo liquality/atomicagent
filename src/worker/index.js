@@ -57,7 +57,7 @@ const opts = {
 
 const addUniqueJob = (name, data = {}, opts = {}) => {
   const defaultOpts = {
-    removeOnComplete: true
+    // removeOnComplete: true
   }
 
   if (name === 'verify-tx') {
@@ -147,6 +147,7 @@ module.exports.start = async () => {
   updateMarketDataQueue.add(
     {},
     {
+      removeOnComplete: true,
       jobId: 'update-market-data-job',
       repeat: {
         every: 1000 * 30
