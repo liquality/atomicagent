@@ -116,7 +116,7 @@ module.exports.start = async () => {
         const opts = _.pick(job.opts, ['removeOnComplete', 'jobId'])
         opts.delay = err.delay || job.opts.delay
 
-        debug(`Adding ${job.name} due to RescheduleError with ${opts.delay}ms delay`)
+        debug(`Adding ${job.name} due to RescheduleError (${err.message}) with ${opts.delay}ms delay`)
 
         const data = {
           groupBy: assets[err.asset].chain,
