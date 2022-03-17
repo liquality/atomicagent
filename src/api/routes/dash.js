@@ -267,8 +267,7 @@ router.get(
       {
         $addFields: {
           market: { $concat: ['$from', '-', '$to'] },
-          date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          uaWallet: { $gte: [{ $indexOfCP: ['$userAgent', 'Wallet'] }, 0] }
+          date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
         }
       },
       {
@@ -277,17 +276,17 @@ router.get(
           ...$group,
           'wallet:sum:fromAmountUsd': {
             $sum: {
-              $cond: ['$uaWallet', '$fromAmountUsd', 0]
+              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
             }
           },
           'wallet:sum:toAmountUsd': {
             $sum: {
-              $cond: ['$uaWallet', '$toAmountUsd', 0]
+              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
             }
           },
           'wallet:count': {
             $sum: {
-              $cond: ['$uaWallet', 1, 0]
+              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
             }
           },
           'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
