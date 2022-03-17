@@ -276,17 +276,17 @@ router.get(
           ...$group,
           'wallet:sum:fromAmountUsd': {
             $sum: {
-              $cond: [{ $userAgent: { $regex: /^Wallet/i } }, '$fromAmountUsd', 0]
+              $cond: [{ $gte: [{ $indexOfCP: ['$userAgent', 'Wallet'] }, 0] }, '$fromAmountUsd', 0]
             }
           },
           'wallet:sum:toAmountUsd': {
             $sum: {
-              $cond: [{ $userAgent: { $regex: /^Wallet/i } }, '$toAmountUsd', 0]
+              $cond: [{ $gte: [{ $indexOfCP: ['$userAgent', 'Wallet'] }, 0] }, '$toAmountUsd', 0]
             }
           },
           'wallet:count': {
             $sum: {
-              $cond: [{ $userAgent: { $regex: /^Wallet/i } }, 1, 0]
+              $cond: [{ $gte: [{ $indexOfCP: ['$userAgent', 'Wallet'] }, 0] }, 1, 0]
             }
           },
           'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
