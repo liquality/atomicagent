@@ -7,4 +7,15 @@ module.exports = async () => {
   debug('Running....')
 
   await Market.updateAllMarketData()
+
+  return {
+    next: [
+      {
+        name: 'update-market-data',
+        opts: {
+          delay: 1000 * 30
+        }
+      }
+    ]
+  }
 }

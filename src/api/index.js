@@ -61,23 +61,40 @@ module.exports.start = () => {
   app.use('/api/swap', require('./routes/swap'))
   app.use('/api/dash', require('./routes/dash'))
 
-  const serverAdapter = new ExpressAdapter()
+  const roServerAdapter = new ExpressAdapter()
+  const rwServerAdapter = new ExpressAdapter()
+
+  createBullBoard({
+    queues: getQueues().map((q) => new BullAdapter(q, { readOnlyMode: true })),
+    serverAdapter: roServerAdapter
+  })
 
   createBullBoard({
     queues: getQueues().map((q) => new BullAdapter(q)),
-    serverAdapter: serverAdapter
+    serverAdapter: rwServerAdapter
   })
 
-  serverAdapter.setBasePath('/queues')
+  roServerAdapter.setBasePath('/queues')
+  rwServerAdapter.setBasePath('/admin/queues')
 
   app.use(
     '/queues',
     basicAuth({
       users: { admin: config.application.queuePassword },
       challenge: true,
-      realm: 'AtomicAgent'
+      realm: 'AtomicAgentRO'
     }),
-    serverAdapter.getRouter()
+    roServerAdapter.getRouter()
+  )
+
+  app.use(
+    '/admin/queues',
+    basicAuth({
+      users: { admin: config.application.queuePasswordRW },
+      challenge: true,
+      realm: 'AtomicAgentRW'
+    }),
+    rwServerAdapter.getRouter()
   )
 
   if (process.env.NODE_ENV === 'production') {

@@ -86,9 +86,9 @@ MarketSchema.static('updateAllMarketData', async function () {
     return acc
   }, {})
   const plainMarkets = markets.map((m) => ({ from: m.from, to: m.to }))
-  debug(`Getting rates from coingecko `)
+  debug('Getting rates from coingecko')
   const marketRates = await coingecko.getRates(plainMarkets, fixedUsdRates)
-  debug(`Coingecko success next updating rates ...`)
+  debug('Coingecko success next updating rates...')
 
   const LATEST_ASSET_MAP = {}
   await Bluebird.map(

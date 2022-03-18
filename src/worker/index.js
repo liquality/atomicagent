@@ -77,6 +77,29 @@ const addUniqueJob = (name, data = {}, opts = {}) => {
 
 module.exports.addUniqueJob = addUniqueJob
 
+async function requeueFailedJob(q, job, err) {
+  await job.remove()
+
+  const opts = _.pick(job.opts, ['removeOnComplete', 'jobId'])
+  opts.delay = err.delay || job.opts.delay
+
+  if (q.name === 'UpdateMarketData') {
+    opts.delay = 1000 * 10
+  }
+
+  debug(`Adding ${job.name} due to ${err.name} (${err.message}) with ${opts.delay / 1000}s delay`)
+
+  const data = {
+    ...(job.data || {})
+  }
+
+  if (err.asset) {
+    data.groupBy = assets[err.asset].chain
+  }
+
+  q.add(job.name, data, opts)
+}
+
 module.exports.start = async () => {
   if (mainqueue) throw new Error('Worker is already running')
 
@@ -89,7 +112,7 @@ module.exports.start = async () => {
 
     if (queueFileName.startsWith('update-market-data')) {
       updateMarketDataQueue = new Queue('UpdateMarketData', opts)
-      updateMarketDataQueue.process(1, processorPath)
+      updateMarketDataQueue.process('update-market-data', 1, processorPath)
     } else {
       mainqueue.process(processorName, 1, processorPath)
     }
@@ -98,32 +121,18 @@ module.exports.start = async () => {
   queueArr.push(mainqueue, updateMarketDataQueue)
 
   queueArr.forEach((q) => {
-    if (q.name !== 'UpdateMarketData') {
-      q.on('completed', async (_, result) => {
-        if (!result?.next) return
+    q.on('completed', async (_, result) => {
+      if (!result?.next) return
 
-        result.next.forEach((newJob) => {
-          const { name, data = {}, opts = {} } = newJob
-          addUniqueJob(name, data, opts)
-        })
+      result.next.forEach((newJob) => {
+        const { name, data = {}, opts = {} } = newJob
+        addUniqueJob(name, data, opts)
       })
-    }
+    })
 
     q.on('failed', async (job, err) => {
-      if (err.name === 'RescheduleError') {
-        await job.remove()
-
-        const opts = _.pick(job.opts, ['removeOnComplete', 'jobId'])
-        opts.delay = err.delay || job.opts.delay
-
-        debug(`Adding ${job.name} due to RescheduleError (${err.message}) with ${opts.delay}ms delay`)
-
-        const data = {
-          groupBy: assets[err.asset].chain,
-          ...job.data
-        }
-
-        q.add(job.name, data, opts)
+      if (q.name === 'UpdateMarketData' || err.name === 'RescheduleError') {
+        await requeueFailedJob(q, job, err)
       } else {
         reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
       }
@@ -135,7 +144,6 @@ module.exports.start = async () => {
     })
 
     q.on('stalled', (job) => {
-      debug('Job has stalled', job)
       const err = new Error('Job has stalled')
       reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
     })
@@ -143,13 +151,11 @@ module.exports.start = async () => {
 
   // kickoff market data update
   updateMarketDataQueue.add(
+    'update-market-data',
     {},
     {
       removeOnComplete: true,
-      jobId: 'update-market-data-job',
-      repeat: {
-        every: 1000 * 30
-      }
+      jobId: 'new-update-market-data-job'
     }
   )
 }
