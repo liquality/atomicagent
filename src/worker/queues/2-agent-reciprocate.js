@@ -1,6 +1,6 @@
 require('../../utils/sentry')
 require('../../utils/mongo').connect()
-const debug = require('debug')('liquality:agent:worker:reciprocate-init-swap')
+const debug = require('debug')('liquality:agent:worker:2-agent-reciprocate')
 
 const config = require('../../config')
 const Check = require('../../models/Check')

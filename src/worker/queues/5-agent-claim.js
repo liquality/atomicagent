@@ -1,6 +1,6 @@
 require('../../utils/sentry')
 require('../../utils/mongo').connect()
-const debug = require('debug')('liquality:agent:worker:agent-claim')
+const debug = require('debug')('liquality:agent:worker:5-agent-claim')
 
 const Order = require('../../models/Order')
 

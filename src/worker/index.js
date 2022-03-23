@@ -82,7 +82,11 @@ const addUniqueJob = (name, data = {}, opts = {}) => {
     data.groupBy = 'other-jobs'
   }
 
-  return mainqueue.add(name, data, { ...defaultOpts, ...opts })
+  const arr = [name, data, { ...defaultOpts, ...opts }]
+
+  debug('addUniqueJob', ...arr)
+
+  return mainqueue.add(...arr)
 }
 
 module.exports.addUniqueJob = addUniqueJob
@@ -119,24 +123,26 @@ module.exports.start = async () => {
 
     q.on('failed', async (job, err) => {
       if (q.name === 'UpdateMarketData' || err.name === 'RescheduleError') {
-        await job.remove()
-
-        const opts = _.pick(job.opts, ['removeOnComplete', 'jobId'])
-        opts.delay = err.delay || job.opts.delay
-
-        debug(`Adding ${job.name} due to ${err.name} (${err.message}) with ${opts.delay / 1000}s delay`)
-
+        const name = job.name
         const data = {
           ...(job.data || {})
         }
+        const opts = _.pick(job.opts, ['removeOnComplete', 'jobId'])
+        opts.delay = err.delay || job.opts.delay
+
+        await job.remove()
+
+        debug(`Adding "${name}" due to ${err.name} (${err.message}) with ${opts.delay / 1000}s delay`)
 
         if (err.asset) {
           data.groupBy = assets[err.asset].chain
         }
 
-        if (job.name) {
-          q.add(job.name, data, opts)
+        if (name) {
+          debug('failed', name, data, opts)
+          q.add(name, data, opts)
         } else {
+          debug('failed', data, opts)
           q.add(data, opts)
         }
       } else {

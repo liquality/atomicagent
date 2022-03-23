@@ -1,6 +1,6 @@
 require('../../utils/sentry')
 require('../../utils/mongo').connect()
-const debug = require('debug')('liquality:agent:worker:find-claim-tx-or-refund')
+const debug = require('debug')('liquality:agent:worker:4-find-user-claim-or-agent-refund')
 
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')

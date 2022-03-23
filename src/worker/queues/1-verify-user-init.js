@@ -1,6 +1,6 @@
 require('../../utils/sentry')
 require('../../utils/mongo').connect()
-const debug = require('debug')('liquality:agent:worker:verify-user-init-tx')
+const debug = require('debug')('liquality:agent:1-verify-user-init')
 
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
