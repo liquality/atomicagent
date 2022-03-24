@@ -66,6 +66,9 @@ module.exports = async (job) => {
   await order.save()
   await order.log('VERIFY_USER_INIT_TX')
 
+  const newOrder = await Order.findOne({ orderId }).exec()
+  debug('New Order', orderId, newOrder.status)
+
   return {
     next: [
       {
