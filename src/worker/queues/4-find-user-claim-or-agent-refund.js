@@ -12,12 +12,10 @@ module.exports = async (job) => {
 
   const order = await Order.findOne({ orderId }).exec()
   if (!order) {
-    debug(`Order not found: ${orderId}`)
-    return
+    throw new Error(`Order not found: ${orderId}`)
   }
   if (order.status !== 'AGENT_FUNDED') {
-    debug(`Order has invalid status: ${orderId} / ${order.status}`)
-    return
+    throw new Error(`Order has invalid status: ${orderId} / ${order.status}`)
   }
 
   const toClient = await order.toClient()

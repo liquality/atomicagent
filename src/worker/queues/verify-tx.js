@@ -15,7 +15,9 @@ module.exports = async (job) => {
   const { orderId, type } = job.data
 
   const order = await Order.findOne({ orderId }).exec()
-  if (!order) return
+  if (!order) {
+    throw new Error(`Order not found: ${orderId}`)
+  }
   if (['QUOTE_EXPIRED', 'SWAP_EXPIRED'].includes(order.status)) return
 
   const hash = order[type]
