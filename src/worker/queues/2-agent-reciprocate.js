@@ -64,14 +64,14 @@ module.exports = async (job) => {
     return
   }
 
-  const withinUsdThreshold = order.fromAmountUsd > 0 && order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd
-  if (!withinUsdThreshold) {
-    if (!flag.approve) {
-      throw new RescheduleError(`Reschedule ${orderId}: reciprocate-init-swap is not approved yet`, order.from)
-    }
+  // const withinUsdThreshold = order.fromAmountUsd > 0 && order.fromAmountUsd < config.threshold.manualAboveFromAmountUsd
+  // if (!withinUsdThreshold) {
+  //   if (!flag.approve) {
+  //     throw new RescheduleError(`Reschedule ${orderId}: reciprocate-init-swap is not approved yet`, order.from)
+  //   }
 
-    debug(`Approved ${orderId}`, flag.message)
-  }
+  //   debug(`Approved ${orderId}`, flag.message)
+  // }
 
   const fromAsset = await Asset.findOne({ code: order.from }).exec()
   if (fromAsset['24hrUsdLimit']) {
