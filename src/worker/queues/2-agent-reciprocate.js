@@ -14,8 +14,14 @@ module.exports = async (job) => {
   const { orderId } = job.data
 
   const order = await Order.findOne({ orderId }).exec()
-  if (!order) return
-  if (order.status !== 'USER_FUNDED') return
+  if (!order) {
+    debug(`Order not found: ${orderId}`)
+    return
+  }
+  if (order.status !== 'USER_FUNDED') {
+    debug(`Order has invalid status: ${orderId} / ${order.status}`)
+    return
+  }
 
   const fromClient = await order.fromClient()
   const toClient = await order.toClient()

@@ -11,9 +11,14 @@ module.exports = async (job) => {
   const { orderId, toLastScannedBlock } = job.data
 
   const order = await Order.findOne({ orderId }).exec()
-  if (!order) return
-
-  if (order.status !== 'AGENT_FUNDED') return
+  if (!order) {
+    debug(`Order not found: ${orderId}`)
+    return
+  }
+  if (order.status !== 'AGENT_FUNDED') {
+    debug(`Order has invalid status: ${orderId} / ${order.status}`)
+    return
+  }
 
   const toClient = await order.toClient()
   let toCurrentBlockNumber
