@@ -1,5 +1,4 @@
 const debug = require('debug')('liquality:agent:worker')
-const _ = require('lodash')
 const fs = require('fs').promises
 const path = require('path')
 const Queue = require('bull')
@@ -55,9 +54,9 @@ const opts = {
   }
 }
 
-const addUniqueJob = (name, data = {}, opts = {}) => {
+const addUniqueJob = (q, name, data = {}, opts = {}) => {
   if (name === 'UpdateMarketData') {
-    return updateMarketDataQueue.add(
+    return q.add(
       {
         groupBy: 'market-data'
       },
@@ -117,34 +116,25 @@ module.exports.start = async () => {
 
       result.next.forEach((newJob) => {
         const { name, data = {}, opts = {} } = newJob
-        addUniqueJob(name, data, opts)
+        addUniqueJob(q, name, data, opts)
       })
     })
 
     q.on('failed', async (job, err) => {
       if (q.name === 'UpdateMarketData' || err.name === 'RescheduleError') {
-        const name = job.name
-        const data = {
-          ...(job.data || {})
-        }
-        const opts = _.pick(job.opts, ['removeOnComplete', 'jobId'])
-        opts.delay = err.delay || job.opts.delay
+        const args = [
+          job.name,
+          job.data,
+          {
+            delay: err.delay || job.opts.delay
+          }
+        ]
 
         await job.remove()
 
-        debug(`Adding "${name}" due to ${err.name} (${err.message}) with ${opts.delay / 1000}s delay`)
+        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message}): ${args}`)
 
-        if (err.asset) {
-          data.groupBy = assets[err.asset].chain
-        }
-
-        if (name) {
-          debug('failed', name, data, opts)
-          q.add(name, data, opts)
-        } else {
-          debug('failed', data, opts)
-          q.add(data, opts)
-        }
+        addUniqueJob(q, ...args)
       } else {
         reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
       }
@@ -161,7 +151,7 @@ module.exports.start = async () => {
   })
 
   // kickoff market data update
-  addUniqueJob('UpdateMarketData')
+  addUniqueJob(updateMarketDataQueue, 'UpdateMarketData')
 }
 
 module.exports.stop = async () => {
@@ -175,3 +165,5 @@ module.exports.stop = async () => {
 }
 
 module.exports.getQueues = () => [mainqueue, updateMarketDataQueue]
+module.exports.getAtomicAgentQueue = () => mainqueue
+module.exports.getMarketDataQueue = () => updateMarketDataQueue

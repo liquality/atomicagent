@@ -26,11 +26,7 @@ module.exports = async (job) => {
   try {
     fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
   } catch (e) {
-    if (['BlockNotFoundError'].includes(e.name)) {
-      throw new RescheduleError(e.message, order.from)
-    }
-
-    throw e
+    throw new RescheduleError(e.message, order.from)
   }
 
   const stop =
@@ -119,7 +115,13 @@ module.exports = async (job) => {
 
   debug(`Auto-approved order ${orderId} worth $${order.fromAmountUsd}`)
 
-  const toLastScannedBlock = await toClient.chain.getBlockHeight()
+  let toLastScannedBlock
+
+  try {
+    toLastScannedBlock = await toClient.chain.getBlockHeight()
+  } catch (e) {
+    throw new RescheduleError(e.message, order.to)
+  }
 
   const toFundTx = await order.initiateSwap()
 

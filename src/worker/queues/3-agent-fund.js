@@ -16,17 +16,14 @@ module.exports = async (job) => {
 
   const fromClient = await order.fromClient()
 
-  const fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
+  let fromCurrentBlockNumber
   let fromCurrentBlock
 
   try {
+    fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
     fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
   } catch (e) {
-    if (['BlockNotFoundError'].includes(e.name)) {
-      throw new RescheduleError(e.message, order.from)
-    }
-
-    throw e
+    throw new RescheduleError(e.message, order.from)
   }
 
   const stop =

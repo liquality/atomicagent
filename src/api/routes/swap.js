@@ -16,7 +16,7 @@ const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentComp
 const hashUtil = require('../../utils/hash')
 const { DuplicateOrderError } = require('../../utils/errors')
 
-const { addUniqueJob } = require('../../worker')
+const { addUniqueJob, getAtomicAgentQueue } = require('../../worker')
 
 const amplitude = Amplitude.init(process.env.AMPLITUDE_API_KEY)
 
@@ -178,7 +178,7 @@ router.post(
     await order.log('SWAP_UPDATE', null, body)
 
     if (oldStatus === 'QUOTE') {
-      addUniqueJob('1-verify-user-init', { orderId: order.orderId })
+      addUniqueJob(getAtomicAgentQueue(), '1-verify-user-init', { orderId: order.orderId })
     }
 
     res.json(order.json())
