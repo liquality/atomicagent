@@ -4,6 +4,7 @@ const path = require('path')
 const Queue = require('bull')
 const Redis = require('ioredis')
 const { assets } = require('@liquality/cryptoassets')
+const { v4: uuidv4 } = require('uuid')
 
 const config = require('../config')
 const reportError = require('../utils/reportError')
@@ -22,7 +23,7 @@ const QUEUES_DIR = path.join(__dirname, 'queues')
 const opts = {
   limiter: {
     max: 1,
-    duration: 1000 * 30,
+    duration: 1000 * 15,
     groupKey: 'groupBy'
   },
   redis: { maxRetriesPerRequest: null, enableReadyCheck: false },
@@ -71,13 +72,17 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
 
   if (name === 'verify-tx') {
     defaultOpts.delay = 1000 * 20
+
+    if (!data.groupBy) {
+      data.groupBy = uuidv4()
+    }
   } else if (data.orderId) {
     defaultOpts.jobId = `${name}:${data.orderId}`
   }
 
   if (data.asset) {
     data.groupBy = assets[data.asset].chain
-  } else {
+  } else if (!data.groupBy) {
     data.groupBy = 'other-jobs'
   }
 
@@ -132,7 +137,7 @@ module.exports.start = async () => {
 
         await job.remove()
 
-        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message}): ${args}`)
+        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message})`, args)
 
         addUniqueJob(q, ...args)
       } else {
