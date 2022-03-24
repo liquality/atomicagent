@@ -56,7 +56,7 @@ const opts = {
 }
 
 const addUniqueJob = (q, name, data = {}, opts = {}) => {
-  if (name === 'UpdateMarketData') {
+  if (name === 'UpdateMarketData' || name === '__default__') {
     return q.add(
       {
         groupBy: 'market-data'
