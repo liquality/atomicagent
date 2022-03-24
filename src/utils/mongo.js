@@ -1,3 +1,4 @@
+const debug = require('debug')('liquality:agent:mongo')
 const mongoose = require('mongoose')
 const config = require('../config')
 
@@ -5,8 +6,7 @@ const connect = async () => {
   mongoose.set('debug', config.database.debug)
 
   const mongooseOnError = (err) => {
-    console.error(err)
-    process.exit(1)
+    debug(err)
   }
 
   mongoose
