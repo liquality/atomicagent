@@ -86,7 +86,12 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
     data.groupBy = 'other-jobs'
   }
 
-  const arr = [name, data, { ...defaultOpts, ...opts }]
+  const arr = []
+  if (name && name !== '__default__') {
+    arr.push(name)
+  }
+
+  arr.push(data, { ...defaultOpts, ...opts })
 
   debug('addUniqueJob', ...arr)
 
