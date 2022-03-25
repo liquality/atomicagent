@@ -15,7 +15,8 @@ let stopping = false
 
 const bclients = []
 
-let mainqueue
+let mainQueue
+let verifyTxQueue
 let updateMarketDataQueue
 const queueArr = []
 const QUEUES_DIR = path.join(__dirname, 'queues')
@@ -56,7 +57,7 @@ const opts = {
 }
 
 const addUniqueJob = (q, name, data = {}, opts = {}) => {
-  if (name === 'UpdateMarketData' || name === '__default__') {
+  if (q.name === 'UpdateMarketData') {
     return q.add(
       {
         groupBy: 'market-data'
@@ -68,41 +69,41 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
     )
   }
 
-  const defaultOpts = {}
-
-  if (name === 'verify-tx') {
-    defaultOpts.delay = 1000 * 20
-  } else if (data.orderId) {
-    defaultOpts.jobId = `${name}:${data.orderId}`
+  if (q.name === 'VerifyTx' || name === 'verify-tx') {
+    return q.add(
+      {
+        ...data,
+        groupBy: uuidv4()
+      },
+      {
+        delay: 1000 * 20,
+        removeOnComplete: true,
+        jobId: `${name}:${data.orderId}`
+      }
+    )
   }
 
-  if (data.asset) {
-    data.groupBy = assets[data.asset].chain
+  const newOpts = {
+    jobId: `${name}:${data.orderId}`,
+    ...opts
   }
 
-  if (!data.groupBy) {
-    data.groupBy = uuidv4()
-  }
+  data.groupBy = assets[data.asset].chain
 
-  const arr = []
-  if (name && name !== '__default__') {
-    arr.push(name)
-  }
-
-  arr.push(data, { ...defaultOpts, ...opts })
+  const arr = [name, data, newOpts]
 
   debug('addUniqueJob', ...arr)
 
-  return mainqueue.add(...arr)
+  return q.add(...arr)
 }
 
 module.exports.addUniqueJob = addUniqueJob
 
 module.exports.start = async () => {
-  if (mainqueue) throw new Error('Worker is already running')
+  if (mainQueue) throw new Error('Worker is already running')
 
   const queues = (await fs.readdir(QUEUES_DIR)).filter((name) => name.endsWith('.js'))
-  mainqueue = new Queue('AtomicAgent', opts)
+  mainQueue = new Queue('AtomicAgent', opts)
 
   queues.forEach((queueFileName) => {
     const processorName = path.basename(queueFileName, '.js')
@@ -111,12 +112,15 @@ module.exports.start = async () => {
     if (queueFileName.startsWith('update-market-data')) {
       updateMarketDataQueue = new Queue('UpdateMarketData', opts)
       updateMarketDataQueue.process(1, processorPath)
+    } else if (queueFileName.startsWith('verify-tx')) {
+      verifyTxQueue = new Queue('VerifyTx', opts)
+      verifyTxQueue.process(1, processorPath)
     } else {
-      mainqueue.process(processorName, 1, processorPath)
+      mainQueue.process(processorName, 1, processorPath)
     }
   })
 
-  queueArr.push(mainqueue, updateMarketDataQueue)
+  queueArr.push(mainQueue, verifyTxQueue, updateMarketDataQueue)
 
   queueArr.forEach((q) => {
     q.on('completed', async (_, result) => {
@@ -140,7 +144,7 @@ module.exports.start = async () => {
 
         await job.remove()
 
-        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message})`, args)
+        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message})`, ...args)
 
         addUniqueJob(q, ...args)
       } else {
@@ -172,6 +176,5 @@ module.exports.stop = async () => {
   console.log('Closed worker')
 }
 
-module.exports.getQueues = () => [mainqueue, updateMarketDataQueue]
-module.exports.getAtomicAgentQueue = () => mainqueue
-module.exports.getMarketDataQueue = () => updateMarketDataQueue
+module.exports.getQueues = () => [mainQueue, updateMarketDataQueue]
+module.exports.getAtomicAgentQueue = () => mainQueue

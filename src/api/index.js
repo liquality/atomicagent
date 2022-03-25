@@ -61,16 +61,17 @@ module.exports.start = () => {
   app.use('/api/swap', require('./routes/swap'))
   app.use('/api/dash', require('./routes/dash'))
 
+  const queues = getQueues()
   const roServerAdapter = new ExpressAdapter()
   const rwServerAdapter = new ExpressAdapter()
 
   createBullBoard({
-    queues: getQueues().map((q) => new BullAdapter(q, { readOnlyMode: true })),
+    queues: queues.map((q) => new BullAdapter(q, { readOnlyMode: true })),
     serverAdapter: roServerAdapter
   })
 
   createBullBoard({
-    queues: getQueues().map((q) => new BullAdapter(q)),
+    queues: queues.map((q) => new BullAdapter(q)),
     serverAdapter: rwServerAdapter
   })
 
