@@ -8,6 +8,13 @@ services:
     networks:
       local:
         ipv4_address: 10.10.0.8
+  redis:
+    image: redis:alpine
+    ports:
+      - '6379:6379'
+    networks:
+      local:
+        ipv4_address: 10.10.0.9
   bitcoin:
     image: vulpemventures/bitcoin:latest
     ports:

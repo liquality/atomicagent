@@ -1,4 +1,5 @@
 const BaseError = require('standard-error')
+const config = require('../config')
 
 function createError(name) {
   class Err extends BaseError {}
@@ -10,6 +11,10 @@ class RescheduleError extends BaseError {
   constructor(msg, asset, props) {
     super(msg, props)
     this.asset = asset
+
+    if (config.assets[asset].blockTimeInSeconds) {
+      this.delay = config.assets[asset].blockTimeInSeconds * 1000
+    }
   }
 }
 

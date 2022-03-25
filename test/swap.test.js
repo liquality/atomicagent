@@ -2,10 +2,10 @@
 const _ = require('lodash')
 
 const swap = require('./lib/swap')
-const { prepare, clearJobs, updateMarketData } = require('./lib/utils')
+const { prepare, updateMarketData } = require('./lib/utils')
 const config = require('../src/config')
 
-const NUM_CONCURRENT_SWAPS_PER_MARKET = 3
+const NUM_CONCURRENT_SWAPS_PER_MARKET = 1
 
 const AMOUNT = {
   BTC: () => _.random(...[0.03, 0.031].map((v) => v * 1e8)),
@@ -43,11 +43,10 @@ describe.only('Swap', () => {
       describe(market, () => {
         before(async function () {
           this.timeout(0)
-          await clearJobs()
           await updateMarketData()
 
-          config.application.swapExpirationDurationInSeconds = 70
-          config.application.nodeSwapExpirationDurationInSeconds = 30
+          config.application.swapExpirationDurationInSeconds = 150
+          config.application.nodeSwapExpirationDurationInSeconds = 120
         })
 
         swap([SWAPS[market][0]], { refund: false, reject: false })
@@ -60,11 +59,10 @@ describe.only('Swap', () => {
       describe(market, () => {
         before(async function () {
           this.timeout(0)
-          await clearJobs()
           await updateMarketData()
 
-          config.application.swapExpirationDurationInSeconds = 70
-          config.application.nodeSwapExpirationDurationInSeconds = 30
+          config.application.swapExpirationDurationInSeconds = 150
+          config.application.nodeSwapExpirationDurationInSeconds = 120
         })
 
         swap([SWAPS[market][0]], { refund: true, reject: false })
@@ -75,11 +73,10 @@ describe.only('Swap', () => {
   describe('Successful concurrent swaps', () => {
     before(async function () {
       this.timeout(0)
-      await clearJobs()
       await updateMarketData()
 
-      config.application.swapExpirationDurationInSeconds = 580
-      config.application.nodeSwapExpirationDurationInSeconds = 380
+      config.application.swapExpirationDurationInSeconds = 600
+      config.application.nodeSwapExpirationDurationInSeconds = 400
     })
 
     swap(SWAPS_ARR, { refund: false, reject: false })

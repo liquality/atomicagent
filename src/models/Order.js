@@ -7,8 +7,7 @@ const AuditLog = require('./AuditLog')
 const MarketHistory = require('./MarketHistory')
 
 const { getClient } = require('../utils/clients')
-const { withLock } = require('../utils/chainLock')
-const crypto = require('../utils/crypto')
+const { withRetry } = require('../utils/chainLock')
 const { formatTxHash } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
@@ -228,24 +227,6 @@ const OrderSchema = new mongoose.Schema(
       default: true,
       index: true
     },
-    hasUserUnconfirmedTx: {
-      type: Boolean,
-      default: true,
-      index: true
-    },
-    hasUnconfirmedTx: {
-      type: Boolean,
-      default: true,
-      index: true
-    },
-
-    passphraseHash: {
-      type: String
-    },
-    passphraseSalt: {
-      type: String
-    },
-
     fromStartBlock: {
       type: Number
     },
@@ -291,34 +272,6 @@ OrderSchema.methods.json = function () {
   return json
 }
 
-OrderSchema.methods.setPassphrase = function (passphrase) {
-  if (this.passphraseHash) throw new Error('Passphrase already exists')
-
-  const { salt, hash } = crypto.hash(passphrase)
-
-  this.passphraseSalt = salt
-  this.passphraseHash = hash
-}
-
-OrderSchema.methods.verifyPassphrase = function (passphrase) {
-  if (!this.passphraseHash) throw new Error("Passphrase doesn't exists")
-
-  return crypto.verify(passphrase, this.passphraseSalt, this.passphraseHash)
-}
-
-OrderSchema.methods.setAgentAddresses = async function () {
-  if (this.fromCounterPartyAddress) throw new Error('Address exists')
-
-  const fromClient = await this.fromClient()
-  const toClient = await this.toClient()
-
-  const fromAddresses = await await fromClient.wallet.getUnusedAddress()
-  const toAddresses = await toClient.wallet.getUnusedAddress()
-
-  this.fromCounterPartyAddress = chains[assets[this.from].chain].formatAddress(fromAddresses.address)
-  this.toCounterPartyAddress = chains[assets[this.to].chain].formatAddress(toAddresses.address)
-}
-
 OrderSchema.methods.setExpiration = async function () {
   const now = Math.ceil(Date.now() / 1000)
 
@@ -353,19 +306,12 @@ OrderSchema.methods.setUsdRates = async function () {
 OrderSchema.pre('save', function (next) {
   const txs = Object.values(this.txMap)
 
-  const userTxs = txs.filter(
-    ({ type }) =>
-      (type.startsWith('from') && !type.includes('Claim')) || (type.startsWith('to') && type.includes('Claim'))
-  )
-
   const agentTxs = txs.filter(
     ({ type }) =>
       (type.startsWith('to') && !type.includes('Claim')) || (type.startsWith('from') && type.includes('Claim'))
   )
 
-  this.hasUserUnconfirmedTx = !userTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
   this.hasAgentUnconfirmedTx = !agentTxs.every(({ blockHash, replacedBy }) => blockHash || replacedBy)
-  this.hasUnconfirmedTx = this.hasUserUnconfirmedTx || this.hasAgentUnconfirmedTx
 
   this.totalAgentFeeUsd = 0
   this.totalAgentFeeUsd += this.getFeeForTxType('toFundHash')
@@ -457,10 +403,10 @@ OrderSchema.methods.addTx = function (type, tx) {
 }
 
 OrderSchema.methods.claimSwap = async function () {
-  const fromClient = await await this.fromClient()
+  const fromClient = await this.fromClient()
   const { defaultFee } = config.assets[this.from]
 
-  return withLock(this.from, async () => {
+  return withRetry(this.from, async () => {
     const fees = await fromClient.chain.getFees()
 
     return fromClient.swap.claimSwap(
@@ -482,10 +428,10 @@ OrderSchema.methods.refundSwap = async function () {
   const toClient = await this.toClient()
   const { defaultFee } = config.assets[this.to]
 
-  return withLock(this.to, async () => {
+  return withRetry(this.to, async () => {
     const fees = await toClient.chain.getFees()
 
-    const refundTx = await toClient.swap.refundSwap(
+    return toClient.swap.refundSwap(
       {
         value: BN(this.toAmount),
         recipientAddress: this.toAddress,
@@ -496,8 +442,6 @@ OrderSchema.methods.refundSwap = async function () {
       this.toFundHash,
       fees[defaultFee].fee
     )
-
-    return refundTx
   })
 }
 
@@ -505,7 +449,7 @@ OrderSchema.methods.initiateSwap = async function () {
   const toClient = await this.toClient()
   const { defaultFee } = config.assets[this.to]
 
-  return withLock(this.to, async () => {
+  return withRetry(this.to, async () => {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.initiateSwap(
@@ -525,7 +469,7 @@ OrderSchema.methods.fundSwap = async function () {
   const toClient = await this.toClient()
   const { defaultFee } = config.assets[this.to]
 
-  return withLock(this.to, async () => {
+  return withRetry(this.to, async () => {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.fundSwap(
@@ -545,7 +489,7 @@ OrderSchema.methods.fundSwap = async function () {
 OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
   const fromClient = await this.fromClient()
 
-  try {
+  return withRetry(this.from, async () => {
     const verified = await fromClient.swap.verifyInitiateSwapTransaction(
       {
         value: BN(this.fromAmount),
@@ -560,20 +504,14 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
     if (!verified) {
       throw new RescheduleError(`Reschedule ${this.orderId}: Transaction not found`, this.from)
     }
-  } catch (e) {
-    if (['TxNotFoundError', 'PendingTxError', 'RescheduleError'].includes(e.name)) {
-      throw new RescheduleError(e.message, this.from)
-    }
-
-    throw e
-  }
+  })
 }
 
 OrderSchema.methods.findFromFundSwapTransaction = async function () {
   const fromClient = await this.fromClient()
 
-  try {
-    const fromSecondaryFundTx = await fromClient.swap.findFundSwapTransaction(
+  return withRetry(this.from, async () => {
+    return fromClient.swap.findFundSwapTransaction(
       {
         value: BN(this.fromAmount),
         recipientAddress: this.fromCounterPartyAddress,
@@ -583,22 +521,14 @@ OrderSchema.methods.findFromFundSwapTransaction = async function () {
       },
       this.fromFundHash
     )
-
-    return fromSecondaryFundTx
-  } catch (e) {
-    if (['TxNotFoundError', 'PendingTxError'].includes(e.name)) {
-      throw new RescheduleError(e.message, this.from)
-    }
-
-    throw e
-  }
+  })
 }
 
 OrderSchema.methods.findToFundSwapTransaction = async function () {
   const toClient = await this.toClient()
 
-  try {
-    const toSecondaryFundTx = await toClient.swap.findFundSwapTransaction(
+  return withRetry(this.to, async () => {
+    return toClient.swap.findFundSwapTransaction(
       {
         value: BN(this.toAmount),
         recipientAddress: this.toAddress,
@@ -608,52 +538,7 @@ OrderSchema.methods.findToFundSwapTransaction = async function () {
       },
       this.toFundHash
     )
-
-    return toSecondaryFundTx
-  } catch (e) {
-    if (['TxNotFoundError', 'PendingTxError'].includes(e.name)) {
-      throw new RescheduleError(e.message, this.to)
-    }
-
-    throw e
-  }
-}
-
-OrderSchema.methods.findRefundSwapTransaction = async function (fromLastScannedBlock, fromCurrentBlockNumber) {
-  const fromClient = await this.fromClient()
-
-  if (!fromCurrentBlockNumber) {
-    fromCurrentBlockNumber = await fromClient.chain.getBlockHeight()
-  }
-
-  return blockScanOrFind(
-    fromClient,
-    async (blockNumber) => {
-      try {
-        const tx = await fromClient.swap.findRefundSwapTransaction(
-          {
-            value: BN(this.fromAmount),
-            recipientAddress: this.fromCounterPartyAddress,
-            refundAddress: this.fromAddress,
-            secretHash: this.secretHash,
-            expiration: this.swapExpiration
-          },
-          this.fromFundHash,
-          blockNumber
-        )
-
-        return tx
-      } catch (e) {
-        if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-          throw new RescheduleError(e.message, this.from)
-        }
-
-        throw e
-      }
-    },
-    fromLastScannedBlock,
-    fromCurrentBlockNumber
-  )
+  })
 }
 
 OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBlock, toCurrentBlockNumber) {
@@ -666,8 +551,8 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
   return blockScanOrFind(
     toClient,
     async (blockNumber) => {
-      try {
-        const tx = await toClient.swap.findClaimSwapTransaction(
+      return withRetry(this.to, async () => {
+        return toClient.swap.findClaimSwapTransaction(
           {
             value: BN(this.toAmount),
             recipientAddress: this.toAddress,
@@ -678,15 +563,7 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
           this.toFundHash,
           blockNumber
         )
-
-        return tx
-      } catch (e) {
-        if (['PendingTxError', 'BlockNotFoundError'].includes(e.name)) {
-          throw new RescheduleError(e.message, this.to)
-        }
-
-        throw e
-      }
+      })
     },
     toLastScannedBlock,
     toCurrentBlockNumber

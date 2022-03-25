@@ -2,26 +2,22 @@
 const chai = require('chai')
 const Bluebird = require('bluebird')
 const chaiHttp = require('chai-http')
-const humanInterval = require('human-interval')
 chai.should()
 chai.use(chaiHttp)
 
 const { app } = require('../../src/api')
 const { wait } = require('../../src/utils/chainLock')
-const config = require('../../src/config')
 
 const {
   requestQuote,
   testQuote,
-  initiate,
-  fund,
-  verifyInitiate,
+  userInitiate,
+  userFund,
+  verifyAgentInitiation,
   verifyAgentFunding,
   findAgentFundingTx,
-  claim,
-  refundSwap,
-  verifyClaimOrRefund,
-  verifyUserRefund,
+  userClaim,
+  verifyAgentClaimOrRefund,
   verifyAllTxs,
   approveOrder,
   updateAgentOrder
@@ -81,7 +77,7 @@ module.exports = (contexts, { refund, reject }) => {
 
       async function fundContext(context, request) {
         try {
-          await fund(context, request)
+          await userFund(context, request)
         } catch (e) {
           if (e.name === 'RescheduleError') {
             return wait(5000).then(() => fundContext(context, request))
@@ -92,7 +88,7 @@ module.exports = (contexts, { refund, reject }) => {
       }
 
       return Bluebird.map(contexts, async (context) => {
-        await initiate(context, request)
+        await userInitiate(context, request)
         await fundContext(context, request)
       }).then(() => request.close())
     })
@@ -125,7 +121,7 @@ module.exports = (contexts, { refund, reject }) => {
 
       const request = chai.request(app()).keepOpen()
 
-      return Bluebird.map(contexts, (context) => verifyInitiate(context, request)).then(() => request.close())
+      return Bluebird.map(contexts, (context) => verifyAgentInitiation(context, request)).then(() => request.close())
     })
 
     it('should not allow update to already funded quote', async function () {
@@ -150,7 +146,9 @@ module.exports = (contexts, { refund, reject }) => {
       it('should reciprocate by funding the swap', async function () {
         this.timeout(0)
 
-        await Bluebird.map(contexts, (context) => approveOrder(context), { concurrency: 2 })
+        await Bluebird.map(contexts, (context) => approveOrder(context), {
+          concurrency: 2
+        })
 
         const request = chai.request(app()).keepOpen()
 
@@ -173,7 +171,7 @@ module.exports = (contexts, { refund, reject }) => {
         const expectedStatus = 'USER_FUNDED'
         const request = chai.request(app()).keepOpen()
 
-        return Bluebird.map(contexts, (context) => verifyClaimOrRefund(context, request, expectedStatus))
+        return Bluebird.map(contexts, (context) => verifyAgentClaimOrRefund(context, request, expectedStatus))
       })
     })
   } else {
@@ -182,7 +180,7 @@ module.exports = (contexts, { refund, reject }) => {
         before(async function () {
           this.timeout(0)
 
-          return Bluebird.map(contexts, (context) => claim(context))
+          return Bluebird.map(contexts, (context) => userClaim(context))
         })
       }
 
@@ -192,35 +190,7 @@ module.exports = (contexts, { refund, reject }) => {
         const expectedStatus = refund ? 'AGENT_REFUNDED' : 'AGENT_CLAIMED'
         const request = chai.request(app()).keepOpen()
 
-        return Bluebird.map(contexts, (context) => verifyClaimOrRefund(context, request, expectedStatus))
-      })
-    })
-  }
-
-  if (refund && !reject) {
-    describe('Verify user refund', () => {
-      before(async function () {
-        this.timeout(0)
-
-        const maxSwapExpiration = Math.max(...contexts.map((context) => context.swapExpiration))
-        const maxBlockTime = Math.max(
-          ...contexts.map((context) => humanInterval(config.assets[context.from].blockTime))
-        )
-        const waitFor = maxSwapExpiration * 1000 - Date.now() + maxBlockTime * 2
-
-        console.log(`[user] Waiting for ${waitFor}ms before attempting refund`)
-        await wait(waitFor)
-        console.log('[user] Attempting refund now')
-
-        return Bluebird.map(contexts, (context) => refundSwap(context)).then(() => console.log('[user] Refunded'))
-      })
-
-      it('should verify refund', async function () {
-        this.timeout(0)
-
-        const request = chai.request(app()).keepOpen()
-
-        return Bluebird.map(contexts, (context) => verifyUserRefund(context, request))
+        return Bluebird.map(contexts, (context) => verifyAgentClaimOrRefund(context, request, expectedStatus))
       })
     })
   }

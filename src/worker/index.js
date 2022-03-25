@@ -1,40 +1,182 @@
-const mongoose = require('mongoose')
-const Agenda = require('agenda')
+const debug = require('debug')('liquality:agent:worker')
+const fs = require('fs').promises
+const path = require('path')
+const Queue = require('bull')
+const Redis = require('ioredis')
+const { assets } = require('@liquality/cryptoassets')
+const { v4: uuidv4 } = require('uuid')
 
-const configureJobs = require('./configureJobs')
-const jobReporter = require('./jobReporter')
-const handleJobError = require('./handleJobError')
 const config = require('../config')
+const reportError = require('../utils/reportError')
 
-let agenda
+let client
+let subscriber
+let stopping = false
 
-module.exports.start = async () => {
-  agenda = new Agenda({
-    mongo: mongoose.connection,
-    maxConcurrency: 2,
-    lockLimit: 2,
-    defaultConcurrency: 1, // only process one job of a type at a time
-    defaultLockLimit: 1, // only one job of a type can be locked at a time
-    defaultLockLifetime: 1000 * 60 * 2 // a job can run for maximum 2 min before it is timedout
-  })
+const bclients = []
 
-  await configureJobs(agenda)
+let mainQueue
+let verifyTxQueue
+let updateMarketDataQueue
+const queueArr = []
+const QUEUES_DIR = path.join(__dirname, 'queues')
 
-  if (config.worker.jobReporter) {
-    jobReporter(agenda)
+const opts = {
+  limiter: {
+    max: 1,
+    duration: 1000 * 15,
+    groupKey: 'groupBy'
+  },
+  redis: { maxRetriesPerRequest: null, enableReadyCheck: false },
+  settings: {
+    lockDuration: 45000,
+    lockRenewTime: 22500,
+    stalledInterval: 45000
+  },
+  createClient: function (type, redisOpts) {
+    switch (type) {
+      case 'client':
+        if (!client) {
+          client = new Redis(config.redis.uri, redisOpts)
+        }
+        return client
+      case 'subscriber':
+        if (!subscriber) {
+          subscriber = new Redis(config.redis.uri, redisOpts)
+        }
+        return subscriber
+      case 'bclient': {
+        const client = new Redis(config.redis.uri, redisOpts)
+        bclients.push(client)
+        return client
+      }
+      default:
+        throw new Error(`Unexpected connection type: "${type}"`)
+    }
+  }
+}
+
+const addUniqueJob = (q, name, data = {}, opts = {}) => {
+  if (name === 'UpdateMarketData' || q.name === 'UpdateMarketData') {
+    return updateMarketDataQueue.add(
+      {
+        groupBy: 'market-data'
+      },
+      {
+        removeOnComplete: true,
+        jobId: 'update-market-data-job'
+      }
+    )
   }
 
-  agenda.on('fail', handleJobError)
+  if (name === 'verify-tx' || q.name === 'VerifyTx') {
+    return verifyTxQueue.add(
+      {
+        ...data,
+        groupBy: uuidv4()
+      },
+      {
+        delay: 1000 * 20,
+        removeOnComplete: true,
+        jobId: `${name}:${data.orderId}`
+      }
+    )
+  }
 
-  await agenda.start()
-  await agenda.every('30 seconds', 'update-market-data')
+  const newOpts = {
+    jobId: `${name}:${data.orderId}`,
+    ...opts
+  }
+
+  if (data.asset) {
+    data.groupBy = assets[data.asset].chain
+  }
+
+  const arr = [name, data, newOpts]
+
+  debug('addUniqueJob', ...arr)
+
+  return mainQueue.add(...arr)
 }
 
-module.exports.stop = () => {
-  if (!agenda) return
+module.exports.addUniqueJob = addUniqueJob
 
-  agenda.stop().then(() => process.exit(0))
+module.exports.start = async () => {
+  if (mainQueue) throw new Error('Worker is already running')
+
+  const queues = (await fs.readdir(QUEUES_DIR)).filter((name) => name.endsWith('.js'))
+  mainQueue = new Queue('AtomicAgent', opts)
+
+  queues.forEach((queueFileName) => {
+    const processorName = path.basename(queueFileName, '.js')
+    const processorPath = path.join(QUEUES_DIR, queueFileName)
+
+    if (queueFileName.startsWith('update-market-data')) {
+      updateMarketDataQueue = new Queue('UpdateMarketData', opts)
+      updateMarketDataQueue.process(1, processorPath)
+    } else if (queueFileName.startsWith('verify-tx')) {
+      verifyTxQueue = new Queue('VerifyTx', opts)
+      verifyTxQueue.process(1, processorPath)
+    } else {
+      mainQueue.process(processorName, 1, processorPath)
+    }
+  })
+
+  queueArr.push(mainQueue, verifyTxQueue, updateMarketDataQueue)
+
+  queueArr.forEach((q) => {
+    q.on('completed', async (_, result) => {
+      if (!result?.next) return
+
+      result.next.forEach((newJob) => {
+        const { name, data = {}, opts = {} } = newJob
+        addUniqueJob(q, name, data, opts)
+      })
+    })
+
+    q.on('failed', async (job, err) => {
+      if (q.name === 'UpdateMarketData' || err.name === 'RescheduleError') {
+        const args = [
+          job.name,
+          job.data,
+          {
+            delay: err.delay || job.opts.delay
+          }
+        ]
+
+        await job.remove()
+
+        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message})`, ...args)
+
+        addUniqueJob(q, ...args)
+      } else {
+        reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
+      }
+    })
+
+    q.on('error', (err) => {
+      reportError(err, { queueName: q.name })
+    })
+
+    q.on('stalled', (job) => {
+      const err = new Error('Job has stalled')
+      reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
+    })
+  })
+
+  // kickoff market data update
+  addUniqueJob(updateMarketDataQueue, 'UpdateMarketData')
 }
 
-process.on('SIGTERM', module.exports.stop)
-process.on('SIGINT', module.exports.stop)
+module.exports.stop = async () => {
+  if (stopping) return
+  stopping = true
+
+  await Promise.all(queueArr.map((q) => q.close()))
+  await Promise.all([client, subscriber, ...bclients].map((c) => c.disconnect()))
+
+  console.log('Closed worker')
+}
+
+module.exports.getQueues = () => [mainQueue, verifyTxQueue, updateMarketDataQueue]
+module.exports.getAtomicAgentQueue = () => mainQueue
