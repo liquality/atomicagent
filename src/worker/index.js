@@ -72,18 +72,16 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
 
   if (name === 'verify-tx') {
     defaultOpts.delay = 1000 * 20
-
-    if (!data.groupBy) {
-      data.groupBy = uuidv4()
-    }
   } else if (data.orderId) {
     defaultOpts.jobId = `${name}:${data.orderId}`
   }
 
   if (data.asset) {
     data.groupBy = assets[data.asset].chain
-  } else if (!data.groupBy) {
-    data.groupBy = 'other-jobs'
+  }
+
+  if (!data.groupBy) {
+    data.groupBy = uuidv4()
   }
 
   const arr = []
