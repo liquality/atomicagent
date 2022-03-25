@@ -57,8 +57,8 @@ const opts = {
 }
 
 const addUniqueJob = (q, name, data = {}, opts = {}) => {
-  if (q.name === 'UpdateMarketData') {
-    return q.add(
+  if (name === 'UpdateMarketData' || q.name === 'UpdateMarketData') {
+    return updateMarketDataQueue.add(
       {
         groupBy: 'market-data'
       },
@@ -69,8 +69,8 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
     )
   }
 
-  if (q.name === 'VerifyTx' || name === 'verify-tx') {
-    return q.add(
+  if (name === 'verify-tx' || q.name === 'VerifyTx') {
+    return verifyTxQueue.add(
       {
         ...data,
         groupBy: uuidv4()
@@ -96,7 +96,7 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
 
   debug('addUniqueJob', ...arr)
 
-  return q.add(...arr)
+  return mainQueue.add(...arr)
 }
 
 module.exports.addUniqueJob = addUniqueJob
