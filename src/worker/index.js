@@ -88,7 +88,9 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
     ...opts
   }
 
-  data.groupBy = assets[data.asset].chain
+  if (data.asset) {
+    data.groupBy = assets[data.asset].chain
+  }
 
   const arr = [name, data, newOpts]
 
