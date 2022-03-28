@@ -262,6 +262,7 @@ async function createClient(asset) {
   if (assetData.chain === 'avalanche') return createEthClient(asset)
   if (assetData.chain === 'arbitrum') return createEthClient(asset)
   if (assetData.chain === 'ethereum') return createEthClient(asset)
+  if (assetData.chain === 'avalanche') return createEthClient(asset)
   if (assetData.chain === 'near') return createNearClient()
   if (assetData.chain === 'solana') return createSolClient()
   if (assetData.chain === 'terra') return createTerraClient(asset)
