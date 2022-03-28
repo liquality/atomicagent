@@ -135,32 +135,44 @@ module.exports.start = async () => {
     })
 
     q.on('failed', async (job, err) => {
-      if (q.name === 'UpdateMarketData' || err.name === 'RescheduleError') {
-        const args = [
-          job.name,
-          job.data,
-          {
-            delay: err.delay || job.opts.delay
-          }
-        ]
-
-        await job.remove()
-
-        debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message})`, ...args)
-
-        addUniqueJob(q, ...args)
-      } else {
+      if (err.name !== 'RescheduleError') {
         reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
       }
+
+      if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
+        debug('Retrying natively', job)
+        await job.retry()
+        return
+      }
+
+      if (err.name !== 'RescheduleError') return
+
+      const args = [
+        job.name,
+        job.data,
+        {
+          delay: err.delay || job.opts.delay
+        }
+      ]
+
+      await job.remove()
+
+      debug(`[Failed] Adding "${job.name}" due to ${err.name} (${err.message})`, ...args)
+
+      addUniqueJob(q, ...args)
     })
 
     q.on('error', (err) => {
       reportError(err, { queueName: q.name })
     })
 
-    q.on('stalled', (job) => {
+    q.on('stalled', async (job) => {
       const err = new Error('Job has stalled')
       reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
+
+      if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
+        await job.retry()
+      }
     })
   })
 
