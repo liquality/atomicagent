@@ -8,9 +8,10 @@ uri = "redis://localhost:6379/1"
 [application]
 apiPort = 3030
 queuePassword = "test123"
+queuePasswordRW = "secretRWTest123"
 quoteExpirationInSeconds = 1800
+nodeSwapExpirationDurationInSeconds = 2700
 swapExpirationDurationInSeconds = 3600
-nodeSwapExpirationDurationInSeconds = 1800
 
 [auth]
 cookieSecret = '58da74ef560e5578cb46219b7818d7c2'
