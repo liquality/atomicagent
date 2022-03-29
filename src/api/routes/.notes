@@ -1,0 +1,9 @@
+var mySession = db.getMongo().startSession({ causalConsistency: false });
+var mySessionObject = mySession.getDatabase('liqualitytestnetdev').getCollection('orders');
+
+
+{ "_id" : ObjectId("62292619af196988ca4310f2"), "orderId" : "a1a119ca-f103-4c86-87eb-45f3b95d7777", "from" : "MATIC", "to" : "LUNA", "fromAmount" : 1000000000000000000, "toAmount" : 14910, "rate" : 0.01491054, "spread" : 0.01, "minConf" : 60, "expiresAt" : 1646865697113, "hasAgentUnconfirmedTx" : false, "status" : "USER_FUNDED", "userAgent" : "Wallet 0.57.0 (CAL 1.13.10)", "swapExpiration" : 1646867498, "nodeSwapExpiration" : 1646865698, "fromCounterPartyAddress" : "0xcaC585A233083C2D15FFC1c3FDe6C3D18B7401b3", "toCounterPartyAddress" : "terra1q2d7qk83xu0vd3kv4lv8r9lntmuu43lya2v4mj", "fromRateUsd" : 1.49, "toRateUsd" : 98.93, "fromAmountUsd" : 1.49, "toAmountUsd" : 1.48, "createdAt" : ISODate("2022-03-09T22:11:37.130Z"), "updatedAt" : ISODate("2022-03-09T22:20:53.114Z"), "totalAgentFeeUsd" : 0, "totalUserFeeUsd" : 0, "totalFeeUsd" : 0, "__v" : 0, "fromAddress" : "3f429e2212718a717bd7f9e83ca47dab7956447b", "fromFundHash" : "b469effcb26d5e6be7ebcaa43e7df8d27bd6317c37ccc45d4c3784e5185e86c5", "secretHash" : "99a067bc775c423fd829f47afb4bb0eca3a1124771c1c5643a1ffec312e13677", "toAddress" : "terra1au6q7dj5yvfafyfma5zj9cfk0glm2w76k7436x", "txMap" : { "b469effcb26d5e6be7ebcaa43e7df8d27bd6317c37ccc45d4c3784e5185e86c5" : { "asset" : "MATIC", "type" : "fromFundHash", "hash" : "b469effcb26d5e6be7ebcaa43e7df8d27bd6317c37ccc45d4c3784e5185e86c5", "feeAmount" : 421371902236524, "feePrice" : 2.908982287, "feeAmountUsd" : 0, "blockHash" : "322ff9233cbf734a7af800dbf6028161c984777da5e8b0425907467aa3f6d4f5", "blockNumber" : 25447822 } } }
+
+mySessionObject.find({ "from": { $regex: /^LUNA/i } }).hint({ "from": 1 }).limit(2)
+
+
