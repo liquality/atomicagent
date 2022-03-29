@@ -247,7 +247,8 @@ router.get(
     })
     const markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
 
-    debug("all the markets", markets)
+    markets = markets.slice(0, 3)
+    debug('all the markets', markets)
 
     const $group = markets.reduce((acc, market) => {
       acc[`market:${market}:sum:fromAmountUsd`] = {
