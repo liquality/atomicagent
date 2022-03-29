@@ -245,7 +245,7 @@ router.get(
       ...req.query,
       status: ['AGENT_CLAIMED']
     })
-    const markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
+    let markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
 
     markets = markets.slice(0, 3)
     debug('all the markets', markets)
