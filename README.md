@@ -10,10 +10,64 @@
 1. Linux VM
 2. node 14
 3. mongoDB 4.2+
+4. Redis 5
 4. [RPC/API endpoints for the chains you want to support](#liquality-nodes)
 
 
+## `bin/atomicagent` commands
+
+```
+Usage: atomicagent [options] [command]
+
+Options:
+  -V, --version   output the version number
+  -h, --help      display help for command
+
+Commands:
+  wallet          Communicate with asset wallets
+  manage          Manage assets & markets
+  help [command]  display help for command
+```
+
+
+```
+Usage: bin/atomicagent wallet [options] [command]
+
+Options:
+  -c, --config <path>                       Config file path
+  -h, --help                                display help for command
+
+Commands:
+  balances
+  balance <asset>
+  getnewaddress <asset>
+  sendtoaddress <asset> <address> <amount>
+  help [command]                            display help for command
+```
+
+
+```
+Usage: bin/atomicagent manage [options] [command]
+
+Options:
+  -c, --config <path>                                     Config file path
+  -h, --help                                              display help for command
+
+Commands:
+  asset:add <code> <min> <max> <minConf> <dailyUsdLimit>
+  asset:set <code> <key> <value>
+  asset:disable <code>
+  asset:enable <code>
+  markets:create
+  market:spread:set <from> <to> <spread>
+  market:spread:get <from> <to>
+  help [command]                                          display help for command
+```
+
+
 ## Setup
+
+### Prepare config.toml
 
 ```bash
 git clone git@github.com:liquality/atomicagent.git
@@ -21,9 +75,22 @@ cd atomicagent
 npm ci
 cp sample.config.toml config.toml   # copy sample config
 nano config.toml                    # configure your agent
-nano src/migrate/data/assets.json   # add/remove assets
-nano src/migrate/data/markets.json  # add/remove markets
-npm run migrate                     # prepare agent with assets & markets
+```
+
+
+### Prepare assets & markets
+
+```
+bin/atomicagent manage asset:add <code1> <min> <max> <minConf> <dailyUsdLimit>
+bin/atomicagent manage asset:add <code2> <min> <max> <minConf> <dailyUsdLimit>
+bin/atomicagent manage markets:create # creates market for code1-code2 & code2-code1
+```
+
+
+### Start the agent
+
+```
+npm start
 ```
 
 
@@ -59,15 +126,6 @@ npm run migrate                     # prepare agent with assets & markets
 | RSK Scraper           | Mainnet | https://liquality.io/rsk-mainnet-api                   |
 | BSC Scraper           | Mainnet | https://liquality.io/bsc-mainnet-api                   |
 | Polygon Scraper       | Mainnet | https://liquality.io/polygon-mainnet-api/              |
-
-
-
-## Run!
-
-```bash
-npm run api     # runs agent market maker api
-npm run worker  # runs the background process
-```
 
 
 ## Test
