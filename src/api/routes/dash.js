@@ -1,7 +1,6 @@
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const { fromUnixTime, differenceInDays, parseISO, compareAsc, eachDayOfInterval, format } = require('date-fns')
-const debug = require('debug')('liquality:agent:dash')
 
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
@@ -261,7 +260,7 @@ router.get(
       return acc
     }, {})
 
-    let queryArr = [
+    const result = await Order.aggregate([
       {
         $match: query
       },
@@ -297,9 +296,7 @@ router.get(
           count: { $sum: 1 }
         }
       }
-    ]
-    debug('aggregate query', queryArr)
-    const result = await Order.aggregate(queryArr).exec()
+    ]).exec()
 
     const stats = result.map((json) => {
       json.date = json._id
