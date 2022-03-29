@@ -310,7 +310,7 @@ router.get(
           }
         }
       ]).exec()
-
+      debug('Makerts response', JSON.stringify(marketResult))
       result.push(marketResult)
     })
 
