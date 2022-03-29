@@ -2,7 +2,7 @@ const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const { fromUnixTime, differenceInDays, parseISO, compareAsc, eachDayOfInterval, format } = require('date-fns')
 const debug = require('debug')('liquality:agent:dash')
-
+const Bluebird = require('bluebird')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 const MarketHistory = require('../../models/MarketHistory')
@@ -247,60 +247,62 @@ router.get(
     })
     let markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
 
-    markets = markets.slice(0, 3)
-    debug('all the markets', markets)
+    const result = await Bluebird.map(markets,
+      (markets) => {
+        debug('all the markets in group of 10 -> ', markets)
+        const $group = markets.reduce((acc, market) => {
+          acc[`market:${market}:sum:fromAmountUsd`] = {
+            $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
+          }
+          acc[`market:${market}:sum:toAmountUsd`] = {
+            $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] }
+          }
+          acc[`market:${market}:count`] = {
+            $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] }
+          }
 
-    const $group = markets.reduce((acc, market) => {
-      acc[`market:${market}:sum:fromAmountUsd`] = {
-        $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
-      }
-      acc[`market:${market}:sum:toAmountUsd`] = {
-        $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] }
-      }
-      acc[`market:${market}:count`] = {
-        $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] }
-      }
-
-      return acc
-    }, {})
-
-    const result = await Order.aggregate([
-      {
-        $match: query
+          return acc
+        }, {})
+        return await Order.aggregate([
+          {
+            $match: query
+          },
+          {
+            $addFields: {
+              market: { $concat: ['$from', '-', '$to'] },
+              date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+            }
+          },
+          {
+            $group: {
+              _id: '$date',
+              ...$group,
+              'wallet:sum:fromAmountUsd': {
+                $sum: {
+                  $cond: [{ $and: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
+                }
+              },
+              'wallet:sum:toAmountUsd': {
+                $sum: {
+                  $cond: [{ $and: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
+                }
+              },
+              'wallet:count': {
+                $sum: {
+                  $cond: [{ $and: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
+                }
+              },
+              'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
+              'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
+              'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+              'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+              count: { $sum: 1 }
+            }
+          }
+        ]).exec()
       },
-      {
-        $addFields: {
-          market: { $concat: ['$from', '-', '$to'] },
-          date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
-        }
-      },
-      {
-        $group: {
-          _id: '$date',
-          ...$group,
-          'wallet:sum:fromAmountUsd': {
-            $sum: {
-              $cond: [{ $and: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
-            }
-          },
-          'wallet:sum:toAmountUsd': {
-            $sum: {
-              $cond: [{ $and: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
-            }
-          },
-          'wallet:count': {
-            $sum: {
-              $cond: [{ $and: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
-            }
-          },
-          'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
-          'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
-          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
-          'sum:toAmountUsd': { $sum: '$toAmountUsd' },
-          count: { $sum: 1 }
-        }
-      }
-    ]).exec()
+      { concurrency: Number(10) }
+    )
 
     const stats = result.map((json) => {
       json.date = json._id
