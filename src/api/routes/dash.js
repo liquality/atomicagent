@@ -247,7 +247,8 @@ router.get(
     })
     let markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
 
-    const result = await Bluebird.map(markets,
+    const result = await Bluebird.map(
+      markets,
       (markets) => {
         debug('all the markets in group of 10 -> ', markets)
         const $group = markets.reduce((acc, market) => {
@@ -263,7 +264,7 @@ router.get(
 
           return acc
         }, {})
-        return await Order.aggregate([
+        return Order.aggregate([
           {
             $match: query
           },
