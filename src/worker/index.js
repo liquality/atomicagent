@@ -33,6 +33,9 @@ const opts = {
     lockRenewTime: 22500,
     stalledInterval: 45000
   },
+  defaultJobOptions: {
+    stackTraceLimit: 20
+  },
   createClient: function (type, redisOpts) {
     switch (type) {
       case 'client':
