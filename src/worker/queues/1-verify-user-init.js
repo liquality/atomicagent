@@ -1,11 +1,11 @@
 require('../../utils/sentry')
-require('../../utils/mongo').connect()
+const mongo = require('../../utils/mongo')
 const debug = require('debug')('liquality:agent:1-verify-user-init')
 
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async (job) => {
+async function process(job) {
   debug(job.data)
 
   const { orderId } = job.data
@@ -75,4 +75,11 @@ module.exports = async (job) => {
       }
     ]
   }
+}
+
+module.exports = (job) => {
+  return mongo
+    .connect()
+    .then(() => process(job))
+    .finally(() => mongo.disconnect())
 }

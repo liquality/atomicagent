@@ -1,9 +1,9 @@
 require('../../utils/sentry')
-require('../../utils/mongo').connect()
+const mongo = require('../../utils/mongo')
 const debug = require('debug')('liquality:agent:worker:update-market-data')
 const Market = require('../../models/Market')
 
-module.exports = async (job) => {
+async function process(job) {
   debug('Running....', job.id)
 
   await Market.updateAllMarketData()
@@ -15,4 +15,11 @@ module.exports = async (job) => {
       }
     ]
   }
+}
+
+module.exports = (job) => {
+  return mongo
+    .connect()
+    .then(() => process(job))
+    .finally(() => mongo.disconnect())
 }

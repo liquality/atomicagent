@@ -1,11 +1,11 @@
 require('../../utils/sentry')
-require('../../utils/mongo').connect()
+const mongo = require('../../utils/mongo')
 const debug = require('debug')('liquality:agent:worker:3-agent-fund')
 
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 
-module.exports = async (job) => {
+async function process(job) {
   debug(job.data)
 
   const { orderId, toLastScannedBlock } = job.data
@@ -97,4 +97,11 @@ module.exports = async (job) => {
   })
 
   return { next }
+}
+
+module.exports = (job) => {
+  return mongo
+    .connect()
+    .then(() => process(job))
+    .finally(() => mongo.disconnect())
 }
