@@ -5,18 +5,12 @@ const config = require('../config')
 const connect = async () => {
   mongoose.set('debug', config.database.debug)
 
-  const mongooseOnError = (err) => {
-    debug(err)
-  }
+  mongoose.connection.on('error', debug)
 
-  mongoose
-    .connect(config.database.uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: false
-    })
-    .catch(mongooseOnError)
-
-  mongoose.connection.on('error', mongooseOnError)
+  return mongoose.connect(config.database.uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: false
+  })
 }
 
 module.exports = {
