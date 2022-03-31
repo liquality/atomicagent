@@ -265,7 +265,6 @@ router.get(
     })
     let allMarkets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
 
-    debug('all the markets', allMarkets)
     const groupSize = 10
     let result = []
     const marketGroups = allMarkets
@@ -277,7 +276,6 @@ router.get(
       })
 
     marketGroups.forEach(async (markets) => {
-      debug('Markets ', markets)
       const $group = markets.reduce((acc, market) => {
         acc[`market:${market}:sum:fromAmountUsd`] = {
           $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
@@ -329,7 +327,6 @@ router.get(
           }
         }
       ]).exec()
-      debug('Makerts response', JSON.stringify(marketResult))
       result.push(marketResult)
     })
 
@@ -347,7 +344,6 @@ router.get(
     })
 
     result = finalResults
-
     const stats = result.map((json) => {
       json.date = json._id
       delete json._id
@@ -369,7 +365,7 @@ router.get(
 
       return json
     })
-
+    debug('result=>', stats)
     const emptyDataPoint = {
       'wallet:sum:fromAmountUsd': 0,
       'wallet:sum:toAmountUsd': 0,
