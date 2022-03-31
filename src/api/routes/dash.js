@@ -328,21 +328,21 @@ router.get(
         }
       ]).exec()
 
-      debug('market result =>', marketResult)
       result.push(marketResult)
     })
 
     //flatten and group by date
-    result = result.flat(1).reduce((r, ele) => {
+    let flattenResult = result.flat(1).reduce((r, ele) => {
       r[ele._id] = r[ele._id] || []
       r[ele._id].push(ele)
       return r
     }, Object.create(null))
 
+    debug('market result =>', flattenResult)
     //merge all with sum
     let finalResults = []
-    Object.keys(result).forEach((key) => {
-      finalResults.push(mergeJSON(result[key]))
+    Object.keys(flattenResult).forEach((key) => {
+      finalResults.push(mergeJSON(flattenResult[key]))
     })
 
     result = finalResults
