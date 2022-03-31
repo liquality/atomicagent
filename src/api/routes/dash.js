@@ -304,6 +304,8 @@ router.get(
       }
     ]).exec()
 
+    debug('result data ', JSON.stringify(result))
+
     const stats = result.map((json) => {
       json.date = json._id
       delete json._id
