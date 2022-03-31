@@ -6,6 +6,25 @@ const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 const MarketHistory = require('../../models/MarketHistory')
 
+const mergeJSON = (data) => {
+  const result = {}
+
+  data.forEach((dataSet) => {
+    for (let [key, value] of Object.entries(dataSet)) {
+      if (key === '_id' || key === 'wallet:count' || key === 'count') {
+        result[key] = value
+        continue
+      }
+      if (result[key]) {
+        result[key] += value
+      } else {
+        result[key] = value
+      }
+    }
+  })
+  return result
+}
+
 const addressHashVariants = (address) => {
   const addressLowerCase = address.toLowerCase()
 
@@ -240,71 +259,94 @@ router.get(
 router.get(
   '/stats',
   asyncHandler(async (req, res) => {
-    debug('req query ', req.query)
     const query = createQuery({
       ...req.query,
       status: ['AGENT_CLAIMED']
     })
-    let markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
+    let allMarkets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
 
-    markets = markets.slice(0, 10)
-    debug('markets ', markets)
+    debug('all the markets', allMarkets)
+    const groupSize = 10
+    let result = []
+    const marketGroups = allMarkets
+      .map((e, i) => {
+        return i % groupSize === 0 ? allMarkets.slice(i, i + groupSize) : null
+      })
+      .filter((e) => {
+        return e
+      })
 
-    const $group = markets.reduce((acc, market) => {
-      acc[`market:${market}:sum:fromAmountUsd`] = {
-        $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
-      }
-      acc[`market:${market}:sum:toAmountUsd`] = {
-        $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] }
-      }
-      acc[`market:${market}:count`] = {
-        $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] }
-      }
-
-      return acc
-    }, {})
-
-    debug('groups ', JSON.stringify($group))
-
-    const result = await Order.aggregate([
-      {
-        $match: query
-      },
-      {
-        $addFields: {
-          market: { $concat: ['$from', '-', '$to'] },
-          date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+    marketGroups.forEach(async (markets) => {
+      debug('Markets ', markets)
+      const $group = markets.reduce((acc, market) => {
+        acc[`market:${market}:sum:fromAmountUsd`] = {
+          $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
         }
-      },
-      {
-        $group: {
-          _id: '$date',
-          ...$group,
-          'wallet:sum:fromAmountUsd': {
-            $sum: {
-              $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
-            }
-          },
-          'wallet:sum:toAmountUsd': {
-            $sum: {
-              $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
-            }
-          },
-          'wallet:count': {
-            $sum: {
-              $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
-            }
-          },
-          'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
-          'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
-          'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
-          'sum:toAmountUsd': { $sum: '$toAmountUsd' },
-          count: { $sum: 1 }
+        acc[`market:${market}:sum:toAmountUsd`] = {
+          $sum: { $cond: [{ $eq: ['$market', market] }, '$toAmountUsd', 0] }
         }
-      }
-    ]).exec()
+        acc[`market:${market}:count`] = {
+          $sum: { $cond: [{ $eq: ['$market', market] }, 1, 0] }
+        }
 
-    debug('result data ', JSON.stringify(result))
+        return acc
+      }, {})
+
+      const marketResult = await Order.aggregate([
+        {
+          $match: query
+        },
+        {
+          $addFields: {
+            market: { $concat: ['$from', '-', '$to'] },
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }
+          }
+        },
+        {
+          $group: {
+            _id: '$date',
+            ...$group,
+            'wallet:sum:fromAmountUsd': {
+              $sum: {
+                $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
+              }
+            },
+            'wallet:sum:toAmountUsd': {
+              $sum: {
+                $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
+              }
+            },
+            'wallet:count': {
+              $sum: {
+                $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
+              }
+            },
+            'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
+            'sum:totalUserFeeUsd': { $sum: '$totalUserFeeUsd' },
+            'sum:fromAmountUsd': { $sum: '$fromAmountUsd' },
+            'sum:toAmountUsd': { $sum: '$toAmountUsd' },
+            count: { $sum: 1 }
+          }
+        }
+      ]).exec()
+      debug('Makerts response', JSON.stringify(marketResult))
+      result.push(marketResult)
+    })
+
+    //flatten and group by date
+    result = result.flat(1).reduce((r, ele) => {
+      r[ele._id] = r[ele._id] || []
+      r[ele._id].push(ele)
+      return r
+    }, Object.create(null))
+
+    //merge all with sum
+    let finalResults = []
+    Object.keys(result).forEach((key) => {
+      finalResults.push(mergeJSON(result[key]))
+    })
+
+    result = finalResults
 
     const stats = result.map((json) => {
       json.date = json._id
@@ -357,7 +399,7 @@ router.get(
     res.json({
       count: result.length,
       result: {
-        markets,
+        allMarkets,
         stats
       }
     })
