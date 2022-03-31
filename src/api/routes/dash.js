@@ -275,7 +275,7 @@ router.get(
         return e
       })
 
-    marketGroups.forEach(async (markets) => {
+    for (const markets of marketGroups) {
       const $group = markets.reduce((acc, market) => {
         acc[`market:${market}:sum:fromAmountUsd`] = {
           $sum: { $cond: [{ $eq: ['$market', market] }, '$fromAmountUsd', 0] }
@@ -327,9 +327,8 @@ router.get(
           }
         }
       ]).exec()
-
       result.push(marketResult)
-    })
+    }
 
     //flatten and group by date
     let flattenResult = result.flat(1).reduce((r, ele) => {
