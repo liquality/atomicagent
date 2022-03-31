@@ -327,6 +327,8 @@ router.get(
           }
         }
       ]).exec()
+
+      debug('market result =>', marketResult)
       result.push(marketResult)
     })
 
@@ -337,7 +339,6 @@ router.get(
       return r
     }, Object.create(null))
 
-    debug('result=>', result)
     //merge all with sum
     let finalResults = []
     Object.keys(result).forEach((key) => {
