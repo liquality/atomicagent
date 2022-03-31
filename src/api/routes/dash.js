@@ -1,7 +1,7 @@
 const asyncHandler = require('express-async-handler')
 const router = require('express').Router()
 const { fromUnixTime, differenceInDays, parseISO, compareAsc, eachDayOfInterval, format } = require('date-fns')
-
+const debug = require('debug')('liquality:agent:dash')
 const Market = require('../../models/Market')
 const Order = require('../../models/Order')
 const MarketHistory = require('../../models/MarketHistory')
@@ -240,11 +240,15 @@ router.get(
 router.get(
   '/stats',
   asyncHandler(async (req, res) => {
+    debug('req query ', req.query)
     const query = createQuery({
       ...req.query,
       status: ['AGENT_CLAIMED']
     })
-    const markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
+    let markets = (await Market.find({}, 'from to').lean().exec()).map((market) => `${market.from}-${market.to}`)
+
+    markets = markets.slice(0, 25)
+    debug('markets ', markets)
 
     const $group = markets.reduce((acc, market) => {
       acc[`market:${market}:sum:fromAmountUsd`] = {
@@ -259,6 +263,8 @@ router.get(
 
       return acc
     }, {})
+
+    debug('groups ', JSON.stringify($group))
 
     const result = await Order.aggregate([
       {
