@@ -8,3 +8,4 @@ test/docker/config/*
 !test/docker/config/bitcoin.conf
 docker-commands.md
 .DS_Store
+query.txt

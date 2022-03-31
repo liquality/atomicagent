@@ -282,17 +282,17 @@ router.get(
           ...$group,
           'wallet:sum:fromAmountUsd': {
             $sum: {
-              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
+              $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, '$fromAmountUsd', 0]
             }
           },
           'wallet:sum:toAmountUsd': {
             $sum: {
-              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
+              $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, '$toAmountUsd', 0]
             }
           },
           'wallet:count': {
             $sum: {
-              $cond: [{ $regexMatch: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
+              $cond: [{ $or: { input: '$userAgent', regex: /^Wallet/i } }, 1, 0]
             }
           },
           'sum:totalAgentFeeUsd': { $sum: '$totalAgentFeeUsd' },
