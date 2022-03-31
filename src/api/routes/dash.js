@@ -337,6 +337,7 @@ router.get(
       return r
     }, Object.create(null))
 
+    debug('result=>', result)
     //merge all with sum
     let finalResults = []
     Object.keys(result).forEach((key) => {
@@ -344,7 +345,7 @@ router.get(
     })
 
     result = finalResults
-    debug('result=>', result)
+
     const stats = result.map((json) => {
       json.date = json._id
       delete json._id
