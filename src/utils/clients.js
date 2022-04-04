@@ -238,7 +238,7 @@ async function createTerraClient(asset) {
     new TerraWalletProvider({
       network: terraNetwork,
       mnemonic,
-      baseDerivationPath: `'m/44'/${terraNetwork.coinType}'/0'`,
+      derivationPath: `'m/44'/${terraNetwork.coinType}'/0'/0/0`,
       asset: terraConfig.asset,
       feeAsset: terraConfig.feeAsset,
       stableFee: false
