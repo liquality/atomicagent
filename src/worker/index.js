@@ -173,10 +173,6 @@ module.exports.start = async () => {
     q.on('stalled', async (job) => {
       const err = new Error('Job has stalled')
       reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
-
-      // if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
-      //   await job.retry()
-      // }
     })
   })
 
