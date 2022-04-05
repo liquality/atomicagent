@@ -174,7 +174,7 @@ module.exports.start = async () => {
       reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
 
       if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
-        await job.moveToCompleted('succeeded', true);
+        await job.moveToCompleted('succeeded', true)
         // await job.retry()
       }
     })
