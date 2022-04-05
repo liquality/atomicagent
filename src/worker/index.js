@@ -31,7 +31,8 @@ const opts = {
   settings: {
     lockDuration: 45000,
     lockRenewTime: 22500,
-    stalledInterval: 45000
+    stalledInterval: 30000,
+    maxStalledCount: 1
   },
   defaultJobOptions: {
     stackTraceLimit: 20
@@ -173,10 +174,9 @@ module.exports.start = async () => {
       const err = new Error('Job has stalled')
       reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
 
-      if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
-        await job.moveToCompleted('succeeded', true)
-        // await job.retry()
-      }
+      // if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
+      //   await job.retry()
+      // }
     })
   })
 
