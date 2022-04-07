@@ -26,7 +26,7 @@ const checkJobForRetry = (err, job) => {
   if (!err || !err.message || !job) return false
 
   if (
-    '4-find-user-claim-or-agent-refund' === job.name &&
+    ['4-find-user-claim-or-agent-refund'].includes(job.name) &&
     (err.message.includes('502') ||
       err.message.includes('timeout') ||
       err.message.includes('timed out') ||
