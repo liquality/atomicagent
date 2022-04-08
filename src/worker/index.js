@@ -30,7 +30,6 @@ const checkJobForRetry = (err, job) => {
     (err.message.includes('timeout of 30000ms exceeded') ||
       err.message.includes('Request failed with status code 400') ||
       err.message.includes('Request failed with status code 502') ||
-      err.message.includes('400') ||
       err.message.includes('connection timed out'))
   ) {
     return true
