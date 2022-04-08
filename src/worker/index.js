@@ -27,11 +27,11 @@ const checkJobForRetry = (err, job) => {
 
   if (
     ['4-find-user-claim-or-agent-refund'].includes(job.name) &&
-    (err.message.includes('502') ||
-      err.message.includes('timeout') ||
-      err.message.includes('timed out') ||
+    (err.message.includes('timeout of 30000ms exceeded') ||
+      err.message.includes('Request failed with status code 400') ||
+      err.message.includes('Request failed with status code 502') ||
       err.message.includes('400') ||
-      err.message.includes('30000ms'))
+      err.message.includes('connection timed out'))
   ) {
     return true
   }
