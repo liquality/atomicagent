@@ -21,6 +21,23 @@ let updateMarketDataQueue
 const queueArr = []
 const QUEUES_DIR = path.join(__dirname, 'queues')
 
+const checkJobForRetry = (err, job) => {
+  // retrying the timeout jobs only for the below specific jobs
+  if (!err || !err.message || !job) return false
+
+  if (
+    ['4-find-user-claim-or-agent-refund'].includes(job.name) &&
+    (err.message.includes('timeout of 30000ms exceeded') ||
+      err.message.includes('Request failed with status code 400') ||
+      err.message.includes('Request failed with status code 502') ||
+      err.message.includes('connection timed out'))
+  ) {
+    return true
+  }
+
+  return false
+}
+
 const opts = {
   limiter: {
     max: 1,
@@ -143,7 +160,7 @@ module.exports.start = async () => {
         reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
       }
 
-      if (['UpdateMarketData', 'VerifyTx'].includes(q.name)) {
+      if (['UpdateMarketData', 'VerifyTx'].includes(q.name) || checkJobForRetry(err, job)) {
         debug('Retrying natively', job)
         await job.retry()
         return
