@@ -190,6 +190,16 @@ module.exports.start = async () => {
     q.on('stalled', async (job) => {
       const err = new Error('Job has stalled')
       reportError(err, { queueName: q.name, orderId: job.data?.orderId }, { job })
+
+      let updateDataQueue = this.getUpdateMarketDataQueue()
+
+      updateDataQueue.clean(0, 'delayed')
+      updateDataQueue.clean(0, 'wait')
+      updateDataQueue.clean(0, 'active')
+      updateDataQueue.clean(0, 'completed')
+      updateDataQueue.clean(0, 'failed')
+
+      addUniqueJob(updateDataQueue, 'UpdateMarketData')
     })
   })
 
@@ -209,3 +219,4 @@ module.exports.stop = async () => {
 
 module.exports.getQueues = () => [mainQueue, verifyTxQueue, updateMarketDataQueue]
 module.exports.getAtomicAgentQueue = () => mainQueue
+module.exports.getUpdateMarketDataQueue = () => updateMarketDataQueue
