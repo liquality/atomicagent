@@ -4,7 +4,7 @@ const router = require('express').Router()
 const Market = require('../../models/Market')
 
 router.get(
-  '/market',
+  '/sync',
   asyncHandler(async (req, res) => {
     await Market.updateAllMarketData()
 
