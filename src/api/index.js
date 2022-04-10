@@ -60,6 +60,7 @@ module.exports.start = () => {
   app.use('/api/user', require('./routes/user'))
   app.use('/api/swap', require('./routes/swap'))
   app.use('/api/dash', require('./routes/dash'))
+  app.use('/api/market', require('./routes/market'))
 
   const queues = getQueues()
   const roServerAdapter = new ExpressAdapter()
