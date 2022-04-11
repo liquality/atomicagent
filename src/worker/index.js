@@ -46,13 +46,13 @@ const opts = {
   },
   redis: { maxRetriesPerRequest: null, enableReadyCheck: false },
   settings: {
-    lockDuration: 45000,
-    lockRenewTime: 22500,
-    stalledInterval: 30000,
+    lockDuration: 60000,
+    lockRenewTime: 30000,
+    stalledInterval: 15000,
     maxStalledCount: 1
   },
   defaultJobOptions: {
-    stackTraceLimit: 20
+    stackTraceLimit: 10
   },
   createClient: function (type, redisOpts) {
     switch (type) {
