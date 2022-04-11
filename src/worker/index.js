@@ -85,6 +85,7 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
         groupBy: 'market-data'
       },
       {
+        priority: 1,
         removeOnComplete: true,
         jobId: 'update-market-data-job'
       }
