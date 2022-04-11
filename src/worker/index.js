@@ -49,7 +49,7 @@ const opts = {
   settings: {
     lockDuration: 60000,
     lockRenewTime: 30000,
-    stalledInterval: 15000,
+    stalledInterval: 45000,
     maxStalledCount: 1
   },
   defaultJobOptions: {
