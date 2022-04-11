@@ -8,7 +8,6 @@ const cors = require('cors')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
 const basicAuth = require('express-basic-auth')
-
 const { createBullBoard } = require('@bull-board/api')
 const { BullAdapter } = require('@bull-board/api/bullAdapter')
 const { ExpressAdapter } = require('@bull-board/express')
@@ -60,7 +59,6 @@ module.exports.start = () => {
   app.use('/api/user', require('./routes/user'))
   app.use('/api/swap', require('./routes/swap'))
   app.use('/api/dash', require('./routes/dash'))
-  app.use('/api/market', require('./routes/market'))
 
   const queues = getQueues()
   const roServerAdapter = new ExpressAdapter()
