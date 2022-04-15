@@ -7,7 +7,6 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-const api = require('./api')
 const worker = require('./worker')
 const mongo = require('./utils/mongo')
 
@@ -15,7 +14,6 @@ mongo.connect()
 
 async function start() {
   await worker.start()
-  api.start()
 }
 
 function stop(signal) {
@@ -23,7 +21,6 @@ function stop(signal) {
     console.log('Received', signal)
 
     await worker.stop()
-    await api.stop()
     await mongo.disconnect()
     process.exit(0)
   }
