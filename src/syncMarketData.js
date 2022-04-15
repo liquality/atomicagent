@@ -11,17 +11,14 @@ const mongo = require('./utils/mongo')
 const Market = require('./models/Market')
 const cron = require('node-cron')
 
-const syncMarketData = async () => {
+const task = cron.schedule('*/15 * * * * *', async () => {
   await Market.updateAllMarketData()
-}
-const task = cron.schedule('* * * * *', () => {
-  syncMarketData()
 })
 
 mongo.connect()
 
 async function start() {
-  console.log('worker', JSON.stringify(syncMarketData))
+  console.log('starting sync market data cron')
   await task.start()
 }
 
