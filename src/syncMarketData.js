@@ -7,22 +7,29 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-const syncMarketData = require('./syncMarketData')
-
 const mongo = require('./utils/mongo')
+const Market = require('./models/Market')
+const cron = require('node-cron')
+
+const syncMarketData = async () => {
+  await Market.updateAllMarketData()
+}
+const task = cron.schedule('* * * * *', () => {
+  syncMarketData()
+})
 
 mongo.connect()
 
 async function start() {
   console.log('worker', JSON.stringify(syncMarketData))
-  await syncMarketData.start()
+  await task.start()
 }
 
 function stop(signal) {
   return async function () {
     console.log('Received', signal)
 
-    await syncMarketData.stop()
+    await task.stop()
     await mongo.disconnect()
     process.exit(0)
   }
