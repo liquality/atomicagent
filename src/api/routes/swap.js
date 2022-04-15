@@ -16,7 +16,7 @@ const ensureUserAgentCompatible = require('../../middlewares/ensureUserAgentComp
 const hashUtil = require('../../utils/hash')
 const { DuplicateOrderError } = require('../../utils/errors')
 
-const { addUniqueJob, getAtomicAgentQueue } = require('../../worker')
+const { addUniqueJob, getAtomicAgentQueue } = require('../../syncMarketData')
 
 const amplitude = Amplitude.init(process.env.AMPLITUDE_API_KEY)
 
