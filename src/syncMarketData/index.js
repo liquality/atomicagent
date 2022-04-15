@@ -3,7 +3,7 @@ const Market = require('../models/Market')
 const syncMarketData = async () => {
   await Market.updateAllMarketData()
 }
-const task = cron.schedule('*/15 * * * * *', () => {
+const task = cron.schedule('* * * * *', () => {
   syncMarketData()
 })
 
