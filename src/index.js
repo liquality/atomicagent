@@ -7,7 +7,7 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-const worker = require('./sync')
+const worker = require('./worker/sync')
 const mongo = require('./utils/mongo')
 
 mongo.connect()
