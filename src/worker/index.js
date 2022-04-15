@@ -1,6 +1,8 @@
 const cron = require('node-cron')
-const { syncMarketData } = require('./queues/sync-market')
-
+const Market = require('../models/Market')
+const syncMarketData = async () => {
+  await Market.updateAllMarketData()
+}
 const task = cron.schedule('*/15 * * * * *', () => {
   syncMarketData()
 })
