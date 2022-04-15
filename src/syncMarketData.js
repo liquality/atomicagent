@@ -7,22 +7,22 @@ if (process.env.NODE_ENV === 'production') {
   })
 }
 
-const worker = require('./syncMarketData')
+const syncMarketData = require('./syncMarketData')
 
 const mongo = require('./utils/mongo')
 
 mongo.connect()
 
 async function start() {
-  console.log('worker', JSON.stringify(worker))
-  await worker.start()
+  console.log('worker', JSON.stringify(syncMarketData))
+  await syncMarketData.start()
 }
 
 function stop(signal) {
   return async function () {
     console.log('Received', signal)
 
-    await worker.stop()
+    await syncMarketData.stop()
     await mongo.disconnect()
     process.exit(0)
   }
