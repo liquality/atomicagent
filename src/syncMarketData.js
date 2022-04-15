@@ -11,7 +11,7 @@ const mongo = require('./utils/mongo')
 const Market = require('./models/Market')
 const cron = require('node-cron')
 
-const task = cron.schedule('*/15 * * * * *', async () => {
+const task = cron.schedule('* * * * *', async () => {
   await Market.updateAllMarketData()
 })
 
