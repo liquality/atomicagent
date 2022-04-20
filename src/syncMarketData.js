@@ -1,12 +1,3 @@
-const Sentry = require('@sentry/node')
-
-// Enable Sentry (for production only)
-if (process.env.NODE_ENV === 'production') {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN
-  })
-}
-
 const mongo = require('./utils/mongo')
 const Market = require('./models/Market')
 const cron = require('node-cron')
