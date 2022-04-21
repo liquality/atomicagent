@@ -6,6 +6,7 @@ const { parseArgsStringToArgv } = require('string-argv')
 const config = require('../../config')
 const Check = require('../../models/Check')
 const Order = require('../../models/Order')
+const { safeCompare } = require('../../utils/crypto')
 
 const ensureAuth = require('../../middlewares/ensureAuth')
 
@@ -41,7 +42,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const { body } = req
 
-    if (body.password !== config.auth.simplePassword) {
+    if (!safeCompare(body.password, config.auth.simplePassword)) {
       return res.notOk(401, 'Invalid password')
     }
 
