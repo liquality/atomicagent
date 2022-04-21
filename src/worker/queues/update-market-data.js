@@ -9,11 +9,7 @@ async function process(job) {
   await Market.updateAllMarketData()
 
   return {
-    next: [
-      {
-        name: 'UpdateMarketData'
-      }
-    ]
+    updateMarketData: true
   }
 }
 

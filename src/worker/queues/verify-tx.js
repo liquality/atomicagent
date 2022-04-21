@@ -7,7 +7,6 @@ const { assets } = require('@liquality/cryptoassets')
 
 const { getClient } = require('../../utils/clients')
 const Order = require('../../models/Order')
-const { RescheduleError } = require('../../utils/errors')
 
 async function process(job) {
   debug(job.data)
@@ -45,7 +44,11 @@ async function process(job) {
       const receipt = await client.getMethod('getTransactionReceipt')(hash)
 
       if (!receipt) {
-        throw new RescheduleError(`Reschedule verify-tx for ${order.orderId}:${type}`, asset)
+        debug(`Reschedule verify-tx for ${order.orderId}:${type}`)
+
+        return {
+          verify: job.data
+        }
       }
 
       const { gasUsed } = receipt
@@ -58,10 +61,12 @@ async function process(job) {
 
     debug(`Verified ${type} for ${orderId}`)
 
-    return order.save()
+    await order.save()
   }
 
-  throw new RescheduleError(`Reschedule verify-tx for ${order.orderId}:${type}`, asset)
+  return {
+    verify: job.data
+  }
 }
 
 module.exports = (job) => {

@@ -1,24 +1,13 @@
-require('../../utils/sentry')
-const mongo = require('../../utils/mongo')
 const debug = require('debug')('liquality:agent:worker:2-agent-reciprocate')
 
 const config = require('../../config')
 const Check = require('../../models/Check')
 const Order = require('../../models/Order')
 const Asset = require('../../models/Asset')
-const { RescheduleError } = require('../../utils/errors')
 
-async function process(job) {
-  debug(job.data)
-
-  const { orderId } = job.data
-
-  const order = await Order.findOne({ orderId }).exec()
-  if (!order) {
-    throw new Error(`Order not found: ${orderId}`)
-  }
+module.exports = async function (order) {
   if (order.status !== 'USER_FUNDED') {
-    throw new Error(`Order has invalid status: ${orderId} / ${order.status}`)
+    throw new Error(`Order has invalid status: ${order.orderId} / ${order.status}`)
   }
 
   const fromClient = await order.fromClient()
@@ -30,7 +19,11 @@ async function process(job) {
   try {
     fromCurrentBlock = await fromClient.chain.getBlockByNumber(fromCurrentBlockNumber)
   } catch (e) {
-    throw new RescheduleError(e.message, order.from)
+    debug(e)
+
+    return {
+      next: true
+    }
   }
 
   const stop =
@@ -60,11 +53,11 @@ async function process(job) {
     return
   }
 
-  const check = await Check.getCheckForOrder(orderId)
+  const check = await Check.getCheckForOrder(order.orderId)
   const flag = check.get('flags.reciprocate-init-swap') || {}
 
   if (flag.reject) {
-    debug(`Rejected ${orderId}`, flag.message)
+    debug(`Rejected ${order.orderId}`, flag.message)
     return
   }
 
@@ -98,9 +91,13 @@ async function process(job) {
     const fromAmountDaily = query[0]['sum:fromAmountUsd']
     if (fromAmountDaily > fromAsset['24hrUsdLimit']) {
       if (!flag.approve) {
-        throw new RescheduleError(`Reschedule ${orderId}: reciprocate-init-swap is not approved yet`, order.from)
+        debug(`Reschedule ${order.orderId}: reciprocate-init-swap is not approved yet`)
+
+        return {
+          next: true
+        }
       }
-      debug(`Approved ${orderId}`, flag.message)
+      debug(`Approved ${order.orderId}`, flag.message)
     }
   }
 
@@ -117,14 +114,18 @@ async function process(job) {
 
   await order.log('AUTH', 'AUTO_APPROVED', { type, action, message })
 
-  debug(`Auto-approved order ${orderId} worth $${order.fromAmountUsd}`)
+  debug(`Auto-approved order ${order.orderId} worth $${order.fromAmountUsd}`)
 
   let toLastScannedBlock
 
   try {
     toLastScannedBlock = await toClient.chain.getBlockHeight()
   } catch (e) {
-    throw new RescheduleError(e.message, order.to)
+    debug(e)
+
+    return {
+      next: true
+    }
   }
 
   const toFundTx = await order.initiateSwap()
@@ -142,28 +143,7 @@ async function process(job) {
   })
 
   return {
-    next: [
-      {
-        name: '3-agent-fund',
-        data: { orderId, toLastScannedBlock, asset: order.to },
-        opts: {
-          delay: 1000 * 15
-        }
-      },
-      {
-        name: 'verify-tx',
-        data: {
-          orderId,
-          type: 'toFundHash'
-        }
-      }
-    ]
+    next: true,
+    verify: 'toFundHash'
   }
-}
-
-module.exports = (job) => {
-  return mongo
-    .connect()
-    .then(() => process(job))
-    .finally(() => mongo.disconnect())
 }
