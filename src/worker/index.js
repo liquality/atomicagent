@@ -41,7 +41,7 @@ const checkJobForRetry = (err, job) => {
 const opts = {
   limiter: {
     max: 1,
-    duration: 1000 * 15,
+    duration: 1000 * 10,
     groupKey: 'groupBy'
   },
   redis: { maxRetriesPerRequest: null, enableReadyCheck: false },
