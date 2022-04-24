@@ -96,6 +96,7 @@ module.exports.start = async () => {
       await job.remove()
 
       if (result.updateMarketData) {
+        debug('Adding updateMarketData job in complete')
         await updateMarketDataQueue.add(
           {},
           {

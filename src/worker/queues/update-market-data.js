@@ -4,7 +4,7 @@ const debug = require('debug')('liquality:agent:worker:update-market-data')
 const Market = require('../../models/Market')
 
 async function process(job) {
-  debug('Running....', job.id)
+  debug('Update Market job Running....', job.id)
 
   await Market.updateAllMarketData()
 
