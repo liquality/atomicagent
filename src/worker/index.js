@@ -93,7 +93,8 @@ module.exports.start = async () => {
     q.on('completed', async (job, result) => {
       if (!result) return
 
-      await job.remove()
+      //We don't need as we are enabling the flag removeOnComplete
+      //await job.remove()
 
       if (result.updateMarketData) {
         debug('Adding updateMarketData job in complete')
