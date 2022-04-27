@@ -94,7 +94,7 @@ module.exports.start = async () => {
       if (!result) return
 
       //We don't need as we are enabling the flag removeOnComplete
-      //await job.remove()
+      await job.remove()
 
       if (result.updateMarketData) {
         debug('Adding updateMarketData job in complete')
