@@ -19,7 +19,7 @@ program.command('order:process <orderId>').action(async (orderId) => {
     throw new Error(`Invalid orderId: "${orderId}"`)
   }
 
-  await processOrder({ data: orderId })
+  await processOrder({ orderId: orderId })
 
   process.exit()
 })
