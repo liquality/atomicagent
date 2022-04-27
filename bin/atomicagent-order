@@ -1,0 +1,45 @@
+#!/usr/bin/env node
+
+const program = require('commander')
+
+const { addCommonOptions } = require('./common')
+const mongo = require('../src/utils/mongo')
+
+const Order = require('../src/models/Order')
+const processOrder = require('../src/worker/queues/atomicagent')
+const Order = require('../../src/models/Order')
+
+mongo.connect()
+
+addCommonOptions(program)
+
+program.command('order:process <orderId>').action(async (orderId) => {
+
+  if (!orderId) {
+    throw new Error(`Invalid orderId: "${orderId}"`)
+  }
+
+  await processOrder({ data: orderId })
+
+  process.exit()
+})
+
+
+program.command('order:get <orderId>').action(async (orderId) => {
+
+  if (!orderId) {
+    throw new Error(`Invalid orderId: "${orderId}"`)
+  }
+
+
+  const order = await Order.findOne({ orderId }).exec()
+  if (!order) {
+    throw new Error(`Order not found: ${orderId}`)
+  }
+  console.log(JSON.stringify(order))
+
+  process.exit()
+})
+
+
+program.parse(process.argv)

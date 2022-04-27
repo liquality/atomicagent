@@ -9,4 +9,6 @@ program.command('wallet', 'Communicate with asset wallets')
 
 program.command('manage', 'Manage assets & markets')
 
+program.command('order', 'Manage and promote order to different status')
+
 program.parse(process.argv)
