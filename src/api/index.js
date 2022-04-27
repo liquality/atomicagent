@@ -8,12 +8,11 @@ const cors = require('cors')
 const session = require('express-session')
 const MongoStore = require('connect-mongo')
 const basicAuth = require('express-basic-auth')
-
 const { createBullBoard } = require('@bull-board/api')
 const { BullAdapter } = require('@bull-board/api/bullAdapter')
 const { ExpressAdapter } = require('@bull-board/express')
 
-const { getQueues } = require('../worker')
+const { getQueues } = require('../syncMarketData')
 const config = require('../config')
 const httpHelpers = require('../middlewares/httpHelpers')
 const handleHttpError = require('../middlewares/handleHttpError')

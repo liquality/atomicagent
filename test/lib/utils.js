@@ -14,7 +14,7 @@ const { ClientFactory } = require('@liquality/client-factory')
 const { sha256 } = require('@liquality/crypto')
 
 const api = require('../../src/api')
-const worker = require('../../src/worker')
+const worker = require('../../src/syncMarketData')
 const config = require('../../src/config')
 
 const Asset = require('../../src/models/Asset')
