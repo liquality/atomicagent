@@ -6,7 +6,7 @@ const { parseArgsStringToArgv } = require('string-argv')
 const config = require('../../config')
 const Check = require('../../models/Check')
 const Order = require('../../models/Order')
-const processOrder = require('../../worker/queues/atomicagent')
+const { addJobToQueue } = require('../../worker/queues/atomicagent')
 const { safeCompare } = require('../../utils/crypto')
 
 const ensureAuth = require('../../middlewares/ensureAuth')
@@ -129,7 +129,7 @@ router.get(
       return res.notOk(400, `Order not found: ${orderId}`)
     }
 
-    processOrder({ data: { orderId: orderId } })
+    await addJobToQueue({ data: { orderId: orderId } })
 
     res.ok()
   })

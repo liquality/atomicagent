@@ -71,6 +71,8 @@ async function process(job) {
   }
 }
 
+module.exports.addJobToQueue = process
+
 module.exports = (job) => {
   return mongo
     .connect()
