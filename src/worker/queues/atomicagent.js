@@ -71,7 +71,7 @@ async function process(job) {
   }
 }
 
-module.exports.addJobToQueue = process
+module.exports.process = process
 
 module.exports = (job) => {
   return mongo
