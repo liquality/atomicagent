@@ -71,11 +71,10 @@ async function process(job) {
   }
 }
 
-module.exports.process = process
-
 module.exports = (job) => {
   return mongo
     .connect()
     .then(() => process(job))
     .finally(() => mongo.disconnect())
 }
+module.exports.addJobToQueue = process
