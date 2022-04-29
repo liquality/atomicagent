@@ -77,4 +77,3 @@ module.exports = (job) => {
     .then(() => process(job))
     .finally(() => mongo.disconnect())
 }
-module.exports.addJobToQueue = process
