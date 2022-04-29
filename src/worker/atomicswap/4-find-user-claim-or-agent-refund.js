@@ -21,12 +21,10 @@ module.exports = async function (order, job) {
   const toClaimTx = await order.findToClaimSwapTransaction(order.toLastScannedBlock, toCurrentBlockNumber)
 
   if (!toClaimTx) {
-    if (job) {
-      await job.update({
-        ...job.data,
-        toLastScannedBlock: toCurrentBlockNumber
-      })
-    }
+    await job.update({
+      ...job.data,
+      toLastScannedBlock: toCurrentBlockNumber
+    })
 
     let toCurrentBlock
 
