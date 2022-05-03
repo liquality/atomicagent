@@ -116,7 +116,7 @@ router.get(
     const { orderId } = query
     const bearer = req.headers.authorization
 
-    if (bearer != config.auth.bearer) {
+    if (!safeCompare(bearer, config.auth.bearer)) {
       return res.notOk(401, 'Unauthorised')
     }
 
