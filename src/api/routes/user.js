@@ -6,6 +6,7 @@ const { parseArgsStringToArgv } = require('string-argv')
 const config = require('../../config')
 const Check = require('../../models/Check')
 const Order = require('../../models/Order')
+const { getAtomicAgentQueue } = require('../../worker')
 const { safeCompare } = require('../../utils/crypto')
 
 const ensureAuth = require('../../middlewares/ensureAuth')
@@ -108,46 +109,31 @@ router.get(
   })
 )
 
-// router.post(
-//   '/order/retry',
-//   ensureAuth(401),
-//   asyncHandler(async (req, res) => {
-//     const { body } = req
-//     const { orderId, jobName } = body
+router.get(
+  '/order/retry',
+  asyncHandler(async (req, res) => {
+    const { query } = req
+    const { orderId } = query
+    const bearer = req.headers.authorization
 
-//     if (!orderId) {
-//       return res.notOk(400, 'Order ID missing')
-//     }
+    if (!safeCompare(bearer, config.auth.bearer)) {
+      return res.notOk(401, 'Unauthorised')
+    }
 
-//     if (!ALLOWED_RETRY_JOBS.find((job) => job.name === jobName)) {
-//       return res.notOk(400, `Invalid job name: ${jobName}`)
-//     }
+    if (!orderId) {
+      return res.notOk(400, 'Order ID missing')
+    }
 
-//     const order = await Order.findOne({ orderId: orderId }).exec()
-//     if (!order) {
-//       return res.notOk(400, `Order not found: ${orderId}`)
-//     }
+    const order = await Order.findOne({ orderId: orderId }).exec()
+    if (!order) {
+      return res.notOk(400, `Order not found: ${orderId}`)
+    }
 
-//     const index = ALLOWED_RETRY_JOBS.findIndex((job) => job.name === jobName)
-//     const jobsToBeRemoved = ALLOWED_RETRY_JOBS.slice(index).map((job) => job.name)
+    await getAtomicAgentQueue().add({ orderId: order.orderId }, { jobId: order.orderId })
 
-//     await agenda.cancel({
-//       name: {
-//         $in: jobsToBeRemoved
-//       },
-//       'data.orderId': orderId
-//     })
-
-//     order.status = ALLOWED_RETRY_JOBS[index].setStatus
-//     await order.save()
-
-//     await agenda.now(jobName, { orderId: order.orderId })
-
-//     await order.log('RETRY', jobName)
-
-//     res.ok()
-//   })
-// )
+    res.ok()
+  })
+)
 
 router.post(
   '/order/ignore',
