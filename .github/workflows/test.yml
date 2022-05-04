@@ -16,9 +16,9 @@ jobs:
           node-version: 14
       - run: cp sample.config.toml test.config.toml
       - run: chmod -R 777 test/docker/config
-      - run: npm run docker:start
+      - run: yarn docker:start
       - run: sleep 30
-      - run: yarn install --immutable --immutable-cache --check-cache
+      - run: yarn install --immutable
       - run: yarn run lint
       - run: yarn test
       - name: Collect docker logs on failure
