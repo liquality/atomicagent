@@ -23,12 +23,12 @@ jobs:
           npm run docker:start
           sleep 30
 
-      # Run npm scripts
-      - name: npm ci & lint & test
+      # Run yarn scripts
+      - name: yarn install & lint & test
         run: |
-          npm ci
-          npm run lint
-          npm test
+          yarn install --immutable
+          yarn lint
+          yarn test
           echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
 
       - run: npm publish --access public --tag next
