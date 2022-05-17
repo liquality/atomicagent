@@ -8,6 +8,7 @@ const MarketHistory = require('./MarketHistory')
 
 const { getClient } = require('../utils/clients')
 const { withRetry } = require('../utils/chainLock')
+const { getChainifyAsset, requiresApproval, approve } = require('../utils/chainify')
 const { formatTxHash } = require('../utils/hash')
 const { RescheduleError } = require('../utils/errors')
 const { calculateToAmount, calculateUsdAmount, calculateFeeUsdAmount } = require('../utils/fx')
@@ -240,7 +241,7 @@ const OrderSchema = new mongoose.Schema(
         'QUOTE',
         'USER_FUNDED_UNVERIFIED',
         'USER_FUNDED',
-        'AGENT_CONTRACT_CREATED',
+        'AGENT_APPROVED',
         'AGENT_FUNDED',
         'USER_CLAIMED',
         'AGENT_CLAIMED',
@@ -411,6 +412,7 @@ OrderSchema.methods.claimSwap = async function () {
 
     return fromClient.swap.claimSwap(
       {
+        asset: getChainifyAsset(assets[this.from]),
         value: BN(this.fromAmount),
         recipientAddress: this.fromCounterPartyAddress,
         refundAddress: this.fromAddress,
@@ -433,6 +435,7 @@ OrderSchema.methods.refundSwap = async function () {
 
     return toClient.swap.refundSwap(
       {
+        asset: getChainifyAsset(assets[this.to]),
         value: BN(this.toAmount),
         recipientAddress: this.toAddress,
         refundAddress: this.toCounterPartyAddress,
@@ -454,6 +457,7 @@ OrderSchema.methods.initiateSwap = async function () {
 
     return toClient.swap.initiateSwap(
       {
+        asset: getChainifyAsset(assets[this.to]),
         value: BN(this.toAmount),
         recipientAddress: this.toAddress,
         refundAddress: this.toCounterPartyAddress,
@@ -465,25 +469,19 @@ OrderSchema.methods.initiateSwap = async function () {
   })
 }
 
-OrderSchema.methods.fundSwap = async function () {
+OrderSchema.methods.approveSwap = async function () {
   const toClient = await this.toClient()
-  const { defaultFee } = config.assets[this.to]
+  const approvalNeeded = await requiresApproval(toClient, this.to, this.toCounterPartyAddress, this.toAmount)
 
-  return withRetry(this.to, async () => {
-    const fees = await toClient.chain.getFees()
+  if (approvalNeeded) {
+    return withRetry(this.to, async () => {
+      const fees = await toClient.chain.getFees()
+      const { defaultFee } = config.assets[this.to]
+      return approve(toClient, this.to, fees[defaultFee].fee)
+    })
+  }
 
-    return toClient.swap.fundSwap(
-      {
-        value: BN(this.toAmount),
-        recipientAddress: this.toAddress,
-        refundAddress: this.toCounterPartyAddress,
-        secretHash: this.secretHash,
-        expiration: this.nodeSwapExpiration
-      },
-      this.toFundHash,
-      fees[defaultFee].fee
-    )
-  })
+  return null
 }
 
 OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
@@ -492,6 +490,7 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
   return withRetry(this.from, async () => {
     const verified = await fromClient.swap.verifyInitiateSwapTransaction(
       {
+        asset: getChainifyAsset(assets[this.from]),
         value: BN(this.fromAmount),
         recipientAddress: this.fromCounterPartyAddress,
         refundAddress: this.fromAddress,
@@ -504,40 +503,6 @@ OrderSchema.methods.verifyInitiateSwapTransaction = async function () {
     if (!verified) {
       throw new RescheduleError(`Reschedule ${this.orderId}: Transaction not found`, this.from)
     }
-  })
-}
-
-OrderSchema.methods.findFromFundSwapTransaction = async function () {
-  const fromClient = await this.fromClient()
-
-  return withRetry(this.from, async () => {
-    return fromClient.swap.findFundSwapTransaction(
-      {
-        value: BN(this.fromAmount),
-        recipientAddress: this.fromCounterPartyAddress,
-        refundAddress: this.fromAddress,
-        secretHash: this.secretHash,
-        expiration: this.swapExpiration
-      },
-      this.fromFundHash
-    )
-  })
-}
-
-OrderSchema.methods.findToFundSwapTransaction = async function () {
-  const toClient = await this.toClient()
-
-  return withRetry(this.to, async () => {
-    return toClient.swap.findFundSwapTransaction(
-      {
-        value: BN(this.toAmount),
-        recipientAddress: this.toAddress,
-        refundAddress: this.toCounterPartyAddress,
-        secretHash: this.secretHash,
-        expiration: this.swapExpiration
-      },
-      this.toFundHash
-    )
   })
 }
 
@@ -554,6 +519,7 @@ OrderSchema.methods.findToClaimSwapTransaction = async function (toLastScannedBl
       return withRetry(this.to, async () => {
         return toClient.swap.findClaimSwapTransaction(
           {
+            asset: getChainifyAsset(assets[this.to]),
             value: BN(this.toAmount),
             recipientAddress: this.toAddress,
             refundAddress: this.toCounterPartyAddress,

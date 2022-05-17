@@ -42,7 +42,7 @@ async function process(job) {
 
   if (tx.blockHash) {
     if (assets[asset].chain === 'ethereum') {
-      const receipt = await client.getMethod('getTransactionReceipt')(hash)
+      const receipt = await client.chain.getProvider().getTransactionReceipt(hash)
 
       if (!receipt) {
         throw new RescheduleError(`Reschedule verify-tx for ${order.orderId}:${type}`, asset)

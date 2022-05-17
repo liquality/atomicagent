@@ -1,6 +1,6 @@
 require('../../utils/sentry')
 const mongo = require('../../utils/mongo')
-const debug = require('debug')('liquality:agent:worker:2-agent-reciprocate')
+const debug = require('debug')('liquality:agent:worker:3-agent-reciprocate')
 
 const config = require('../../config')
 const Check = require('../../models/Check')
@@ -17,7 +17,7 @@ async function process(job) {
   if (!order) {
     throw new Error(`Order not found: ${orderId}`)
   }
-  if (order.status !== 'USER_FUNDED') {
+  if (order.status !== 'AGENT_APPROVED') {
     throw new Error(`Order has invalid status: ${orderId} / ${order.status}`)
   }
 
@@ -132,7 +132,7 @@ async function process(job) {
   debug('Created contract/funded with transaction', order.orderId, toFundTx.hash)
 
   order.addTx('toFundHash', toFundTx)
-  order.status = 'AGENT_CONTRACT_CREATED'
+  order.status = 'AGENT_FUNDED'
   await order.save()
 
   await order.log('RECIPROCATE_INIT_SWAP', null, {
@@ -144,17 +144,14 @@ async function process(job) {
   return {
     next: [
       {
-        name: '3-agent-fund',
-        data: { orderId, toLastScannedBlock, asset: order.to },
-        opts: {
-          delay: 1000 * 15
-        }
-      },
-      {
-        name: 'verify-tx',
+        name: '4-find-user-claim-or-agent-refund',
         data: {
           orderId,
-          type: 'toFundHash'
+          toLastScannedBlock,
+          asset: order.to
+        },
+        opts: {
+          delay: 1000 * 15
         }
       }
     ]

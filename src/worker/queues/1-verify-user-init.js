@@ -52,12 +52,6 @@ async function process(job) {
 
   debug('Found & verified funding transaction', order.orderId, order.fromFundHash)
 
-  const fromSecondaryFundTx = await order.findFromFundSwapTransaction()
-
-  if (fromSecondaryFundTx) {
-    order.addTx('fromSecondaryFundHash', fromSecondaryFundTx)
-  }
-
   order.addTx('fromFundHash', fromFundTx)
   order.status = 'USER_FUNDED'
 
@@ -70,7 +64,7 @@ async function process(job) {
   return {
     next: [
       {
-        name: '2-agent-reciprocate',
+        name: '2-agent-approve',
         data: { orderId, asset: order.to }
       }
     ]
