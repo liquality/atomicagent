@@ -2,6 +2,7 @@ require('../../utils/sentry')
 const mongo = require('../../utils/mongo')
 const debug = require('debug')('liquality:agent:worker:verify-tx')
 
+const { ensure0x } = require('@chainify/utils')
 const BN = require('bignumber.js')
 const { assets } = require('@liquality/cryptoassets')
 
@@ -42,7 +43,7 @@ async function process(job) {
 
   if (tx.blockHash) {
     if (assets[asset].chain === 'ethereum') {
-      const receipt = await client.chain.getProvider().getTransactionReceipt(hash)
+      const receipt = await client.chain.getProvider().getTransactionReceipt(ensure0x(hash))
 
       if (!receipt) {
         throw new RescheduleError(`Reschedule verify-tx for ${order.orderId}:${type}`, asset)

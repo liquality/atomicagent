@@ -7,7 +7,7 @@ const { Client } = require('@chainify/client')
 
 const {
   BitcoinNetworks,
-  BitcoinEsploraBatchBaseProvider,
+  BitcoinEsploraApiProvider,
   BitcoinFeeApiProvider,
   BitcoinHDWalletProvider,
   BitcoinSwapEsploraProvider
@@ -36,7 +36,7 @@ async function createBtcClient() {
 
   const mnemonic = await secretManager.getMnemonic('BTC')
 
-  const chainProvider = new BitcoinEsploraBatchBaseProvider({
+  const chainProvider = new BitcoinEsploraApiProvider({
     batchUrl: btcConfig.batchApi.url,
     url: btcConfig.api.url,
     network: network,

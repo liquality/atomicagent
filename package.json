@@ -116,6 +116,7 @@
     "@chainify/solana": "portal:/Users/kraykov/Documents/workspaces/liquality/chainabstractionlayer-2/packages/solana",
     "@chainify/terra": "portal:/Users/kraykov/Documents/workspaces/liquality/chainabstractionlayer-2/packages/terra",
     "@chainify/types": "portal:/Users/kraykov/Documents/workspaces/liquality/chainabstractionlayer-2/packages/types",
-    "@chainify/utils": "portal:/Users/kraykov/Documents/workspaces/liquality/chainabstractionlayer-2/packages/utils"
+    "@chainify/utils": "portal:/Users/kraykov/Documents/workspaces/liquality/chainabstractionlayer-2/packages/utils",
+    "@liquality/cryptoassets": "link:/Users/kraykov/Documents/workspaces/liquality/cryptoassets"
   }
 }

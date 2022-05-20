@@ -1,3 +1,4 @@
+const { remove0x } = require('@chainify/utils')
 const { assets } = require('@liquality/cryptoassets')
 const BN = require('bignumber.js')
 
@@ -19,8 +20,11 @@ const requiresApproval = async (client, asset, user, amount) => {
     return false
   }
 
-  const allowanceCallData = `0xdd62ed3e000000000000000000000000${user}000000000000000000000000${HTLC_ADDRESS}`
-  const allowance = await client.chain.getProvider().call(allowanceCallData)
+  const allowanceCallData = `0xdd62ed3e000000000000000000000000${remove0x(user)}000000000000000000000000${HTLC_ADDRESS}`
+  const allowance = await client.chain.getProvider().call({
+    data: allowanceCallData,
+    to: toAsset.contractAddress
+  })
 
   if (new BN(allowance.toString()).gte(amount.toString())) {
     return false
