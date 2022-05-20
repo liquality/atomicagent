@@ -4,9 +4,10 @@ const debug = require('debug')('liquality:agent:worker:verify-tx')
 
 const { ensure0x } = require('@chainify/utils')
 const BN = require('bignumber.js')
-const { assets } = require('@liquality/cryptoassets')
 
 const { getClient } = require('../../utils/clients')
+const { assets } = require('../../utils/cryptoassets')
+
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
 

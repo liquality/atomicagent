@@ -1,4 +1,4 @@
-const { assets } = require('@liquality/cryptoassets')
+const { assets } = require('./cryptoassets')
 const config = require('../config')
 const secretManager = require('./secretManager')
 const { HTLC_ADDRESS } = require('./chainify')

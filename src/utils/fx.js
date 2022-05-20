@@ -1,4 +1,5 @@
-const { assets, unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
+const { unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
+const { assets } = require('./cryptoassets')
 
 function calculateToAmount(from, to, fromAmount, rate) {
   const fromAmountBase = unitToCurrency(assets[from], fromAmount)

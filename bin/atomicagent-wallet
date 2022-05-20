@@ -3,7 +3,8 @@
 const program = require('commander')
 const { addCommonOptions } = require('./common')
 const { getClient } = require('../src/utils/clients')
-const { assets, unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
+const { unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
+const { assets } = require('../src/utils/cryptoassets')
 const config = require('../src/config')
 const { getChainifyAsset } = require('../src/utils/chainify')
 

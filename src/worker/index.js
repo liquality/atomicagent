@@ -3,11 +3,11 @@ const fs = require('fs').promises
 const path = require('path')
 const Queue = require('bull')
 const Redis = require('ioredis')
-const { assets } = require('@liquality/cryptoassets')
 const { v4: uuidv4 } = require('uuid')
 
 const config = require('../config')
 const reportError = require('../utils/reportError')
+const { assets } = require('../utils/cryptoassets')
 
 let client
 let subscriber

@@ -1,5 +1,5 @@
 const { remove0x } = require('@chainify/utils')
-const { assets } = require('@liquality/cryptoassets')
+const { assets } = require('./cryptoassets')
 const BN = require('bignumber.js')
 
 const HTLC_ADDRESS = '133713376F69C1A67d7f3594583349DFB53d8166'

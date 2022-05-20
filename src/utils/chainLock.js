@@ -2,7 +2,7 @@ const debug = require('debug')('liquality:agent:chain-lock')
 
 const EventEmitter = require('events')
 const _ = require('lodash')
-const { assets } = require('@liquality/cryptoassets')
+const { assets } = require('./cryptoassets')
 
 const { RescheduleError } = require('./errors')
 

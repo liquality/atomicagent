@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 
 const Bluebird = require('bluebird')
 const BN = require('bignumber.js')
-const { assets: ASSETS, chains, unitToCurrency } = require('@liquality/cryptoassets')
+const { chains, unitToCurrency } = require('@liquality/cryptoassets')
+const { assets: ASSETS } = require('../utils/cryptoassets')
 
 const Asset = require('./Asset')
 const MarketHistory = require('./MarketHistory')
