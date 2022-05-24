@@ -19,7 +19,7 @@ async function createBtcClient(config) {
   const walletProvider = new BitcoinHDWalletProvider(
     {
       network,
-      mnemonic: config.mnemonic,
+      mnemonic: config.wallet.mnemonic,
       baseDerivationPath: `m/84'/${network.coinType}'/0'`
     },
     chainProvider
