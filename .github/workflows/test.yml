@@ -16,7 +16,7 @@ jobs:
           node-version: 14
       - run: cp sample.config.toml test.config.toml
       - run: chmod -R 777 test/docker/config
-      - run: yarn install --immutable
+      - run: yarn install
       - run: yarn docker:start
       - run: sleep 30
       - run: yarn run lint

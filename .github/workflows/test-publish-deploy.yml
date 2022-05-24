@@ -26,7 +26,7 @@ jobs:
       # Run yarn scripts
       - name: yarn install & lint & test
         run: |
-          yarn install --immutable
+          yarn install
           yarn lint
           yarn test
           echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > ~/.npmrc
