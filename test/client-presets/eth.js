@@ -1,47 +1,32 @@
-const { EthereumRpcProvider } = require('@liquality/ethereum-rpc-provider')
-const { EthereumJsWalletProvider } = require('@liquality/ethereum-js-wallet-provider')
-const { EthereumSwapProvider } = require('@liquality/ethereum-swap-provider')
-const { EthereumScraperSwapFindProvider } = require('@liquality/ethereum-scraper-swap-find-provider')
-const { EthereumRpcFeeProvider } = require('@liquality/ethereum-rpc-fee-provider')
-const { EthereumNetworks } = require('@liquality/ethereum-networks')
+const {
+  EvmChainProvider,
+  EIP1559FeeProvider,
+  EvmWalletProvider,
+  EvmSwapProvider,
+  EvmNetworks
+} = require('@chainify/evm')
+const { HTLC_ADDRESS } = require('../../src/utils/chainify')
+const { Client } = require('@chainify/client')
 
-let network = EthereumNetworks.local
+async function createEthClient(config) {
+  const network = {
+    ...EvmNetworks.local,
+    name: 'mainnet',
+    chainId: 1337,
+    networkId: 1337,
+    rpcUrl: config.rpc.url
+  }
 
-network = {
-  ...network,
-  name: 'mainnet',
-  chainId: 1337,
-  networkId: 1337
+  const feeProvider = new EIP1559FeeProvider(config.rpc.url)
+  const chainProvider = new EvmChainProvider(network, null, feeProvider, false)
+
+  const walletProvider = new EvmWalletProvider(
+    { derivationPath: `m/44'/${network.coinType}'/0'/0/0`, mnemonic: config.wallet.mnemonic },
+    chainProvider
+  )
+  const swapProvider = new EvmSwapProvider({ contractAddress: `0x${HTLC_ADDRESS}` }, walletProvider)
+
+  return new Client().connect(swapProvider)
 }
 
-module.exports = [
-  {
-    provider: EthereumRpcProvider,
-    args: (config) => [
-      {
-        uri: config.assetConfig.rpc.url
-      }
-    ]
-  },
-  {
-    provider: EthereumRpcFeeProvider
-  },
-  {
-    provider: EthereumJsWalletProvider,
-    requires: ['mnemonic'],
-    args: (config) => [
-      {
-        network,
-        mnemonic: config.mnemonic,
-        derivationPath: `m/44'/${network.coinType}'/0'/0/0`
-      }
-    ]
-  },
-  {
-    provider: EthereumSwapProvider
-  },
-  {
-    provider: EthereumScraperSwapFindProvider,
-    args: (config) => [config.assetConfig.scraper.url]
-  }
-]
+module.exports = createEthClient

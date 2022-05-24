@@ -10,8 +10,7 @@ const { expect } = chai
 
 const { v4: uuidv4 } = require('uuid')
 const mongoose = require('mongoose')
-const { ClientFactory } = require('@liquality/client-factory')
-const { sha256 } = require('@liquality/crypto')
+const { sha256 } = require('@chainify/utils')
 
 const api = require('../../src/api')
 const worker = require('../../src/worker')
@@ -31,24 +30,17 @@ const { wait, waitForRandom, withLock } = require('../../src/utils/chainLock')
 
 const btcPreset = require('../client-presets/btc')
 const ethPreset = require('../client-presets/eth')
-const erc20Preset = require('../client-presets/erc20')
 const { getChainifyAsset, approve } = require('../../src/utils/chainify')
 
 const presets = {
   BTC: btcPreset,
   ETH: ethPreset,
-  DAI: erc20Preset
+  DAI: ethPreset
 }
 
 const getClient = async function (asset) {
   const preset = presets[asset]
-
-  const client = ClientFactory.createFrom(preset, {
-    mnemonic: 'test wallet',
-    assetConfig: config.assets[asset]
-  })
-
-  return client
+  return preset(config.assets[asset])
 }
 
 module.exports.getClient = getClient
