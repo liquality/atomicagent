@@ -31,7 +31,7 @@ const requiresApproval = async (client, asset, user, amount) => {
     to: toAsset.contractAddress
   })
 
-  if (new BN(allowance.toString()).gte(amount.toString())) {
+  if (new BN(allowance.toString()).gte(amount)) {
     return false
   }
 
