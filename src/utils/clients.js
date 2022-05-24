@@ -78,7 +78,7 @@ async function createEthClient(asset) {
 
   const mnemonic = await secretManager.getMnemonic(asset)
 
-  const chainProvider = new EvmChainProvider(network)
+  const chainProvider = new EvmChainProvider(network, null, null, false)
 
   let feeProvider
   if (!network.local && (assetData.chain === 'ethereum' || (assetData.chain === 'polygon' && network.isTestnet))) {
@@ -86,6 +86,7 @@ async function createEthClient(asset) {
   } else {
     feeProvider = new RpcFeeProvider(assetConfig.rpc.url)
   }
+
   chainProvider.setFeeProvider(feeProvider)
 
   const walletProvider = new EvmWalletProvider(
