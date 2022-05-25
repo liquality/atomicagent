@@ -245,11 +245,11 @@ module.exports.verifyAgentFunding = async (context, request) => {
       request.get(`/api/swap/order/${context.orderId}`).then((res) => {
         res.should.have.status(200)
 
-        if (['USER_FUNDED', 'AGENT_CONTRACT_CREATED'].includes(res.body.status)) {
+        if (['USER_FUNDED', 'AGENT_APPROVED'].includes(res.body.status)) {
           return check()
         }
 
-        res.body.status.should.equal('AGENT_APPROVED')
+        res.body.status.should.equal('AGENT_FUNDED')
       })
     )
 

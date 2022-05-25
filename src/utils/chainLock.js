@@ -117,6 +117,12 @@ const withLock = async (asset, func) => {
   try {
     const result = await withRetry(asset, func)
     return result
+  } catch (e) {
+    if (e.name === 'RescheduleError') {
+      return wait(5000).then(() => func())
+    }
+
+    throw e
   } finally {
     unlockAsset(chain)
     debug(`Unlocked ${chain} [#${id}] - (Pending IDs: ${[...PENDING[chain]]})`)
