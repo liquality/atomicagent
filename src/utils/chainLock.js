@@ -119,7 +119,8 @@ const withLock = async (asset, func) => {
     return result
   } catch (e) {
     if (e.name === 'RescheduleError') {
-      return wait(5000).then(() => func())
+      await wait(15000)
+      return withRetry(asset, func)
     }
 
     throw e
