@@ -144,6 +144,13 @@ async function process(job) {
   return {
     next: [
       {
+        name: 'verify-tx',
+        data: {
+          orderId,
+          type: 'toFundHash'
+        }
+      },
+      {
         name: '4-find-user-claim-or-agent-refund',
         data: {
           orderId,

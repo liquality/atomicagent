@@ -179,8 +179,17 @@ module.exports = (contexts, { refund, reject }) => {
       if (!refund) {
         before(async function () {
           this.timeout(0)
+          return Bluebird.map(contexts, (context) => {
+            try {
+              return userClaim(context)
+            } catch (e) {
+              if (e.name === 'RescheduleError') {
+                return wait(5000).then(() => userClaim(context))
+              }
 
-          return Bluebird.map(contexts, (context) => userClaim(context))
+              throw e
+            }
+          })
         })
       }
 
