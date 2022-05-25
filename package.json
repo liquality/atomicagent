@@ -60,7 +60,7 @@
     "@chainify/terra": "1.0.3",
     "@chainify/types": "1.0.3",
     "@chainify/utils": "1.0.3",
-    "@liquality/cryptoassets": "^1.10.0",
+    "@liquality/cryptoassets": "^1.13.2",
     "@sentry/node": "^6.13.2",
     "axios": "0.25.0",
     "bignumber.js": "^9.0.2",

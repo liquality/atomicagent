@@ -860,9 +860,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@liquality/cryptoassets@npm:^1.10.0":
-  version: 1.13.0
-  resolution: "@liquality/cryptoassets@npm:1.13.0"
+"@liquality/cryptoassets@npm:^1.13.2":
+  version: 1.13.2
+  resolution: "@liquality/cryptoassets@npm:1.13.2"
   dependencies:
     bignumber.js: ^9.0.2
     bitcoin-address-validation: ^2.2.1
@@ -870,7 +870,7 @@ __metadata:
     cashaddrjs: ^0.4.4
     ethereumjs-util: ^7.1.4
     lodash: ^4.17.11
-  checksum: 5ff1dc3e2fdd8a776cfe69a48a66283a9b9d396f695eac9b4275e6d2f1ba039c6d43ea31c80f9590eef6e1e85142d37dc81bc48ce1ff941f387ae2f8356b08f6
+  checksum: 36a350191429793447707fb712c19f8a122a7eca7e1bba6afc261414e54b3667ef1292b6c9b5bb872ae4ee6b20b8c01c8332dce91eeed0bcc67cacd7f3f1d5f9
   languageName: node
   linkType: hard
 
@@ -1638,7 +1638,7 @@ __metadata:
     "@chainify/terra": 1.0.3
     "@chainify/types": 1.0.3
     "@chainify/utils": 1.0.3
-    "@liquality/cryptoassets": ^1.10.0
+    "@liquality/cryptoassets": ^1.13.2
     "@sentry/node": ^6.13.2
     axios: 0.25.0
     bignumber.js: ^9.0.2

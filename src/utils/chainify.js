@@ -2,7 +2,10 @@ const { remove0x } = require('@chainify/utils')
 const { assets } = require('./cryptoassets')
 const BN = require('bignumber.js')
 
-const HTLC_ADDRESS = '133713376F69C1A67d7f3594583349DFB53d8166'
+const HTLC_ADDRESS =
+  process.env.NODE_ENV === 'production'
+    ? '133713376F69C1A67d7f3594583349DFB53d8166'
+    : 'AD4F91Fc58B651DA404d888A70Fa8683cB82a5FF'
 
 const getChainifyAsset = (asset) => {
   if (asset.type === 'native') {
