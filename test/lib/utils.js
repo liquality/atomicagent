@@ -22,6 +22,7 @@ const MarketHistory = require('../../src/models/MarketHistory')
 const Order = require('../../src/models/Order')
 const Check = require('../../src/models/Check')
 
+const { assets: cryptoassets } = require('../../src/utils/cryptoassets')
 const assets = require('../../src/migrate/data/assets.json')
 const markets = require('../../src/migrate/data/markets.json')
 
@@ -148,13 +149,14 @@ module.exports.userInitiate = async (context) => {
   context.toBlock = await toClient.chain.getBlockHeight()
 
   const { defaultFee } = config.assets[context.from]
+  const asset = getChainifyAsset(cryptoassets[context.from])
 
   const tx = await withLock(context.from, async () => {
     const fees = await fromClient.chain.getFees()
 
     return fromClient.swap.initiateSwap(
       {
-        asset: getChainifyAsset(assets[context.from]),
+        asset,
         value: BN(context.fromAmount),
         recipientAddress: context.fromCounterPartyAddress,
         refundAddress: context.fromAddress,
@@ -170,9 +172,7 @@ module.exports.userInitiate = async (context) => {
 
 module.exports.userApprove = async (context, request) => {
   const fromClient = await getClient(context.from)
-  const { defaultFee } = config.assets[context.from]
-
-  const fromAsset = assets[context.from]
+  const fromAsset = config.assets[context.from]
 
   // approve is needed only for ERC20 tokens
   if (!fromAsset.contractAddress) {
@@ -181,7 +181,7 @@ module.exports.userApprove = async (context, request) => {
 
   const tx = await withLock(context.from, async () => {
     const fees = await fromClient.chain.getFees()
-    return approve(fromClient, context.from, fees[defaultFee].fee)
+    return approve(fromClient, context.from, fees[fromAsset.defaultFee].fee)
   })
 
   if (tx) {
@@ -258,6 +258,7 @@ module.exports.verifyAgentFunding = async (context, request) => {
 
 module.exports.findAgentFundingTx = async (context) => {
   const toClient = await getClient(context.to)
+  const asset = getChainifyAsset(cryptoassets[context.to])
 
   const findInitSwapTx = async (lastScannedBlock) => {
     const currentBlock = await toClient.chain.getBlockHeight()
@@ -266,7 +267,7 @@ module.exports.findAgentFundingTx = async (context) => {
       async (blockNumber) =>
         toClient.swap.findInitiateSwapTransaction(
           {
-            asset: getChainifyAsset(assets[context.to]),
+            asset,
             value: BN(context.toAmount),
             recipientAddress: context.toAddress,
             refundAddress: context.toCounterPartyAddress,
@@ -292,13 +293,14 @@ module.exports.userClaim = async (context) => {
   const toClient = await getClient(context.to)
 
   const { defaultFee } = config.assets[context.to]
+  const asset = getChainifyAsset(cryptoassets[context.to])
 
   return withLock(context.to, async () => {
     const fees = await toClient.chain.getFees()
 
     return toClient.swap.claimSwap(
       {
-        asset: getChainifyAsset(assets[context.to]),
+        asset: asset,
         value: BN(context.toAmount),
         recipientAddress: context.toAddress,
         refundAddress: context.toCounterPartyAddress,
@@ -363,7 +365,9 @@ module.exports.deployAndMintMidman = async () => {
   const eth = await getClient('ETH')
 
   const code = await eth.chain.getProvider().getCode(config.assets.DAI.contractAddress, 'latest')
-  if (code) return debug('MIDMAN ERC-20 contract already exists')
+  if (code !== '0x') {
+    return debug('MIDMAN ERC-20 contract already exists')
+  }
 
   debug('Deploying MIDMAN ERC-20 contract')
 

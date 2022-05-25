@@ -1,10 +1,4 @@
-const {
-  EvmChainProvider,
-  EIP1559FeeProvider,
-  EvmWalletProvider,
-  EvmSwapProvider,
-  EvmNetworks
-} = require('@chainify/evm')
+const { EvmChainProvider, EvmWalletProvider, EvmSwapProvider, EvmNetworks } = require('@chainify/evm')
 const { HTLC_ADDRESS } = require('../../src/utils/chainify')
 const { Client } = require('@chainify/client')
 
@@ -17,8 +11,7 @@ async function createEthClient(config) {
     rpcUrl: config.rpc.url
   }
 
-  const feeProvider = new EIP1559FeeProvider(config.rpc.url)
-  const chainProvider = new EvmChainProvider(network, null, feeProvider, false)
+  const chainProvider = new EvmChainProvider(network, null, null, false)
 
   const walletProvider = new EvmWalletProvider(
     { derivationPath: `m/44'/${network.coinType}'/0'/0/0`, mnemonic: config.wallet.mnemonic },
