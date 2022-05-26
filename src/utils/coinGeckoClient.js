@@ -2,7 +2,7 @@ const debug = require('debug')('liquality:agent:coingecko')
 const _ = require('lodash')
 const axios = require('axios')
 const BN = require('bignumber.js')
-const { assets } = require('@liquality/cryptoassets')
+const { assets } = require('./cryptoassets')
 
 class CoinGecko {
   constructor(url = 'https://api.coingecko.com/api/v3') {

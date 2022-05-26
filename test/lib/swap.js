@@ -12,7 +12,7 @@ const {
   requestQuote,
   testQuote,
   userInitiate,
-  userFund,
+  userApprove,
   verifyAgentInitiation,
   verifyAgentFunding,
   findAgentFundingTx,
@@ -75,12 +75,12 @@ module.exports = (contexts, { refund, reject }) => {
 
       const request = chai.request(app()).keepOpen()
 
-      async function fundContext(context, request) {
+      async function approveContext(context, request) {
         try {
-          await userFund(context, request)
+          await userApprove(context, request)
         } catch (e) {
           if (e.name === 'RescheduleError') {
-            return wait(5000).then(() => fundContext(context, request))
+            return wait(5000).then(() => approveContext(context, request))
           }
 
           throw e
@@ -88,8 +88,8 @@ module.exports = (contexts, { refund, reject }) => {
       }
 
       return Bluebird.map(contexts, async (context) => {
+        await approveContext(context, request)
         await userInitiate(context, request)
-        await fundContext(context, request)
       }).then(() => request.close())
     })
 
@@ -179,7 +179,6 @@ module.exports = (contexts, { refund, reject }) => {
       if (!refund) {
         before(async function () {
           this.timeout(0)
-
           return Bluebird.map(contexts, (context) => userClaim(context))
         })
       }

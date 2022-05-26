@@ -75,8 +75,8 @@ describe.only('Swap', () => {
       this.timeout(0)
       await updateMarketData()
 
-      config.application.swapExpirationDurationInSeconds = 600
-      config.application.nodeSwapExpirationDurationInSeconds = 400
+      config.application.swapExpirationDurationInSeconds = 700
+      config.application.nodeSwapExpirationDurationInSeconds = 500
     })
 
     swap(SWAPS_ARR, { refund: false, reject: false })

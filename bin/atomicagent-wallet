@@ -3,15 +3,18 @@
 const program = require('commander')
 const { addCommonOptions } = require('./common')
 const { getClient } = require('../src/utils/clients')
-const { assets, unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
+const { unitToCurrency, currencyToUnit } = require('@liquality/cryptoassets')
+const { assets } = require('../src/utils/cryptoassets')
 const config = require('../src/config')
+const { getChainifyAsset } = require('../src/utils/chainify')
 
 addCommonOptions(program)
 
 async function printBalance(asset) {
   const client = await getClient(asset)
+  const chainifyAsset = getChainifyAsset(assets[asset])
   const addresses = await client.wallet.getUsedAddresses()
-  const balance = addresses.length === 0 ? 0 : await client.chain.getBalance(addresses)
+  const balance = addresses.length === 0 ? 0 : await client.chain.getBalance(addresses, [chainifyAsset])
   const balanceInCurrency = unitToCurrency(assets[asset], balance).toNumber()
   const code = assets[asset].code
 
@@ -40,7 +43,13 @@ program.command('getnewaddress <asset>').action(async (asset) => {
 program.command('sendtoaddress <asset> <address> <amount>').action(async (asset, address, amount) => {
   const amountInUnit = currencyToUnit(assets[asset], amount)
   const client = await getClient(asset)
-  const tx = await client.chain.sendTransaction({ to: address, value: amountInUnit })
+  const chainifyAsset = getChainifyAsset(assets[asset])
+  const tx = await client.wallet.sendTransaction({
+    to: address,
+    value: amountInUnit,
+    asset: chainifyAsset,
+    feeAsset: chainifyAsset
+  })
 
   console.log(tx)
 })

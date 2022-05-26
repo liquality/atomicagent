@@ -65,7 +65,7 @@ killswitch = 'pm2 stop "Worker"'
   network="local"
   type = "ERC20"
   blockTimeInSeconds = 5
-  contractAddress = "0x094cdd8e19b97505869c87a995a972c4df7f69a8"
+  contractAddress = "0x429c7f7c9C90703E319d94BdB2b93b56D7fE1b37"
   defaultFee = "average"
     [assets.DAI.wallet]
     type = "js"

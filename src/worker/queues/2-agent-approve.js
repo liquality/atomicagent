@@ -1,6 +1,6 @@
 require('../../utils/sentry')
 const mongo = require('../../utils/mongo')
-const debug = require('debug')('liquality:agent:worker:3-agent-fund')
+const debug = require('debug')('liquality:agent:worker:2-agent-approve')
 
 const Order = require('../../models/Order')
 const { RescheduleError } = require('../../utils/errors')
@@ -8,13 +8,15 @@ const { RescheduleError } = require('../../utils/errors')
 async function process(job) {
   debug(job.data)
 
-  const { orderId, toLastScannedBlock } = job.data
+  const { orderId } = job.data
 
   const order = await Order.findOne({ orderId }).exec()
   if (!order) {
     throw new Error(`Order not found: ${orderId}`)
   }
-  if (order.status !== 'AGENT_CONTRACT_CREATED') {
+
+  // approve step only after user funded
+  if (order.status !== 'USER_FUNDED') {
     throw new Error(`Order has invalid status: ${orderId} / ${order.status}`)
   }
 
@@ -50,27 +52,26 @@ async function process(job) {
 
     await order.save()
 
-    await order.log('FUND_SWAP', null, {
-      fromBlock: fromCurrentBlockNumber
-    })
+    await order.log('APPROVE_SWAP', null, { fromBlock: fromCurrentBlockNumber })
 
     debug(`Stopping ${orderId} - ${order.status}`)
 
     return
   }
 
-  const toSecondaryFundTx = await order.fundSwap()
-  if (toSecondaryFundTx) {
-    debug('Initiated secondary funding transaction', orderId, toSecondaryFundTx.hash)
-    order.addTx('toSecondaryFundHash', toSecondaryFundTx)
+  const approveTx = await order.approveSwap()
+
+  if (approveTx) {
+    debug('Initiated approve transaction', orderId, approveTx.hash)
+    order.addTx('toSecondaryFundHash', approveTx)
   }
 
-  order.status = 'AGENT_FUNDED'
+  order.status = 'AGENT_APPROVED'
   await order.save()
 
   const next = []
 
-  if (toSecondaryFundTx) {
+  if (approveTx) {
     next.push({
       name: 'verify-tx',
       data: {
@@ -80,17 +81,11 @@ async function process(job) {
     })
   }
 
-  await order.log('FUND_SWAP', null, {
-    toSecondaryFundHash: order.toSecondaryFundHash
-  })
+  await order.log('APPROVE_SWAP', null, { toSecondaryFundHash: order.toSecondaryFundHash })
 
   next.push({
-    name: '4-find-user-claim-or-agent-refund',
-    data: {
-      orderId,
-      toLastScannedBlock,
-      asset: order.to
-    },
+    name: '3-agent-reciprocate',
+    data: { orderId, asset: order.to },
     opts: {
       delay: 1000 * 15
     }

@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 
 const Bluebird = require('bluebird')
 const BN = require('bignumber.js')
-const { assets: ASSETS, chains, unitToCurrency } = require('@liquality/cryptoassets')
+const { chains, unitToCurrency } = require('@liquality/cryptoassets')
+const { assets: ASSETS } = require('../utils/cryptoassets')
 
 const Asset = require('./Asset')
 const MarketHistory = require('./MarketHistory')
@@ -13,6 +14,7 @@ const { getClient } = require('../utils/clients')
 const config = require('../config')
 const coingecko = require('../utils/coinGeckoClient')
 const reportError = require('../utils/reportError')
+const { getChainifyAsset } = require('../utils/chainify')
 
 const MarketSchema = new mongoose.Schema(
   {
@@ -101,10 +103,12 @@ MarketSchema.static('updateAllMarketData', async function () {
       try {
         const client = await asset.getClient()
         const addresses = await client.wallet.getUsedAddresses()
-        asset.balance = addresses.length === 0 ? 0 : await client.chain.getBalance(addresses)
+        const chainifyAsset = getChainifyAsset(ASSETS[asset.code])
+        const balance = addresses.length === 0 ? 0 : await client.chain.getBalance(addresses, [chainifyAsset])
+        asset.balance = balance.toString()
 
         try {
-          const address = (await client.wallet.getUnusedAddress()).address
+          const address = (await client.wallet.getUnusedAddress()).toString()
           asset.address = chains[ASSETS[asset.code].chain].formatAddress(address)
         } catch (e) {
           // ignore if this snippet fails
