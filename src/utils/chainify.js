@@ -25,8 +25,8 @@ const requiresApproval = async (client, asset, user, amount) => {
 
   const allowanceCallData = [
     '0xdd62ed3e', // signature
-    `000000000000000000000000${remove0x(user)}`, // user address
-    `000000000000000000000000${HTLC_ADDRESS}` // htlc address
+    `${remove0x(user).padStart(64, 0)}`, // user address
+    `${HTLC_ADDRESS}`.padStart(64, 0) // htlc address
   ].join('')
 
   const allowance = await client.chain.getProvider().call({
@@ -51,7 +51,7 @@ const approve = async (client, asset, fee) => {
 
   const approveTxData = [
     '0x095ea7b3', // signature
-    `000000000000000000000000${remove0x(HTLC_ADDRESS)}`, // htlc address
+    `${remove0x(HTLC_ADDRESS)}`.padStart(64, 0), // htlc address
     `ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff` // max uint256
   ].join('')
 
