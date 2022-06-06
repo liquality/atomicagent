@@ -104,15 +104,16 @@ async function createNearClient() {
   const nearNetwork = { ...defaultConfig, nodeUrl: nearConfig.rpc?.url || defaultConfig.nodeUrl }
 
   const mnemonic = await secretManager.getMnemonic('NEAR')
+  const nearHelperUrl = nearConfig.helperUrl ? nearConfig.helperUrl : nearNetwork.helperUrl
 
   const walletOptions = {
     mnemonic,
     derivationPath: `m/44'/${nearNetwork.coinType}'/0'`,
-    helperUrl: nearNetwork.helperUrl
+    helperUrl: nearHelperUrl
   }
   const chainProvider = new NearChainProvider(nearNetwork)
   const walletProvider = new NearWalletProvider(walletOptions, chainProvider)
-  const swapProvider = new NearSwapProvider(nearNetwork.helperUrl, walletProvider)
+  const swapProvider = new NearSwapProvider(nearHelperUrl, walletProvider)
   return new Client().connect(swapProvider)
 }
 
