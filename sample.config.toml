@@ -100,3 +100,16 @@ killswitch = 'pm2 stop "Worker"'
     [assets.SOV.wallet]
     type = "js"
     mnemonic = "piece effort bind that embrace enrich remind powder sudden patient legend group"
+
+
+  [assets.NEAR]
+  blockTimeInSeconds = 5
+  network = "near_mainnet"
+  defaultFee = "average"
+    [assets.NEAR.rpc]
+    url = "https://near-mainnet--rpc--archive.datahub.figment.io/apikey/34936f0636daa31fce47a133c923357d"
+    [assets.NEAR.helperUrl]
+    url = "https://near-testnet-api.liq-chainhub.net/account/dev-1616732137696-2058648/activity"
+    [assets.NEAR.wallet]
+    type = "js"
+    mnemonic = "skull habit twenty boat curtain jewel shock memory pyramid exact copper name"
