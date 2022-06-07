@@ -104,7 +104,7 @@ async function createNearClient() {
   const nearNetwork = { ...defaultConfig, nodeUrl: nearConfig.rpc?.url || defaultConfig.nodeUrl }
 
   const mnemonic = await secretManager.getMnemonic('NEAR')
-  const nearHelperUrl = nearConfig.helperUrl ? nearConfig.helperUrl : nearNetwork.helperUrl
+  const nearHelperUrl = nearConfig.helperUrl?.url ? nearConfig.helperUrl.url : nearNetwork.helperUrl
 
   const walletOptions = {
     mnemonic,
