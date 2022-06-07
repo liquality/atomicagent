@@ -3,7 +3,7 @@ const { assets } = require('./cryptoassets')
 const BN = require('bignumber.js')
 
 const HTLC_ADDRESS =
-  process.env.NODE_ENV === 'production'
+  process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'testnet'
     ? '133713376F69C1A67d7f3594583349DFB53d8166'
     : 'AD4F91Fc58B651DA404d888A70Fa8683cB82a5FF'
 
