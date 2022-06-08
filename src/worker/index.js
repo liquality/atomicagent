@@ -30,6 +30,7 @@ const checkJobForRetry = (err, job) => {
     (err.message.includes('timeout of 30000ms exceeded') ||
       err.message.includes('Request failed with status code 400') ||
       err.message.includes('Request failed with status code 502') ||
+      err.message.includes('Server selection timed out after 30000 ms') ||
       err.message.includes('connection timed out'))
   ) {
     return true
@@ -46,13 +47,13 @@ const opts = {
   },
   redis: { maxRetriesPerRequest: null, enableReadyCheck: false },
   settings: {
-    lockDuration: 45000,
-    lockRenewTime: 22500,
-    stalledInterval: 30000,
+    lockDuration: 60000,
+    lockRenewTime: 30000,
+    stalledInterval: 45000,
     maxStalledCount: 1
   },
   defaultJobOptions: {
-    stackTraceLimit: 20
+    stackTraceLimit: 10
   },
   createClient: function (type, redisOpts) {
     switch (type) {
@@ -84,6 +85,7 @@ const addUniqueJob = (q, name, data = {}, opts = {}) => {
         groupBy: 'market-data'
       },
       {
+        priority: 1,
         removeOnComplete: true,
         jobId: 'update-market-data-job'
       }
