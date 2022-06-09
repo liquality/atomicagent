@@ -134,7 +134,7 @@ npm start
 ### Configure
 
 ```bash
-cp sample.config.toml test.config.toml  # copy sample config
+cp sample.config.toml test.config.toml  # copy sample config to test config
 nano config.toml                        # configure your agent as per your test environment
 ```
 
