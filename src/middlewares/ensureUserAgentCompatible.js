@@ -11,6 +11,8 @@ module.exports = (incompatibleResponse) => (req, res, next) => {
       const userCALVersion = matches[2]
       const isUserAgentCompatible = semver.satisfies(userCALVersion, CAL_VERSION_CHECK)
       if (!isUserAgentCompatible) return res.json(incompatibleResponse)
+    } else {
+      return res.json(incompatibleResponse)
     }
   }
 
