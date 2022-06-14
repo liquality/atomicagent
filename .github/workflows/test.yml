@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 16
       - run: cp sample.config.toml test.config.toml
       - run: chmod -R 777 test/docker/config
       - run: yarn install
