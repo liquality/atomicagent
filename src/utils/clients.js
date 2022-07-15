@@ -55,7 +55,7 @@ async function createBtcClient() {
   const swapProvider = new BitcoinSwapEsploraProvider({ network, scraperUrl: btcConfig.api.url }, walletProvider)
 
   if (!network.isTestnet) {
-    const feeProvider = new BitcoinFeeApiProvider('https://liquality.io/swap/mempool/v1/fees/recommended')
+    const feeProvider = new BitcoinFeeApiProvider('https://mempool.space/api/v1/fees/recommended')
     chainProvider.setFeeProvider(feeProvider)
   }
 
